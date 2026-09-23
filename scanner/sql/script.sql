@@ -1,13 +1,12 @@
 CREATE TABLE IF NOT EXISTS machine (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    ip TEXT NOT NULL,
-    mac TEXT NOT NULL,
+    ip TEXT NOT NULL UNIQUE,
+    mac TEXT,
     first_seen TEXT NOT NULL,
     last_seen TEXT NOT NULL
 );
 
-
-INSERT INTO machine (ip, mac, first_seen, last_seen) VALUES
+INSERT OR IGNORE INTO machine (ip, mac, first_seen, last_seen) VALUES
     ('192.168.1.1',   '00:1A:2B:3C:4D:01', '2026-09-15T08:00:00', '2026-09-18T09:30:00'),
     ('192.168.1.10',  '00:1A:2B:3C:4D:02', '2026-09-15T08:00:05', '2026-09-18T09:30:00'),
     ('192.168.1.11',  '00:1A:2B:3C:4D:03', '2026-09-16T10:12:00', '2026-09-18T09:28:00'),

@@ -1,34 +1,57 @@
+import uuid
+from datetime import datetime, timezone
+from typing import List, Optional
+
 from libnmap.process import NmapProcess
 from libnmap.parser import NmapParser
 
+from entities.machine import Machine
 
-def scan_network():
-   
+DEFAULT_TARGETS = ["127.0.0.1"]
 
-    networks = ["192.168.10.0/24", "192.168.20.0/24"]
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
-    for i in range(len(networks)):
-        scan = NmapProcess(networks[i], "-sV")
-        return_code = scan.run()
-        result = []
-        if return_code == 0:
-            report = NmapParser.parse(scan.stdout)
-            for host in report.hosts:
-                print("Adresse IP :", host.address)
-                print("État :", host.status)
-                print(host.services)
-                for serv in host.services:
-                    pserv = "{0:>5s}/{1:3s}  {2:12s}  {3}".format(
-                        str(serv.port),
-                        serv.protocol,
-                        serv.state,
-                        serv.service)
 
-                    print(pserv)
+def _extract_mac(host) -> Optional[str]:
+    #TODO
+    return None
 
-                machine = (host.address, host.status, host.services)
-                    
-                result.append(machine)
-        else:
-            print("Le scan a échoué :", scan.stderr)
-    return result
+
+def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
+    """Scanne les cibles données (par défaut : localhost) et retourne des entités Machine
+    non persistées (id=None). -Pn force nmap à considérer les hôtes comme actifs sans
+    dépendre de la découverte ICMP, ce qui est nécessaire pour scanner localhost de façon fiable."""
+    targets = targets or DEFAULT_TARGETS
+
+    scan = NmapProcess(" ".join(targets), "-sV -Pn")
+    return_code = scan.run()
+
+    if return_code != 0:
+        raise RuntimeError(f"Le scan nmap a échoué : {scan.stderr}")
+
+    report = NmapParser.parse(scan.stdout)
+    timestamp = _now_iso()
+    machines: List[Machine] = []
+
+    for host in report.hosts:
+        if not host.is_up():
+            continue
+
+        mac = _extract_mac(host)
+
+        machines.append(
+            Machine(
+                ip=host.address,
+                mac=host.address, # à changer
+                first_seen=timestamp,
+                last_seen=timestamp,
+            )
+        )
+
+    return machines
+
+
+if __name__ == "__main__":
+    for m in scan_network():
+        print(m)
