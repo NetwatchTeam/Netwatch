@@ -1,7 +1,6 @@
 from typing import List, Optional
 from dataclasses import asdict
 
-from entities.machine import Machine
 from usecases.interfaces.repository_interface import RepositoryInterface
 from usecases.scan_network import scan_network
 

@@ -43,7 +43,7 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
         machines.append(
             Machine(
                 ip=host.address,
-                mac=host.address, # à changer
+                mac=host.address, # à remplacer par le mac
                 first_seen=timestamp,
                 last_seen=timestamp,
             )
