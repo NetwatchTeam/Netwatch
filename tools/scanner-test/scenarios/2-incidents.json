@@ -1,0 +1,227 @@
+{
+  "scannedAt": "2026-09-25T08:00:00Z",
+  "devices": [
+    {
+      "ip": "192.168.10.1",
+      "mac": "00:09:0f:aa:00:01",
+      "hostname": "fw-principal",
+      "vendor": "Fortinet",
+      "latencyMs": 0.8,
+      "openPorts": [
+        443
+      ],
+      "certificates": [
+        {
+          "port": 443,
+          "subject": "CN=fw-principal.exemple.local",
+          "issuer": "CN=Fortinet CA",
+          "expiresAt": "2027-06-30T23:59:59Z"
+        }
+      ]
+    },
+    {
+      "ip": "192.168.10.2",
+      "mac": "00:1b:54:aa:00:02",
+      "hostname": "sw-coeur",
+      "vendor": "Cisco",
+      "latencyMs": 0.6,
+      "openPorts": [
+        22,
+        443
+      ],
+      "certificates": []
+    },
+    {
+      "ip": "192.168.10.5",
+      "mac": "24:5a:4c:aa:00:05",
+      "hostname": "wifi-rdc",
+      "vendor": "Ubiquiti",
+      "latencyMs": 1.4,
+      "openPorts": [
+        22,
+        443
+      ],
+      "certificates": []
+    },
+    {
+      "ip": "192.168.10.10",
+      "mac": "3c:52:82:aa:00:10",
+      "hostname": "srv-erp",
+      "vendor": "Dell",
+      "latencyMs": 48.5,
+      "openPorts": [
+        443,
+        1433,
+        3389
+      ],
+      "certificates": [
+        {
+          "port": 443,
+          "subject": "CN=srv-erp.exemple.local",
+          "issuer": "CN=AC interne Exemple",
+          "expiresAt": "2026-10-15T23:59:59Z"
+        }
+      ]
+    },
+    {
+      "ip": "192.168.10.11",
+      "mac": "00:11:32:aa:00:11",
+      "hostname": "nas-sauvegarde",
+      "vendor": "Synology",
+      "latencyMs": 1.7,
+      "openPorts": [
+        443,
+        445,
+        5001
+      ],
+      "certificates": [
+        {
+          "port": 5001,
+          "subject": "CN=nas.exemple.local",
+          "issuer": "CN=AC interne Exemple",
+          "expiresAt": "2026-09-29T23:59:59Z"
+        }
+      ]
+    },
+    {
+      "ip": "192.168.10.12",
+      "mac": "3c:52:82:aa:00:12",
+      "hostname": "srv-intranet",
+      "vendor": "Dell",
+      "latencyMs": 2.4,
+      "openPorts": [
+        80,
+        443
+      ],
+      "certificates": [
+        {
+          "port": 443,
+          "subject": "CN=intranet.exemple.local",
+          "issuer": "CN=Let's Encrypt R11",
+          "expiresAt": "2027-03-01T23:59:59Z"
+        }
+      ]
+    },
+    {
+      "ip": "192.168.10.13",
+      "mac": "3c:52:82:aa:00:13",
+      "hostname": "srv-mail",
+      "vendor": "Dell",
+      "latencyMs": 2.9,
+      "openPorts": [
+        25,
+        443,
+        993
+      ],
+      "certificates": [
+        {
+          "port": 443,
+          "subject": "CN=mail.exemple.local",
+          "issuer": "CN=AC interne Exemple",
+          "expiresAt": "2026-09-20T23:59:59Z"
+        },
+        {
+          "port": 993,
+          "subject": "CN=mail.exemple.local",
+          "issuer": "CN=AC interne Exemple",
+          "expiresAt": "2026-12-31T23:59:59Z"
+        }
+      ]
+    },
+    {
+      "ip": "192.168.10.20",
+      "mac": "a0:d3:c1:aa:00:20",
+      "hostname": "imp-accueil",
+      "vendor": "HP",
+      "latencyMs": 4.2,
+      "openPorts": [
+        80,
+        443,
+        631,
+        9100
+      ],
+      "certificates": []
+    },
+    {
+      "ip": "192.168.10.21",
+      "mac": "c0:56:e3:aa:00:21",
+      "hostname": "cam-parking",
+      "vendor": "Hikvision",
+      "latencyMs": 6.8,
+      "openPorts": [
+        80,
+        554
+      ],
+      "certificates": []
+    },
+    {
+      "ip": "192.168.10.40",
+      "mac": "f8:bc:12:aa:00:40",
+      "hostname": "pc-accueil",
+      "vendor": "Lenovo",
+      "latencyMs": 2.2,
+      "openPorts": [],
+      "certificates": []
+    },
+    {
+      "ip": "192.168.10.41",
+      "mac": "f8:bc:12:aa:00:41",
+      "hostname": "pc-commercial",
+      "vendor": "Lenovo",
+      "latencyMs": 5.7,
+      "openPorts": [],
+      "certificates": []
+    },
+    {
+      "ip": "192.168.10.50",
+      "mac": "00:04:f2:aa:00:50",
+      "hostname": "tel-standard",
+      "vendor": "Polycom",
+      "latencyMs": 3.3,
+      "openPorts": [
+        80,
+        5060
+      ],
+      "certificates": []
+    },
+    {
+      "ip": "192.168.10.77",
+      "mac": "9c:b6:d0:aa:00:77",
+      "hostname": "DESKTOP-8F3K2QX",
+      "vendor": null,
+      "latencyMs": 4.1,
+      "openPorts": [
+        135,
+        445
+      ]
+    },
+    {
+      "ip": "192.168.10.88",
+      "mac": "dc:a6:32:aa:00:88",
+      "hostname": null,
+      "vendor": "Raspberry Pi",
+      "latencyMs": 7.9,
+      "openPorts": [
+        22,
+        5900
+      ]
+    }
+  ],
+  "throughput": [
+    {
+      "sourceIp": "192.168.10.10",
+      "targetIp": "192.168.10.11",
+      "mbps": 312.7
+    },
+    {
+      "sourceIp": "192.168.10.12",
+      "targetIp": "192.168.10.2",
+      "mbps": 861.3
+    },
+    {
+      "sourceIp": "192.168.10.1",
+      "targetIp": null,
+      "mbps": 6.2
+    }
+  ]
+}

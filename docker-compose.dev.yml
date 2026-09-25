@@ -1,0 +1,7 @@
+# Développement uniquement : rend PostgreSQL accessible depuis la machine hôte
+# pour lancer l'API avec `npm run dev`. Jamais utilisé chez un client.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db
+services:
+  db:
+    ports:
+      - '127.0.0.1:${DB_DEV_PORT:-5433}:5432'

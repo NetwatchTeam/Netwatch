@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-netwatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?mot de passe PostgreSQL manquant}
+      POSTGRES_DB: ${POSTGRES_DB:-netwatch}
+    volumes:
+      - netwatch-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-netwatch} -d ${POSTGRES_DB:-netwatch}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgres://${POSTGRES_USER:-netwatch}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-netwatch}
+      # `demo` fait tourner le produit sans scanner ; passez à `http` chez le client.
+      SCANNER_MODE: ${SCANNER_MODE:-demo}
+      SCANNER_URL: ${SCANNER_URL:-}
+      SCANNER_TOKEN: ${SCANNER_TOKEN:-}
+      APP_PASSWORD: ${APP_PASSWORD:?mot de passe du tableau de bord manquant}
+      SESSION_SECRET: ${SESSION_SECRET:?clé de signature des sessions manquante}
+    ports:
+      - '${APP_PORT:-3001}:3001'
+
+  # Faux scanner pour les tests (jamais démarré chez un client : profil `test`).
+  # Voir tools/scanner-test/README.md
+  scanner-test:
+    profiles: [test]
+    image: node:22-alpine
+    working_dir: /scanner
+    command: node server.mjs
+    volumes:
+      - ./tools/scanner-test:/scanner:ro
+    ports:
+      - '${SCANNER_TEST_PORT:-8090}:8080'
+
+  # Le scanner réseau est développé séparément. Une fois son image disponible,
+  # ajoutez-le ici et passez SCANNER_MODE=http avec SCANNER_URL=http://scanner:8080.
+  # scanner:
+  #   image: netwatch/scanner:latest
+  #   network_mode: host
+  #   restart: unless-stopped
+
+volumes:
+  netwatch-db:
