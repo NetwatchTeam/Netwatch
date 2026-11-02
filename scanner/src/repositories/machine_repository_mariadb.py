@@ -2,16 +2,24 @@ import mariadb
 from dotenv import load_dotenv
 import os
 from typing import List, Optional
+from pathlib import Path
 
 from entities.machine import Machine
 from usecases.interfaces.repository_interface import RepositoryInterface
 
 
-load_dotenv("src/includes/.env")
+
 
 
 class MariaDBMachineRepository(RepositoryInterface):
     def __init__(self):
+
+        chemin = Path("src/includes/.env")
+
+        if chemin.is_file():
+            load_dotenv(dotenv_path=chemin)
+        else:
+            raise FileNotFoundError(f"Fichier de configuration introuvable. Chemin attendu : {chemin.absolute()}")
 
 
         self.db_config = {
@@ -23,7 +31,8 @@ class MariaDBMachineRepository(RepositoryInterface):
         }
 
     def _connect(self) -> mariadb.Connection:
-        return mariadb.connect(**self.db_config)
+        connect=mariadb.connect(**self.db_config, ssl_verify_cert=False)
+        return connect
     
     def get_all(self) -> List[Machine]:
         conn = self._connect()

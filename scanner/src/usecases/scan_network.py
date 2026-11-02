@@ -50,8 +50,3 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
         )
 
     return machines
-
-
-if __name__ == "__main__":
-    for m in scan_network():
-        print(m)
