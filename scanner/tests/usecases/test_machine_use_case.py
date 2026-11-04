@@ -6,14 +6,59 @@ from entities.machine import Machine
 from usecases.machine_use_case import scan
 
 
+@patch("usecases.machine_use_case.check_machine_tls")
 @patch("usecases.machine_use_case.scan_network")
-def test_scan_convertit_les_machines_en_dict(mock_scan_network):
+def test_scan_convertit_les_machines_en_dict_avec_tls(mock_scan_network, mock_check_tls):
     mock_scan_network.return_value = [
         Machine(ip="10.0.0.1", mac="aa:bb", first_seen="t1", last_seen="t2", id=3)
     ]
+    mock_check_tls.return_value = {
+        "ip": "10.0.0.1",
+        "port": 443,
+        "status": "ok",
+        "not_after": "2026-12-31T23:59:59+00:00",
+        "days_remaining": 42,
+    }
 
     assert scan() == [
-        {"ip": "10.0.0.1", "id": 3, "mac": "aa:bb", "first_seen": "t1", "last_seen": "t2"}
+        {
+            "ip": "10.0.0.1",
+            "id": 3,
+            "mac": "aa:bb",
+            "first_seen": "t1",
+            "last_seen": "t2",
+            "tls_status": "ok",
+            "tls_days_remaining": 42,
+            "tls_not_after": "2026-12-31T23:59:59+00:00",
+        }
+    ]
+    mock_check_tls.assert_called_once_with("10.0.0.1")
+
+
+@patch("usecases.machine_use_case.check_machine_tls")
+@patch("usecases.machine_use_case.scan_network")
+def test_scan_enrichit_machine_avec_tls_unreachable(mock_scan_network, mock_check_tls):
+    mock_scan_network.return_value = [
+        Machine(ip="10.0.0.1", mac="aa:bb", first_seen="t1", last_seen="t2", id=3)
+    ]
+    mock_check_tls.return_value = {
+        "ip": "10.0.0.1",
+        "port": 443,
+        "status": "unreachable",
+        "message": "Connection refused",
+    }
+
+    assert scan() == [
+        {
+            "ip": "10.0.0.1",
+            "id": 3,
+            "mac": "aa:bb",
+            "first_seen": "t1",
+            "last_seen": "t2",
+            "tls_status": "unreachable",
+            "tls_days_remaining": None,
+            "tls_not_after": None,
+        }
     ]
 
 
