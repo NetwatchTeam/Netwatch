@@ -5,7 +5,10 @@ from datetime import datetime, timezone
 from cryptography import x509
 
 
-def check_machine_tls(ip: str, port: int = 443, timeout: float = 3.0) -> dict:
+EXPIRING_SOON_DAYS = 30
+
+def check_machine_tls(
+ip: str, port: int = 443, timeout: float = 3.0, expiring_soon_days: int = EXPIRING_SOON_DAYS,) -> dict:
     """Récupère le certificat TLS d'une machine et calcule les jours avant expiration."""
     context = ssl.create_default_context()
     context.check_hostname = False
@@ -23,10 +26,17 @@ def check_machine_tls(ip: str, port: int = 443, timeout: float = 3.0) -> dict:
 
     days_left = (expires_at - datetime.now(timezone.utc)).days
 
+    if days_left < 0:
+        status = "expired"
+    elif days_left <= expiring_soon_days:
+        status = "expiring_soon"
+    else:
+        status = "ok"
+
     return {
         "ip": ip,
         "port": port,
-        "status": "expired" if days_left < 0 else "ok",
+        "status": status,
         "not_after": expires_at.isoformat(),
         "days_remaining": days_left,
     }
