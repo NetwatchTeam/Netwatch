@@ -1,175 +1,193 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1160" width="1280" height="1160" role="img" aria-label="Architecture de NetWatch : l'interface React appelle l'API Node.js, dont les couches interfaces, application et domaine ne dépendent d'aucune technologie ; les adaptateurs d'infrastructure implémentent les ports, interrogent le scanner toutes les cinq minutes et écrivent dans PostgreSQL." font-family="Segoe UI, system-ui, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 1170" width="1280" height="1170" role="img" aria-label="Architecture de NetWatch : le dashboard React appelle l'API Node.js en REST ; l'API interroge le collecteur réseau toutes les cinq minutes, applique les règles du domaine et la corrélation par les dépendances validées, et enregistre l'état dans PostgreSQL. Les trois services sont lancés par docker compose." font-family="Segoe UI, system-ui, sans-serif">
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
     </marker>
-    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#1f5fd6"/>
-    </marker>
   </defs>
 
-  <rect width="1280" height="1160" fill="#ffffff"/>
+  <rect width="1280" height="1170" fill="#ffffff"/>
 
   <text x="40" y="40" font-size="20" font-weight="700" fill="#16202c">NetWatch — architecture</text>
-  <text x="40" y="60" font-size="12" fill="#64717f">Dashboard React + API Node.js en couches · scanner réseau séparé · PostgreSQL</text>
+  <text x="40" y="60" font-size="12" fill="#64717f">Collecteur réseau · API Node.js en couches · dashboard React · PostgreSQL — contrat d’échange 1.0.0 (docs/api-contract.md)</text>
 
   <g font-size="12" fill="#16202c" text-anchor="middle">
 
     <!-- Navigateur -->
-    <rect x="40" y="86" width="780" height="184" rx="10" fill="#fbfcfd" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 4"/>
-    <text x="56" y="110" text-anchor="start" font-size="12" font-weight="700" fill="#64717f" letter-spacing="0.5">NAVIGATEUR — interface React + TypeScript</text>
+    <rect x="40" y="86" width="780" height="204" rx="10" fill="#fbfcfd" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 4"/>
+    <text x="56" y="110" text-anchor="start" font-size="12" font-weight="700" fill="#64717f" letter-spacing="0.5">NAVIGATEUR — dashboard React + TypeScript (apps/web)</text>
 
-    <rect x="56" y="122" width="372" height="132" rx="8" fill="none" stroke="#c9d1dc"/>
+    <rect x="56" y="122" width="300" height="152" rx="8" fill="none" stroke="#c9d1dc"/>
     <text x="70" y="142" text-anchor="start" font-weight="700">Espace Direction — gestionnaire</text>
-    <rect x="70" y="152" width="166" height="32" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="153" y="172">Vue d’ensemble</text>
-    <rect x="248" y="152" width="166" height="32" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="331" y="172">Rapport hebdomadaire</text>
-    <text x="70" y="206" text-anchor="start" font-size="11" fill="#64717f">État en une phrase, disponibilité, vitesse du réseau,</text>
-    <text x="70" y="224" text-anchor="start" font-size="11" fill="#64717f">pannes les plus coûteuses de la semaine.</text>
+    <rect x="70" y="152" width="272" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="206" y="171" font-size="11">Vue d’ensemble</text>
+    <rect x="70" y="190" width="272" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="206" y="209" font-size="11">Rapport hebdomadaire · export PDF</text>
+    <text x="70" y="242" text-anchor="start" font-size="11" fill="#64717f">État en une phrase, pannes en cours,</text>
+    <text x="70" y="258" text-anchor="start" font-size="11" fill="#64717f">incidents les plus conséquents de la semaine.</text>
 
-    <rect x="444" y="122" width="360" height="132" rx="8" fill="none" stroke="#c9d1dc"/>
-    <text x="458" y="142" text-anchor="start" font-weight="700">Espace Technique — technicien</text>
-    <rect x="458" y="152" width="108" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="512" y="171" font-size="11">Équipements</text>
-    <rect x="574" y="152" width="108" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="628" y="171" font-size="11">Événements</text>
-    <rect x="690" y="152" width="100" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="740" y="171" font-size="11">À identifier</text>
-    <rect x="458" y="190" width="108" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="512" y="209" font-size="11">Scans</text>
-    <rect x="574" y="190" width="108" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="628" y="209" font-size="11">Réglages</text>
-    <text x="458" y="240" text-anchor="start" font-size="11" fill="#64717f">Détail par machine, valeurs mesurées, seuils.</text>
+    <rect x="372" y="122" width="432" height="152" rx="8" fill="none" stroke="#c9d1dc"/>
+    <text x="386" y="142" text-anchor="start" font-weight="700">Espace Technique — technicien</text>
+    <rect x="386" y="152" width="130" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="451" y="171" font-size="11">Équipements</text>
+    <rect x="524" y="152" width="130" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="589" y="171" font-size="11">Événements</text>
+    <rect x="662" y="152" width="130" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="727" y="171" font-size="11">À identifier</text>
+    <rect x="386" y="190" width="130" height="30" rx="5" fill="#eaf1fe" stroke="#1f5fd6"/>
+    <text x="451" y="209" font-size="11" fill="#1f5fd6" font-weight="600">Dépendances</text>
+    <rect x="524" y="190" width="130" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="589" y="209" font-size="11">Scans</text>
+    <rect x="662" y="190" width="130" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="727" y="209" font-size="11">Réglages</text>
+    <text x="386" y="242" text-anchor="start" font-size="11" fill="#64717f">Fiche machine : ports et services, latence, perte, CPU,</text>
+    <text x="386" y="258" text-anchor="start" font-size="11" fill="#64717f">mémoire, disques, certificats TLS, passerelle.</text>
 
-    <!-- Scanner et parc -->
-    <rect x="860" y="86" width="380" height="96" rx="8" fill="#16202c" stroke="#16202c"/>
-    <text x="1050" y="118" font-weight="700" fill="#ffffff">Scanner réseau</text>
-    <text x="1050" y="140" font-size="11" fill="#cbd2dc">service séparé (autre équipe) — expose GET /scan</text>
-    <text x="1050" y="160" font-size="11" fill="#cbd2dc">renvoie un JSON : machines, ports, certificats, débits</text>
+    <!-- Collecteur et parc -->
+    <rect x="860" y="86" width="380" height="112" rx="10" fill="#16202c"/>
+    <text x="1050" y="114" font-size="14" font-weight="700" fill="#ffffff">Collecteur réseau</text>
+    <text x="1050" y="138" font-size="11" fill="#cbd2dc">Python (branches scanner) — ou collecteur simulé</text>
+    <text x="1050" y="156" font-size="11" fill="#cbd2dc">(tools/scanner-test, service `collector`)</text>
+    <text x="1050" y="180" font-size="11" fill="#cbd2dc">expose GET /scan · répond selon le contrat 1.x</text>
 
-    <rect x="860" y="222" width="380" height="76" rx="8" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="1050" y="252" font-weight="700">Parc de l’entreprise — 10 à 100 machines</text>
-    <text x="1050" y="274" font-size="11" fill="#64717f">serveurs, postes, imprimantes, switchs, Wi-Fi, caméras</text>
+    <line x1="1050" y1="198" x2="1050" y2="234" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="1040" y="221" text-anchor="end" font-size="10.5" fill="#475569">ping, ports, services, TLS, ressources, débit</text>
+
+    <rect x="860" y="236" width="380" height="54" rx="8" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1050" y="258" font-weight="700">Parc de l’entreprise — 10 à 100 machines</text>
+    <text x="1050" y="277" font-size="11" fill="#64717f">serveurs, passerelles, postes, caméras, imprimantes</text>
+
+    <!-- Navigateur → API -->
+    <line x1="430" y1="290" x2="430" y2="354" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="442" y="326" text-anchor="start" font-size="11" fill="#475569">HTTP · JSON · /api/v1 · en-tête X-NetWatch-Contract: 1.0.0 · accès libre (réseau de confiance)</text>
 
     <!-- API -->
-    <rect x="40" y="330" width="1200" height="580" rx="10" fill="#fbfcfd" stroke="#94a3b8" stroke-width="1.5"/>
-    <text x="56" y="354" text-anchor="start" font-size="12" font-weight="700" fill="#64717f" letter-spacing="0.5">API NODE.JS — Express · architecture en couches, dépendances orientées vers l’intérieur</text>
+    <rect x="40" y="356" width="1200" height="560" rx="10" fill="#fbfcfd" stroke="#94a3b8" stroke-width="1.5"/>
+    <text x="56" y="380" text-anchor="start" font-size="12" font-weight="700" fill="#64717f" letter-spacing="0.5">API NODE.JS — Express · architecture en couches, dépendances orientées vers l’intérieur (apps/api)</text>
 
-    <!-- Couche interfaces -->
-    <rect x="56" y="368" width="704" height="96" rx="8" fill="#ffffff" stroke="#c9d1dc"/>
-    <text x="70" y="390" text-anchor="start" font-weight="700">interfaces/http — traduit HTTP ↔ métier</text>
-    <rect x="70" y="402" width="160" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="150" y="421" font-size="11">routes /api/v1</text>
-    <rect x="242" y="402" width="160" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="322" y="421" font-size="11">middleware/erreurs</text>
-    <rect x="414" y="402" width="160" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="494" y="421" font-size="11">presenters (DTO)</text>
-    <rect x="586" y="402" width="160" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="666" y="421" font-size="11">error-handler</text>
-    <text x="70" y="454" text-anchor="start" font-size="11" fill="#64717f">valide les entrées (zod), convertit les dates en ISO, choisit les codes HTTP</text>
+    <!-- interfaces/http -->
+    <rect x="56" y="396" width="720" height="104" rx="8" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="70" y="416" text-anchor="start" font-weight="700">interfaces/http — traduit HTTP ↔ métier</text>
+    <rect x="70" y="428" width="168" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="154" y="447" font-size="11">routes /api/v1</text>
+    <rect x="248" y="428" width="168" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="332" y="447" font-size="11">presenters (DTO)</text>
+    <rect x="426" y="428" width="168" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="510" y="447" font-size="11">rapport PDF (pdfkit)</text>
+    <rect x="604" y="428" width="158" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="683" y="447" font-size="11">error-handler</text>
+    <text x="70" y="484" text-anchor="start" font-size="11" fill="#64717f">valide les entrées (zod), dates ISO, erreurs { error: { code, message } } en 400 / 404 / 409 / 500</text>
 
-    <!-- Couche application -->
-    <rect x="56" y="496" width="704" height="120" rx="8" fill="#ffffff" stroke="#c9d1dc"/>
-    <text x="70" y="518" text-anchor="start" font-weight="700">application — cas d’usage et ports</text>
-    <rect x="70" y="530" width="176" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="158" y="549" font-size="11">IngestScanSnapshot</text>
-    <rect x="258" y="530" width="104" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="310" y="549" font-size="11">RunScan</text>
-    <rect x="374" y="530" width="186" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="467" y="549" font-size="11">GenerateWeeklyReport</text>
-    <rect x="572" y="530" width="174" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="659" y="549" font-size="11">GetNetworkSummary</text>
-    <text x="70" y="584" text-anchor="start" font-size="11" fill="#64717f">ports (interfaces) : DeviceRepository · EventRepository · ThroughputRepository ·</text>
-    <text x="70" y="602" text-anchor="start" font-size="11" fill="#64717f">ScanRunRepository · PolicyRepository · ScannerGateway · Clock · IdGenerator · Logger</text>
+    <line x1="416" y1="500" x2="416" y2="524" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="428" y="517" text-anchor="start" font-size="11" fill="#475569">appelle les cas d’usage</text>
 
-    <!-- Couche domaine -->
-    <rect x="56" y="648" width="704" height="200" rx="8" fill="#eaf1fe" stroke="#1f5fd6" stroke-width="2"/>
-    <text x="70" y="672" text-anchor="start" font-size="13" font-weight="700" fill="#1a4bb0">domain — les règles métier, sans aucune dépendance technique</text>
-    <rect x="70" y="686" width="130" height="30" rx="5" fill="#ffffff" stroke="#bcd0f5"/>
-    <text x="135" y="705" font-size="11">Device</text>
-    <rect x="212" y="686" width="160" height="30" rx="5" fill="#ffffff" stroke="#bcd0f5"/>
-    <text x="292" y="705" font-size="11">MonitoringEvent</text>
-    <rect x="384" y="686" width="160" height="30" rx="5" fill="#ffffff" stroke="#bcd0f5"/>
-    <text x="464" y="705" font-size="11">MonitoringPolicy</text>
-    <rect x="556" y="686" width="160" height="30" rx="5" fill="#ffffff" stroke="#bcd0f5"/>
-    <text x="636" y="705" font-size="11">WeeklyReport</text>
+    <!-- application -->
+    <rect x="56" y="526" width="720" height="118" rx="8" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="70" y="546" text-anchor="start" font-weight="700">application — cas d’usage et ports</text>
+    <rect x="70" y="558" width="128" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="134" y="577" font-size="10.5">IngestScanSnapshot</text>
+    <rect x="206" y="558" width="128" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="270" y="577" font-size="10.5">RunScan</text>
+    <rect x="342" y="558" width="128" height="30" rx="5" fill="#eaf1fe" stroke="#1f5fd6"/>
+    <text x="406" y="577" font-size="10.5" fill="#1f5fd6" font-weight="600">Dépendances</text>
+    <rect x="478" y="558" width="138" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="547" y="577" font-size="10.5">GenerateWeeklyReport</text>
+    <rect x="624" y="558" width="138" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="693" y="577" font-size="10.5">GetNetworkSummary</text>
+    <text x="70" y="610" text-anchor="start" font-size="11" fill="#64717f">ports : DeviceRepository · EventRepository · DependencyRepository · ThroughputRepository ·</text>
+    <text x="70" y="628" text-anchor="start" font-size="11" fill="#64717f">ScanRunRepository · PolicyRepository · ScannerGateway · Clock · IdGenerator · Logger</text>
 
-    <text x="70" y="748" text-anchor="start" font-size="11" fill="#1a4bb0" font-weight="700">règles de détection</text>
-    <rect x="70" y="758" width="166" height="30" rx="5" fill="#ffffff" stroke="#bcd0f5"/>
-    <text x="153" y="777" font-size="11">panne (injoignable)</text>
-    <rect x="248" y="758" width="150" height="30" rx="5" fill="#ffffff" stroke="#bcd0f5"/>
-    <text x="323" y="777" font-size="11">port exposé</text>
-    <rect x="410" y="758" width="150" height="30" rx="5" fill="#ffffff" stroke="#bcd0f5"/>
-    <text x="485" y="777" font-size="11">expiration TLS</text>
-    <rect x="572" y="758" width="174" height="30" rx="5" fill="#ffffff" stroke="#bcd0f5"/>
-    <text x="659" y="777" font-size="11">débit dégradé</text>
-    <text x="70" y="812" text-anchor="start" font-size="11" fill="#1a4bb0">+ machine découverte : reste « à identifier » tant qu’un utilisateur n’a rien déclaré</text>
-    <text x="70" y="832" text-anchor="start" font-size="11" fill="#64717f">Chaque règle renvoie une intention (ouvrir / actualiser / refermer un événement) — testable seule.</text>
+    <line x1="416" y1="644" x2="416" y2="668" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="428" y="661" text-anchor="start" font-size="11" fill="#475569">applique les règles du domaine</text>
 
-    <!-- Infrastructure -->
-    <rect x="800" y="368" width="424" height="480" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-dasharray="5 4"/>
-    <text x="816" y="390" text-anchor="start" font-weight="700">infrastructure — adaptateurs</text>
-    <text x="816" y="408" text-anchor="start" font-size="11" fill="#64717f">implémentent les ports de la couche application</text>
+    <!-- domain -->
+    <rect x="56" y="670" width="720" height="230" rx="8" fill="#eaf1fe" stroke="#1f5fd6" stroke-width="2"/>
+    <text x="70" y="692" text-anchor="start" font-size="13" font-weight="700" fill="#1f5fd6">domain — les règles métier, sans aucune dépendance technique</text>
+    <rect x="70" y="704" width="128" height="30" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="134" y="723" font-size="11">Device</text>
+    <rect x="206" y="704" width="128" height="30" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="270" y="723" font-size="11">MonitoringEvent</text>
+    <rect x="342" y="704" width="128" height="30" rx="5" fill="#ffffff" stroke="#1f5fd6"/>
+    <text x="406" y="723" font-size="11" fill="#1f5fd6" font-weight="600">Dependency</text>
+    <rect x="478" y="704" width="138" height="30" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="547" y="723" font-size="11">MonitoringPolicy</text>
+    <rect x="624" y="704" width="138" height="30" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="693" y="723" font-size="11">WeeklyReport</text>
 
-    <rect x="816" y="424" width="392" height="58" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="1012" y="446" font-size="11.5" font-weight="700">Repositories PostgreSQL</text>
-    <text x="1012" y="466" font-size="11" fill="#64717f">SQL brut, migrations appliquées au démarrage</text>
+    <text x="70" y="756" text-anchor="start" font-size="11" font-weight="700" fill="#1f5fd6">règles de détection</text>
+    <rect x="70" y="764" width="164" height="28" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="152" y="782" font-size="11">panne · injoignable</text>
+    <rect x="242" y="764" width="164" height="28" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="324" y="782" font-size="11">panne en aval</text>
+    <rect x="414" y="764" width="164" height="28" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="496" y="782" font-size="11">perte de paquets</text>
+    <rect x="586" y="764" width="176" height="28" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="674" y="782" font-size="11">saturation CPU / mémoire / disque</text>
+    <rect x="70" y="800" width="164" height="28" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="152" y="818" font-size="11">port exposé</text>
+    <rect x="242" y="800" width="164" height="28" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="324" y="818" font-size="11">expiration TLS</text>
+    <rect x="414" y="800" width="164" height="28" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="496" y="818" font-size="11">certificat TLS invalide</text>
+    <rect x="586" y="800" width="176" height="28" rx="5" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="674" y="818" font-size="11">débit dégradé</text>
 
-    <rect x="816" y="498" width="392" height="58" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="1012" y="520" font-size="11.5" font-weight="700">HttpScannerGateway</text>
-    <text x="1012" y="540" font-size="11" fill="#64717f">appelle GET /scan et valide le JSON reçu</text>
+    <text x="70" y="850" text-anchor="start" font-size="11" fill="#1f5fd6"><tspan font-weight="700">corrélation</tspan> : la topologie ne retient que les dépendances validées pour classer une machine</text>
+    <text x="70" y="866" text-anchor="start" font-size="11" fill="#1f5fd6">« injoignable » (sa passerelle est tombée) plutôt que « en panne » ; cycles et incohérences signalés.</text>
+    <text x="70" y="886" text-anchor="start" font-size="11" fill="#475569">Chaque règle renvoie une intention (ouvrir / actualiser / refermer un événement) — testable seule.</text>
 
-    <rect x="816" y="572" width="392" height="58" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="1012" y="594" font-size="11.5" font-weight="700">ScanScheduler</text>
-    <text x="1012" y="614" font-size="11" fill="#64717f">déclenche un scan toutes les 5 min (intervalle réglable)</text>
+    <!-- infrastructure -->
+    <rect x="800" y="396" width="424" height="504" rx="8" fill="none" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="6 4"/>
+    <text x="816" y="418" text-anchor="start" font-weight="700">infrastructure — adaptateurs</text>
+    <text x="816" y="436" text-anchor="start" font-size="11" fill="#64717f">implémentent les ports de la couche application</text>
 
-    <rect x="816" y="646" width="392" height="58" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="1012" y="668" font-size="11.5" font-weight="700">DemoScannerGateway</text>
-    <text x="1012" y="688" font-size="11" fill="#64717f">réseau fictif pour démonstration, sans matériel</text>
+    <rect x="816" y="452" width="392" height="66" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1012" y="478" font-weight="700">Dépôts PostgreSQL · mémoire</text>
+    <text x="1012" y="500" font-size="11" fill="#64717f">STORAGE=postgres (migrations au démarrage) ou memory</text>
+    <rect x="816" y="528" width="392" height="66" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1012" y="554" font-weight="700">HttpScannerGateway</text>
+    <text x="1012" y="576" font-size="11" fill="#64717f">appelle GET /scan, valide le JSON et la version du contrat</text>
+    <rect x="816" y="604" width="392" height="66" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1012" y="630" font-weight="700">ScanScheduler</text>
+    <text x="1012" y="652" font-size="11" fill="#64717f">déclenche un scan toutes les 5 min (intervalle réglable)</text>
+    <rect x="816" y="680" width="392" height="66" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1012" y="706" font-weight="700">DemoScannerGateway</text>
+    <text x="1012" y="728" font-size="11" fill="#64717f">réseau fictif intégré, sans collecteur (SCANNER_MODE=demo)</text>
+    <rect x="816" y="756" width="392" height="66" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1012" y="782" font-weight="700">config/env · logger · horloge</text>
+    <text x="1012" y="804" font-size="11" fill="#64717f">variables d’environnement validées au démarrage</text>
+    <text x="816" y="852" text-anchor="start" font-size="11" fill="#64717f">Remplacer PostgreSQL ou le collecteur ne touche que cette colonne :</text>
+    <text x="816" y="870" text-anchor="start" font-size="11" fill="#64717f">les couches de gauche ignorent tout de ces technologies.</text>
 
-    <rect x="816" y="720" width="392" height="58" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="1012" y="742" font-size="11.5" font-weight="700">config/env · logger · horloge</text>
-    <text x="1012" y="762" font-size="11" fill="#64717f">variables d’environnement validées au démarrage</text>
+    <!-- implémente -->
+    <line x1="800" y1="590" x2="780" y2="590" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
 
-    <text x="816" y="808" text-anchor="start" font-size="11" fill="#64717f">Remplacer PostgreSQL ou le scanner ne touche que cette colonne :</text>
-    <text x="816" y="826" text-anchor="start" font-size="11" fill="#64717f">les couches de gauche ignorent tout de ces technologies.</text>
+    <!-- Planificateur → collecteur -->
+    <polyline points="1208,637 1258,637 1258,142 1244,142" fill="none" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="1253" y="500" font-size="11" fill="#475569" transform="rotate(-90 1253 500)">GET /scan toutes les 5 min · réponse JSON (contrat 1.x)</text>
 
-    <!-- PostgreSQL -->
-    <rect x="800" y="950" width="424" height="86" rx="8" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="1012" y="982" font-weight="700">PostgreSQL</text>
-    <text x="1012" y="1004" font-size="11" fill="#64717f">équipements, événements, mesures de débit,</text>
-    <text x="1012" y="1022" font-size="11" fill="#64717f">journal des scans, réglages de supervision</text>
+    <!-- API → PostgreSQL -->
+    <line x1="1012" y1="900" x2="1012" y2="958" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="1022" y="934" text-anchor="start" font-size="11" fill="#475569">SQL</text>
 
-    <!-- Cycle -->
-    <rect x="40" y="950" width="716" height="166" rx="8" fill="#ffffff" stroke="#c9d1dc"/>
-    <text x="60" y="978" text-anchor="start" font-size="13" font-weight="700">Cycle de 5 minutes</text>
-    <text x="60" y="1004" text-anchor="start" font-size="11.5">1. ScanScheduler déclenche RunScan et trace l’exécution (succès ou échec).</text>
-    <text x="60" y="1026" text-anchor="start" font-size="11.5">2. HttpScannerGateway appelle GET /scan ; un JSON non conforme est rejeté et signalé.</text>
-    <text x="60" y="1048" text-anchor="start" font-size="11.5">3. IngestScanSnapshot compare la photographie reçue à l’état connu et applique les règles.</text>
-    <text x="60" y="1070" text-anchor="start" font-size="11.5">4. Équipements et événements sont enregistrés ; un événement déjà ouvert n’est jamais dupliqué.</text>
-    <text x="60" y="1096" text-anchor="start" font-size="11" fill="#64717f">Le tableau de bord lit ensuite cet état à la demande : aucune attente pour l’utilisateur.</text>
-  </g>
+    <rect x="800" y="960" width="424" height="96" rx="8" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1012" y="988" font-size="13" font-weight="700">PostgreSQL</text>
+    <text x="1012" y="1010" font-size="11" fill="#64717f">équipements, événements, dépendances, mesures de débit,</text>
+    <text x="1012" y="1028" font-size="11" fill="#64717f">journal des scans, réglages · volume netwatch-db</text>
 
-  <!-- Flèches -->
-  <g stroke="#475569" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
-    <line x1="1050" y1="184" x2="1050" y2="220"/>
-    <line x1="408" y1="270" x2="408" y2="366"/>
-    <line x1="408" y1="464" x2="408" y2="494"/>
-    <line x1="408" y1="616" x2="408" y2="646"/>
-    <line x1="798" y1="556" x2="764" y2="556"/>
-    <line x1="1012" y1="850" x2="1012" y2="948"/>
-    <polyline points="1210,601 1252,601 1252,134 1242,134"/>
-  </g>
+    <rect x="800" y="1070" width="424" height="70" rx="8" fill="#16202c"/>
+    <text x="1012" y="1096" font-size="13" font-weight="700" fill="#ffffff">docker compose up</text>
+    <text x="1012" y="1118" font-size="11" fill="#cbd2dc">db · collector · app (API + dashboard compilé, port 3001)</text>
 
-  <!-- Libellés des flèches -->
-  <g font-size="11" fill="#64717f">
-    <text x="1042" y="206" text-anchor="end">scanne (ping, ports, TLS, débit)</text>
-    <text x="416" y="322">HTTP · JSON · accès libre (réseau de confiance)</text>
-    <text x="416" y="486">appelle les cas d’usage</text>
-    <text x="416" y="638">applique les règles du domaine</text>
-    <text x="781" y="548" text-anchor="middle">implémente</text>
-    <text x="1020" y="906">SQL</text>
-    <text x="1266" y="370" text-anchor="middle" transform="rotate(-90 1266 370)">GET /scan toutes les 5 min</text>
+    <!-- Cycle de 5 minutes -->
+    <rect x="40" y="960" width="736" height="180" rx="8" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="58" y="986" text-anchor="start" font-size="13" font-weight="700">Cycle de 5 minutes</text>
+    <g text-anchor="start" font-size="11.5">
+      <text x="58" y="1012">1. ScanScheduler déclenche RunScan et trace l’exécution (succès ou échec, avec la raison).</text>
+      <text x="58" y="1034">2. HttpScannerGateway appelle GET /scan ; un JSON non conforme ou d’une autre version majeure est rejeté.</text>
+      <text x="58" y="1056">3. IngestScanSnapshot met à jour le parc ; les passerelles vues deviennent des suggestions de dépendance.</text>
+      <text x="58" y="1078">4. Les dépendances validées distinguent les machines en panne des machines injoignables, puis les règles s’appliquent.</text>
+      <text x="58" y="1100">5. Équipements et événements sont enregistrés ; un événement déjà ouvert n’est jamais dupliqué.</text>
+      <text x="58" y="1126" fill="#64717f">Le dashboard lit cet état à la demande : aucune attente pour l’utilisateur.</text>
+    </g>
   </g>
 </svg>

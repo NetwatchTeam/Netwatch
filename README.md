@@ -8,6 +8,9 @@ un gestionnaire qui veut savoir si tout va bien, un technicien qui doit diagnost
 
 ![Architecture de NetWatch](docs/architecture.png)
 
+Les écrans du dashboard, leur disposition et leurs données sont décrits dans le
+[squelette de l'application](docs/squelette-application.md).
+
 ## Ce que le produit détecte
 
 | Constat | Famille | Comportement |
@@ -199,11 +202,14 @@ packages/
 └── contracts/              # types partagés API ↔ interface (le contrat HTTP)
 docs/
 ├── architecture.svg/png    # schéma ci-dessus
+├── squelette-application.md  # plan du site, maquette et rôle de chaque écran, structure du code du dashboard
+├── squelette/              # maquettes fil de fer (générées par tools/squelette/generer-maquettes.mjs)
 ├── api-contract.md         # contrat REST/JSON : routes, formats, erreurs, versionnement
 ├── scanner-contract.md     # ce que l'API attend du collecteur
 └── examples/               # réponses JSON réelles (générées par le code, vérifiées par les tests)
 tools/
-└── scanner-test/           # collecteur simulé (service `collector` de docker compose)
+├── scanner-test/           # collecteur simulé (service `collector` de docker compose)
+└── squelette/              # générateur des maquettes de docs/squelette
 ```
 
 ### Pourquoi ce découpage
