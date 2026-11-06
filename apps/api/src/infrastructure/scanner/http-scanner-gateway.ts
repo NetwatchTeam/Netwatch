@@ -1,3 +1,4 @@
+import { CONTRACT_VERSION, CONTRACT_VERSION_HEADER } from '@netwatch/contracts';
 import type { ScanSnapshot, ScannerGateway } from '../../application/ports/scanner-gateway.js';
 import { ScannerUnavailableError } from '../../domain/errors.js';
 import { snapshotSchema, toDomainSnapshot } from './snapshot-schema.js';
@@ -8,21 +9,46 @@ export interface HttpScannerOptions {
   timeoutMs: number;
 }
 
+/** Codes réseau de Node, traduits pour la page « Scans » : `fetch failed` seul ne dit pas quoi corriger. */
+const NETWORK_ERRORS: Record<string, string> = {
+  ECONNREFUSED: 'connexion refusée — le scanner n’est pas démarré, ou n’écoute pas sur ce port',
+  ENOTFOUND: 'nom d’hôte introuvable — vérifier SCANNER_URL',
+  EAI_AGAIN: 'résolution DNS impossible pour le moment — vérifier SCANNER_URL et le réseau',
+  ECONNRESET: 'connexion coupée par le scanner pendant la réponse',
+  EHOSTUNREACH: 'machine du scanner inaccessible sur le réseau',
+  ENETUNREACH: 'réseau du scanner inaccessible',
+  ETIMEDOUT: 'la machine du scanner ne répond pas',
+  UND_ERR_CONNECT_TIMEOUT: 'la machine du scanner ne répond pas',
+  UND_ERR_SOCKET: 'connexion coupée par le scanner pendant la réponse',
+};
+
+export function explainFetchError(error: unknown, timeoutMs: number): string {
+  if (error instanceof DOMException && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
+    return `pas de réponse en ${timeoutMs / 1000} s (SCANNER_TIMEOUT_MS)`;
+  }
+  // `fetch` enveloppe l'erreur réseau d'origine dans `cause`.
+  const cause = error instanceof Error ? (error.cause as { code?: string; message?: string } | undefined) : undefined;
+  const code = cause?.code;
+  if (code && NETWORK_ERRORS[code]) return `${NETWORK_ERRORS[code]} (${code})`;
+  if (code) return `${cause?.message ?? 'erreur réseau'} (${code})`;
+  return error instanceof Error ? error.message : String(error);
+}
+
 /** Adaptateur du scanner réseau : c'est le seul endroit qui connaît son protocole. */
 export class HttpScannerGateway implements ScannerGateway {
   constructor(private readonly options: HttpScannerOptions) {}
 
   async fetchSnapshot(): Promise<ScanSnapshot> {
     const url = new URL('/scan', this.options.baseUrl).toString();
-    const headers: Record<string, string> = { Accept: 'application/json' };
+    // Le collecteur sait ainsi quelle version du contrat l'API attend.
+    const headers: Record<string, string> = { Accept: 'application/json', [CONTRACT_VERSION_HEADER]: CONTRACT_VERSION };
     if (this.options.token) headers.Authorization = `Bearer ${this.options.token}`;
 
     let response: Response;
     try {
       response = await fetch(url, { headers, signal: AbortSignal.timeout(this.options.timeoutMs) });
     } catch (error) {
-      const reason = error instanceof Error ? error.message : String(error);
-      throw new ScannerUnavailableError(`Scanner injoignable (${url}) : ${reason}`);
+      throw new ScannerUnavailableError(`Scanner injoignable (${url}) : ${explainFetchError(error, this.options.timeoutMs)}`);
     }
 
     if (!response.ok) {

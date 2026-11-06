@@ -6,7 +6,16 @@ import type { EventDetails, EventSeverity, NewEvent } from '../entities/monitori
  */
 export type DetectionIntent =
   | { action: 'open'; event: NewEvent }
-  | { action: 'update'; deviceId: string; dedupeKey: string; severity: EventSeverity; summary: string; details: EventDetails }
+  | {
+      action: 'update';
+      deviceId: string;
+      dedupeKey: string;
+      severity: EventSeverity;
+      summary: string;
+      details: EventDetails;
+      /** Absent : inchangé. Sert quand la cause d'une panne change (passerelle tombée puis revenue). */
+      peerDeviceId?: string | null;
+    }
   | { action: 'resolve'; deviceId: string; dedupeKey: string; at: Date };
 
 /** Clés des événements encore ouverts pour un équipement, indexées par `dedupeKey`. */

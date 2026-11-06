@@ -1,3 +1,4 @@
+import type { Dependency } from '../../domain/entities/dependency.js';
 import type { Device, DeviceKind, DeviceLifecycle, DeviceReachability } from '../../domain/entities/device.js';
 import type { ScanRun, ThroughputSample } from '../../domain/entities/measurement.js';
 import type { EventCategory, EventStatus, EventType, MonitoringEvent } from '../../domain/entities/monitoring-event.js';
@@ -54,6 +55,15 @@ export interface ScanRunRepository {
   finish(run: ScanRun): Promise<void>;
   last(): Promise<ScanRun | null>;
   list(limit: number): Promise<ScanRun[]>;
+}
+
+export interface DependencyRepository {
+  /** Le graphe complet : au plus quelques centaines de liens pour le parc visé. */
+  list(): Promise<Dependency[]>;
+  findById(id: string): Promise<Dependency | null>;
+  insertMany(dependencies: Dependency[]): Promise<void>;
+  saveMany(dependencies: Dependency[]): Promise<void>;
+  deleteMany(ids: string[]): Promise<void>;
 }
 
 export interface PolicyRepository {

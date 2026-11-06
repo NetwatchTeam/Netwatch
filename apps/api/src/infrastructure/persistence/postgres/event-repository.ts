@@ -151,7 +151,7 @@ export class PostgresEventRepository implements EventRepository {
     await this.db.query(
       `update monitoring_events set
          severity = $2, status = $3, summary = $4, details = $5::jsonb,
-         resolved_at = $6, acknowledged_at = $7
+         resolved_at = $6, acknowledged_at = $7, peer_device_id = $8
        where id = $1`,
       [
         event.id,
@@ -161,6 +161,7 @@ export class PostgresEventRepository implements EventRepository {
         JSON.stringify(event.details),
         event.resolvedAt,
         event.acknowledgedAt,
+        event.peerDeviceId,
       ],
     );
   }

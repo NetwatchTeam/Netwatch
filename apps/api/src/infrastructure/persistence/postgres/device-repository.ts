@@ -1,5 +1,13 @@
 import type { DeviceQuery, DeviceRepository } from '../../../application/ports/repositories.js';
-import type { Device, DeviceKind, DeviceLifecycle, DeviceReachability } from '../../../domain/entities/device.js';
+import type {
+  Device,
+  DeviceKind,
+  DeviceLifecycle,
+  DeviceReachability,
+  DiskUsage,
+  MemoryUsage,
+  OpenPort,
+} from '../../../domain/entities/device.js';
 import type { Database } from './pool.js';
 
 interface DeviceRow {
@@ -13,9 +21,23 @@ interface DeviceRow {
   critical: boolean;
   lifecycle: string;
   reachability: string;
+  gateway_ip: string | null;
   latency_ms: number | null;
-  open_ports: number[];
-  certificates: Array<{ port: number; subject: string; issuer: string | null; expiresAt: string }>;
+  packet_loss_percent: number | null;
+  cpu_percent: number | null;
+  memory: MemoryUsage | null;
+  disks: DiskUsage[] | null;
+  ports: OpenPort[] | null;
+  certificates: Array<{
+    port: number;
+    subject: string;
+    issuer: string | null;
+    // Absents des certificats enregistrés avant l'ajout de la vérification.
+    validFrom?: string | null;
+    expiresAt: string;
+    valid?: boolean | null;
+    validationError?: string | null;
+  }>;
   first_seen_at: Date;
   last_seen_at: Date;
   last_change_at: Date;
@@ -34,13 +56,21 @@ function toDevice(row: DeviceRow): Device {
     critical: row.critical,
     lifecycle: row.lifecycle as DeviceLifecycle,
     reachability: row.reachability as DeviceReachability,
+    gatewayIp: row.gateway_ip,
     latencyMs: row.latency_ms,
-    openPorts: row.open_ports ?? [],
+    packetLossPercent: row.packet_loss_percent,
+    cpuPercent: row.cpu_percent,
+    memory: row.memory,
+    disks: row.disks ?? [],
+    ports: row.ports ?? [],
     certificates: (row.certificates ?? []).map((certificate) => ({
       port: certificate.port,
       subject: certificate.subject,
       issuer: certificate.issuer,
+      validFrom: certificate.validFrom ? new Date(certificate.validFrom) : null,
       expiresAt: new Date(certificate.expiresAt),
+      valid: certificate.valid ?? null,
+      validationError: certificate.validationError ?? null,
     })),
     firstSeenAt: row.first_seen_at,
     lastSeenAt: row.last_seen_at,
@@ -52,8 +82,9 @@ function toDevice(row: DeviceRow): Device {
 const UPSERT = `
   insert into devices (
     id, ip, mac, hostname, vendor, kind, label, critical, lifecycle, reachability,
-    latency_ms, open_ports, certificates, first_seen_at, last_seen_at, last_change_at, missed_scans
-  ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::jsonb,$14,$15,$16,$17)
+    latency_ms, packet_loss_percent, cpu_percent, memory, disks, ports, certificates,
+    first_seen_at, last_seen_at, last_change_at, missed_scans, gateway_ip
+  ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::jsonb,$17::jsonb,$18,$19,$20,$21,$22)
   on conflict (id) do update set
     ip = excluded.ip,
     mac = coalesce(excluded.mac, devices.mac),
@@ -65,11 +96,16 @@ const UPSERT = `
     lifecycle = excluded.lifecycle,
     reachability = excluded.reachability,
     latency_ms = excluded.latency_ms,
-    open_ports = excluded.open_ports,
+    packet_loss_percent = excluded.packet_loss_percent,
+    cpu_percent = excluded.cpu_percent,
+    memory = excluded.memory,
+    disks = excluded.disks,
+    ports = excluded.ports,
     certificates = excluded.certificates,
     last_seen_at = excluded.last_seen_at,
     last_change_at = excluded.last_change_at,
-    missed_scans = excluded.missed_scans
+    missed_scans = excluded.missed_scans,
+    gateway_ip = excluded.gateway_ip
 `;
 
 function toParams(device: Device): unknown[] {
@@ -85,19 +121,27 @@ function toParams(device: Device): unknown[] {
     device.lifecycle,
     device.reachability,
     device.latencyMs,
-    device.openPorts,
+    device.packetLossPercent,
+    device.cpuPercent,
+    device.memory === null ? null : JSON.stringify(device.memory),
+    JSON.stringify(device.disks),
+    JSON.stringify(device.ports),
     JSON.stringify(
       device.certificates.map((certificate) => ({
         port: certificate.port,
         subject: certificate.subject,
         issuer: certificate.issuer,
+        validFrom: certificate.validFrom?.toISOString() ?? null,
         expiresAt: certificate.expiresAt.toISOString(),
+        valid: certificate.valid,
+        validationError: certificate.validationError,
       })),
     ),
     device.firstSeenAt,
     device.lastSeenAt,
     device.lastChangeAt,
     device.missedScans,
+    device.gatewayIp,
   ];
 }
 

@@ -1,0 +1,93 @@
+[
+  {
+    "id": "00000000-0000-4000-8000-000000000047",
+    "deviceId": "00000000-0000-4000-8000-000000000002",
+    "deviceName": "srv-fichiers",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "exposed_port",
+    "category": "signalement",
+    "severity": "warning",
+    "status": "open",
+    "summary": "srv-fichiers expose le port 445 — partage de fichiers Windows (SMB)",
+    "details": {
+      "ip": "10.20.0.10",
+      "port": 445,
+      "service": "partage de fichiers Windows (SMB)",
+      "detectedService": "microsoft-ds Windows SMB 3.1.1"
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  },
+  {
+    "id": "00000000-0000-4000-8000-00000000004a",
+    "deviceId": "00000000-0000-4000-8000-000000000003",
+    "deviceName": "Serveur ERP",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "exposed_port",
+    "category": "signalement",
+    "severity": "warning",
+    "status": "open",
+    "summary": "srv-erp expose le port 1433 — base de données SQL Server",
+    "details": {
+      "ip": "10.20.0.20",
+      "port": 1433,
+      "service": "base de données SQL Server",
+      "detectedService": "ms-sql-s Microsoft SQL Server 2019 15.00"
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  },
+  {
+    "id": "00000000-0000-4000-8000-00000000004b",
+    "deviceId": "00000000-0000-4000-8000-000000000003",
+    "deviceName": "Serveur ERP",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "exposed_port",
+    "category": "signalement",
+    "severity": "warning",
+    "status": "open",
+    "summary": "srv-erp expose le port 3389 — bureau à distance (RDP)",
+    "details": {
+      "ip": "10.20.0.20",
+      "port": 3389,
+      "service": "bureau à distance (RDP)",
+      "detectedService": "ms-wbt-server Microsoft Terminal Services"
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  },
+  {
+    "id": "00000000-0000-4000-8000-00000000004c",
+    "deviceId": "00000000-0000-4000-8000-000000000003",
+    "deviceName": "Serveur ERP",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "tls_invalid",
+    "category": "signalement",
+    "severity": "warning",
+    "status": "open",
+    "summary": "Le certificat de sécurité de Serveur ERP (port 443) n'est pas valide : certificat auto-signé",
+    "details": {
+      "ip": "10.20.0.20",
+      "port": 443,
+      "subject": "CN=srv-erp.exemple.local",
+      "issuer": "CN=srv-erp.exemple.local",
+      "validFrom": "2026-06-04T13:05:00.000Z",
+      "expiresAt": "2027-06-04T13:05:00.000Z",
+      "validationError": "certificat auto-signé"
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  }
+]

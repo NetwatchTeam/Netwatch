@@ -1,0 +1,21 @@
+{
+  "health": "critical",
+  "devices": {
+    "total": 38,
+    "up": 29,
+    "down": 1,
+    "unreachable": 8,
+    "unknown": 0,
+    "pendingClassification": 35
+  },
+  "openEvents": {
+    "incident": 9,
+    "observation": 7,
+    "signalement": 9,
+    "configuration": 35
+  },
+  "availability7d": 0.9998825187969925,
+  "averageThroughputMbps": 848.3333333333334,
+  "lastScanAt": "2026-11-06T13:05:00.000Z",
+  "scannerStale": false
+}

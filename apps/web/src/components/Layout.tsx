@@ -1,5 +1,4 @@
 import { NavLink, Outlet } from 'react-router';
-import { useAuth } from '../auth/AuthContext';
 
 /**
  * Deux espaces pour deux publics : « Direction » répond à « est-ce que tout va bien ? »,
@@ -19,6 +18,7 @@ const SECTIONS = [
       { to: '/technique/equipements', label: 'Équipements' },
       { to: '/technique/evenements', label: 'Événements' },
       { to: '/technique/a-identifier', label: 'Machines à identifier' },
+      { to: '/technique/dependances', label: 'Dépendances' },
       { to: '/technique/scans', label: 'Scans' },
       { to: '/technique/reglages', label: 'Réglages' },
     ],
@@ -26,8 +26,6 @@ const SECTIONS = [
 ];
 
 export function Layout() {
-  const { user, logout } = useAuth();
-
   return (
     <div className="layout">
       <aside className="sidebar">
@@ -48,13 +46,6 @@ export function Layout() {
             ))}
           </nav>
         ))}
-
-        <div className="sidebar-footer">
-          <span className="muted">{user?.displayName}</span>
-          <button type="button" className="btn btn-small" onClick={() => void logout()}>
-            Se déconnecter
-          </button>
-        </div>
       </aside>
 
       <main className="content">

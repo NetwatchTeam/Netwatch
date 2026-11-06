@@ -11,6 +11,10 @@ const settingsSchema = z
     watchedPorts: z.array(z.number().int().min(0).max(65_535)).max(100),
     throughputDropPercent: z.number().min(1).max(99),
     throughputFloorMbps: z.number().min(0).max(100_000),
+    packetLossWarningPercent: z.number().min(0.1).max(100),
+    cpuWarningPercent: z.number().min(1).max(100),
+    memoryWarningPercent: z.number().min(1).max(100),
+    diskWarningPercent: z.number().min(1).max(100),
     retentionDays: z.number().int().min(7).max(3650),
   })
   .partial();

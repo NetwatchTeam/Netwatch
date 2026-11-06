@@ -7,15 +7,28 @@
       "hostname": "fw-principal",
       "vendor": "Fortinet",
       "latencyMs": 0.8,
-      "openPorts": [
-        443
+      "packetLossPercent": 0,
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "https",
+              "product": "FortiGate SSL VPN"
+            }
+          ]
+        }
       ],
       "certificates": [
         {
           "port": 443,
           "subject": "CN=fw-principal.exemple.local",
           "issuer": "CN=Fortinet CA",
-          "expiresAt": "2027-06-30T23:59:59Z"
+          "validFrom": "2026-07-01T00:00:00Z",
+          "expiresAt": "2027-06-30T23:59:59Z",
+          "valid": true,
+          "validationError": null
         }
       ]
     },
@@ -25,9 +38,29 @@
       "hostname": "sw-coeur",
       "vendor": "Cisco",
       "latencyMs": 0.6,
-      "openPorts": [
-        22,
-        443
+      "packetLossPercent": 0,
+      "ports": [
+        {
+          "port": 22,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "ssh",
+              "product": "Cisco SSH",
+              "version": "2.0"
+            }
+          ]
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "https",
+              "product": "Cisco IOS http config"
+            }
+          ]
+        }
       ],
       "certificates": []
     },
@@ -37,9 +70,29 @@
       "hostname": "sw-etage1",
       "vendor": "Cisco",
       "latencyMs": 0.9,
-      "openPorts": [
-        22,
-        443
+      "packetLossPercent": 0,
+      "ports": [
+        {
+          "port": 22,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "ssh",
+              "product": "Cisco SSH",
+              "version": "2.0"
+            }
+          ]
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "https",
+              "product": "Cisco IOS http config"
+            }
+          ]
+        }
       ],
       "certificates": []
     },
@@ -49,9 +102,29 @@
       "hostname": "wifi-rdc",
       "vendor": "Ubiquiti",
       "latencyMs": 1.4,
-      "openPorts": [
-        22,
-        443
+      "packetLossPercent": 1.2,
+      "ports": [
+        {
+          "port": 22,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "ssh",
+              "product": "Dropbear sshd",
+              "version": "2022.83"
+            }
+          ]
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "https",
+              "product": "UniFi AP"
+            }
+          ]
+        }
       ],
       "certificates": []
     },
@@ -61,17 +134,67 @@
       "hostname": "srv-erp",
       "vendor": "Dell",
       "latencyMs": 2.1,
-      "openPorts": [
-        443,
-        1433,
-        3389
+      "packetLossPercent": 0,
+      "cpuPercent": 34,
+      "memory": {
+        "usedPercent": 71,
+        "totalMb": 32768
+      },
+      "disks": [
+        {
+          "name": "C:",
+          "usedPercent": 58,
+          "totalGb": 476.9
+        },
+        {
+          "name": "E:",
+          "usedPercent": 74,
+          "totalGb": 1863
+        }
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "https",
+              "product": "Microsoft IIS httpd",
+              "version": "10.0"
+            }
+          ]
+        },
+        {
+          "port": 1433,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "ms-sql-s",
+              "product": "Microsoft SQL Server 2019",
+              "version": "15.00"
+            }
+          ]
+        },
+        {
+          "port": 3389,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "ms-wbt-server",
+              "product": "Microsoft Terminal Services"
+            }
+          ]
+        }
       ],
       "certificates": [
         {
           "port": 443,
           "subject": "CN=srv-erp.exemple.local",
           "issuer": "CN=AC interne Exemple",
-          "expiresAt": "2026-10-15T23:59:59Z"
+          "validFrom": "2025-10-16T00:00:00Z",
+          "expiresAt": "2026-10-15T23:59:59Z",
+          "valid": true,
+          "validationError": null
         }
       ]
     },
@@ -81,17 +204,63 @@
       "hostname": "nas-sauvegarde",
       "vendor": "Synology",
       "latencyMs": 1.7,
-      "openPorts": [
-        443,
-        445,
-        5001
+      "packetLossPercent": 0,
+      "cpuPercent": 9,
+      "memory": {
+        "usedPercent": 42,
+        "totalMb": 8192
+      },
+      "disks": [
+        {
+          "name": "volume1",
+          "usedPercent": 83,
+          "totalGb": 15360
+        }
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "https",
+              "product": "Synology DSM",
+              "version": "7.2"
+            }
+          ]
+        },
+        {
+          "port": 445,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "microsoft-ds",
+              "product": "Windows SMB",
+              "version": "3.1.1"
+            }
+          ]
+        },
+        {
+          "port": 5001,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "https",
+              "product": "Synology DSM",
+              "version": "7.2"
+            }
+          ]
+        }
       ],
       "certificates": [
         {
           "port": 5001,
           "subject": "CN=nas.exemple.local",
           "issuer": "CN=AC interne Exemple",
-          "expiresAt": "2027-09-29T23:59:59Z"
+          "validFrom": "2026-09-30T00:00:00Z",
+          "expiresAt": "2027-09-29T23:59:59Z",
+          "valid": true,
+          "validationError": null
         }
       ]
     },
@@ -101,16 +270,52 @@
       "hostname": "srv-intranet",
       "vendor": "Dell",
       "latencyMs": 2.4,
-      "openPorts": [
-        80,
-        443
+      "packetLossPercent": 0,
+      "cpuPercent": 12,
+      "memory": {
+        "usedPercent": 48,
+        "totalMb": 8192
+      },
+      "disks": [
+        {
+          "name": "C:",
+          "usedPercent": 44,
+          "totalGb": 238.4
+        }
+      ],
+      "ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "http",
+              "product": "nginx",
+              "version": "1.24.0"
+            }
+          ]
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "https",
+              "product": "nginx",
+              "version": "1.24.0"
+            }
+          ]
+        }
       ],
       "certificates": [
         {
           "port": 443,
           "subject": "CN=intranet.exemple.local",
           "issuer": "CN=Let's Encrypt R11",
-          "expiresAt": "2027-03-01T23:59:59Z"
+          "validFrom": "2026-12-02T00:00:00Z",
+          "expiresAt": "2027-03-01T23:59:59Z",
+          "valid": true,
+          "validationError": null
         }
       ]
     },
@@ -120,23 +325,76 @@
       "hostname": "srv-mail",
       "vendor": "Dell",
       "latencyMs": 2.9,
-      "openPorts": [
-        25,
-        443,
-        993
+      "packetLossPercent": 0,
+      "cpuPercent": 21,
+      "memory": {
+        "usedPercent": 63,
+        "totalMb": 16384
+      },
+      "disks": [
+        {
+          "name": "/",
+          "usedPercent": 52,
+          "totalGb": 200
+        },
+        {
+          "name": "/var",
+          "usedPercent": 79,
+          "totalGb": 500
+        }
+      ],
+      "ports": [
+        {
+          "port": 25,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "smtp",
+              "product": "Postfix smtpd"
+            }
+          ]
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "https",
+              "product": "nginx",
+              "version": "1.24.0"
+            }
+          ]
+        },
+        {
+          "port": 993,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "imaps",
+              "product": "Dovecot imapd",
+              "version": "2.3"
+            }
+          ]
+        }
       ],
       "certificates": [
         {
           "port": 443,
           "subject": "CN=mail.exemple.local",
           "issuer": "CN=AC interne Exemple",
-          "expiresAt": "2026-09-20T23:59:59Z"
+          "validFrom": "2025-09-21T00:00:00Z",
+          "expiresAt": "2026-09-20T23:59:59Z",
+          "valid": false,
+          "validationError": "certificat expiré"
         },
         {
           "port": 993,
           "subject": "CN=mail.exemple.local",
           "issuer": "CN=AC interne Exemple",
-          "expiresAt": "2026-12-31T23:59:59Z"
+          "validFrom": "2026-01-01T00:00:00Z",
+          "expiresAt": "2026-12-31T23:59:59Z",
+          "valid": true,
+          "validationError": null
         }
       ]
     },
@@ -146,11 +404,47 @@
       "hostname": "imp-accueil",
       "vendor": "HP",
       "latencyMs": 4.2,
-      "openPorts": [
-        80,
-        443,
-        631,
-        9100
+      "packetLossPercent": 0,
+      "ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "http",
+              "product": "HP Embedded Web Server"
+            }
+          ]
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "https",
+              "product": "HP Embedded Web Server"
+            }
+          ]
+        },
+        {
+          "port": 631,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "ipp",
+              "product": "HP IPP"
+            }
+          ]
+        },
+        {
+          "port": 9100,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "jetdirect"
+            }
+          ]
+        }
       ],
       "certificates": []
     },
@@ -160,9 +454,28 @@
       "hostname": "cam-parking",
       "vendor": "Hikvision",
       "latencyMs": 6.8,
-      "openPorts": [
-        80,
-        554
+      "packetLossPercent": 0,
+      "ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "http",
+              "product": "Hikvision Web Server"
+            }
+          ]
+        },
+        {
+          "port": 554,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "rtsp",
+              "product": "Hikvision RTSP"
+            }
+          ]
+        }
       ],
       "certificates": []
     },
@@ -172,7 +485,20 @@
       "hostname": "pc-compta-01",
       "vendor": "Lenovo",
       "latencyMs": 3.1,
-      "openPorts": [],
+      "packetLossPercent": 0,
+      "cpuPercent": 14,
+      "memory": {
+        "usedPercent": 62,
+        "totalMb": 16384
+      },
+      "disks": [
+        {
+          "name": "C:",
+          "usedPercent": 71,
+          "totalGb": 476.9
+        }
+      ],
+      "ports": [],
       "certificates": []
     },
     {
@@ -181,7 +507,20 @@
       "hostname": "pc-compta-02",
       "vendor": "Lenovo",
       "latencyMs": 3.4,
-      "openPorts": [],
+      "packetLossPercent": 0,
+      "cpuPercent": 9,
+      "memory": {
+        "usedPercent": 55,
+        "totalMb": 16384
+      },
+      "disks": [
+        {
+          "name": "C:",
+          "usedPercent": 64,
+          "totalGb": 476.9
+        }
+      ],
+      "ports": [],
       "certificates": []
     },
     {
@@ -190,7 +529,20 @@
       "hostname": "pc-rh-01",
       "vendor": "Lenovo",
       "latencyMs": 2.8,
-      "openPorts": [],
+      "packetLossPercent": 0,
+      "cpuPercent": 6,
+      "memory": {
+        "usedPercent": 48,
+        "totalMb": 8192
+      },
+      "disks": [
+        {
+          "name": "C:",
+          "usedPercent": 49,
+          "totalGb": 238.4
+        }
+      ],
+      "ports": [],
       "certificates": []
     },
     {
@@ -199,7 +551,20 @@
       "hostname": "pc-direction",
       "vendor": "Apple",
       "latencyMs": 2.6,
-      "openPorts": [],
+      "packetLossPercent": 0,
+      "cpuPercent": 18,
+      "memory": {
+        "usedPercent": 67,
+        "totalMb": 16384
+      },
+      "disks": [
+        {
+          "name": "Macintosh HD",
+          "usedPercent": 58,
+          "totalGb": 512
+        }
+      ],
+      "ports": [],
       "certificates": []
     },
     {
@@ -208,7 +573,20 @@
       "hostname": "pc-accueil",
       "vendor": "Lenovo",
       "latencyMs": 2.2,
-      "openPorts": [],
+      "packetLossPercent": 0,
+      "cpuPercent": 5,
+      "memory": {
+        "usedPercent": 41,
+        "totalMb": 8192
+      },
+      "disks": [
+        {
+          "name": "C:",
+          "usedPercent": 38,
+          "totalGb": 238.4
+        }
+      ],
+      "ports": [],
       "certificates": []
     },
     {
@@ -217,7 +595,20 @@
       "hostname": "pc-commercial",
       "vendor": "Lenovo",
       "latencyMs": 5.7,
-      "openPorts": [],
+      "packetLossPercent": 0,
+      "cpuPercent": 11,
+      "memory": {
+        "usedPercent": 59,
+        "totalMb": 16384
+      },
+      "disks": [
+        {
+          "name": "C:",
+          "usedPercent": 86,
+          "totalGb": 476.9
+        }
+      ],
+      "ports": [],
       "certificates": []
     },
     {
@@ -226,9 +617,29 @@
       "hostname": "tel-standard",
       "vendor": "Polycom",
       "latencyMs": 3.3,
-      "openPorts": [
-        80,
-        5060
+      "packetLossPercent": 0,
+      "ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "http",
+              "product": "Polycom VVX httpd"
+            }
+          ]
+        },
+        {
+          "port": 5060,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "sip",
+              "product": "Polycom VVX",
+              "version": "6.4"
+            }
+          ]
+        }
       ],
       "certificates": []
     },
@@ -238,10 +649,43 @@
       "hostname": "DESKTOP-8F3K2QX",
       "vendor": null,
       "latencyMs": 3.9,
-      "openPorts": [
-        135,
-        445
-      ]
+      "packetLossPercent": 0,
+      "cpuPercent": 23,
+      "memory": {
+        "usedPercent": 52,
+        "totalMb": 8192
+      },
+      "disks": [
+        {
+          "name": "C:",
+          "usedPercent": 31,
+          "totalGb": 476.9
+        }
+      ],
+      "ports": [
+        {
+          "port": 135,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "msrpc",
+              "product": "Microsoft Windows RPC"
+            }
+          ]
+        },
+        {
+          "port": 445,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "microsoft-ds",
+              "product": "Windows SMB",
+              "version": "3.1.1"
+            }
+          ]
+        }
+      ],
+      "certificates": []
     },
     {
       "ip": "192.168.10.88",
@@ -249,9 +693,21 @@
       "hostname": null,
       "vendor": "Raspberry Pi",
       "latencyMs": 8.3,
-      "openPorts": [
-        22
-      ]
+      "packetLossPercent": 0,
+      "ports": [
+        {
+          "port": 22,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "ssh",
+              "product": "OpenSSH",
+              "version": "9.6"
+            }
+          ]
+        }
+      ],
+      "certificates": []
     }
   ],
   "throughput": [

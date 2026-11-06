@@ -1,4 +1,4 @@
-import { deviceDisplayName, isPendingClassification, type Device } from '../entities/device.js';
+import { deviceDisplayName, isPendingClassification, openPortNumbers, type Device } from '../entities/device.js';
 import type { DetectionIntent, OpenEventKeys } from './intents.js';
 
 export const DISCOVERY_KEY = 'device_discovered';
@@ -28,7 +28,7 @@ export function detectDiscovery(
             mac: device.mac,
             hostname: device.hostname,
             vendor: device.vendor,
-            openPorts: device.openPorts.join(', '),
+            openPorts: openPortNumbers(device).join(', '),
           },
           dedupeKey: DISCOVERY_KEY,
           startedAt: device.firstSeenAt,

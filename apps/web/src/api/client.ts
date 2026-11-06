@@ -11,17 +11,6 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Une 401 signifie que la session a expiré : l'application doit revenir
- * à l'écran de connexion sans attendre l'action de l'utilisateur.
- */
-type UnauthorizedHandler = () => void;
-let onUnauthorized: UnauthorizedHandler = () => {};
-
-export function setUnauthorizedHandler(handler: UnauthorizedHandler): void {
-  onUnauthorized = handler;
-}
-
 export function toQuery(params: Record<string, string | number | boolean | undefined | null> = {}): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -43,15 +32,8 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     const response = await fetch(`${config.apiBaseUrl}${path}`, {
       ...init,
       headers,
-      // Le jeton de session est un cookie httpOnly : il n'est jamais lisible en JavaScript.
-      credentials: 'include',
       signal: controller.signal,
     });
-
-    if (response.status === 401) {
-      onUnauthorized();
-      throw new ApiError(401, 'Session expirée, reconnectez-vous');
-    }
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as ApiErrorDto | null;

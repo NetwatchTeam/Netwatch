@@ -1,0 +1,162 @@
+{
+  "dependencies": [
+    {
+      "id": "00000000-0000-4000-8000-00000000002b",
+      "device": {
+        "id": "00000000-0000-4000-8000-00000000000f",
+        "name": "pc-atelier-01",
+        "reachability": "unreachable"
+      },
+      "dependsOn": {
+        "id": "00000000-0000-4000-8000-00000000000e",
+        "name": "Passerelle atelier",
+        "reachability": "down"
+      },
+      "source": "discovered",
+      "status": "validated",
+      "usedByCorrelation": true,
+      "createdAt": "2026-11-06T12:50:00.000Z",
+      "updatedAt": "2026-11-06T13:00:00.000Z",
+      "observedAt": "2026-11-06T13:00:00.000Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000002c",
+      "device": {
+        "id": "00000000-0000-4000-8000-000000000010",
+        "name": "pc-atelier-02",
+        "reachability": "unreachable"
+      },
+      "dependsOn": {
+        "id": "00000000-0000-4000-8000-00000000000e",
+        "name": "Passerelle atelier",
+        "reachability": "down"
+      },
+      "source": "discovered",
+      "status": "validated",
+      "usedByCorrelation": true,
+      "createdAt": "2026-11-06T12:50:00.000Z",
+      "updatedAt": "2026-11-06T13:00:00.000Z",
+      "observedAt": "2026-11-06T13:00:00.000Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000002d",
+      "device": {
+        "id": "00000000-0000-4000-8000-000000000011",
+        "name": "pc-atelier-03",
+        "reachability": "unreachable"
+      },
+      "dependsOn": {
+        "id": "00000000-0000-4000-8000-00000000000e",
+        "name": "Passerelle atelier",
+        "reachability": "down"
+      },
+      "source": "discovered",
+      "status": "validated",
+      "usedByCorrelation": true,
+      "createdAt": "2026-11-06T12:50:00.000Z",
+      "updatedAt": "2026-11-06T13:00:00.000Z",
+      "observedAt": "2026-11-06T13:00:00.000Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000002e",
+      "device": {
+        "id": "00000000-0000-4000-8000-000000000012",
+        "name": "pc-atelier-04",
+        "reachability": "unreachable"
+      },
+      "dependsOn": {
+        "id": "00000000-0000-4000-8000-00000000000e",
+        "name": "Passerelle atelier",
+        "reachability": "down"
+      },
+      "source": "discovered",
+      "status": "validated",
+      "usedByCorrelation": true,
+      "createdAt": "2026-11-06T12:50:00.000Z",
+      "updatedAt": "2026-11-06T13:00:00.000Z",
+      "observedAt": "2026-11-06T13:00:00.000Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000002f",
+      "device": {
+        "id": "00000000-0000-4000-8000-000000000013",
+        "name": "pc-atelier-05",
+        "reachability": "unreachable"
+      },
+      "dependsOn": {
+        "id": "00000000-0000-4000-8000-00000000000e",
+        "name": "Passerelle atelier",
+        "reachability": "down"
+      },
+      "source": "discovered",
+      "status": "validated",
+      "usedByCorrelation": true,
+      "createdAt": "2026-11-06T12:50:00.000Z",
+      "updatedAt": "2026-11-06T13:00:00.000Z",
+      "observedAt": "2026-11-06T13:00:00.000Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000030",
+      "device": {
+        "id": "00000000-0000-4000-8000-000000000014",
+        "name": "pc-atelier-06",
+        "reachability": "unreachable"
+      },
+      "dependsOn": {
+        "id": "00000000-0000-4000-8000-00000000000e",
+        "name": "Passerelle atelier",
+        "reachability": "down"
+      },
+      "source": "discovered",
+      "status": "validated",
+      "usedByCorrelation": true,
+      "createdAt": "2026-11-06T12:50:00.000Z",
+      "updatedAt": "2026-11-06T13:00:00.000Z",
+      "observedAt": "2026-11-06T13:00:00.000Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000031",
+      "device": {
+        "id": "00000000-0000-4000-8000-000000000015",
+        "name": "pc-atelier-07",
+        "reachability": "unreachable"
+      },
+      "dependsOn": {
+        "id": "00000000-0000-4000-8000-00000000000e",
+        "name": "Passerelle atelier",
+        "reachability": "down"
+      },
+      "source": "discovered",
+      "status": "validated",
+      "usedByCorrelation": true,
+      "createdAt": "2026-11-06T12:50:00.000Z",
+      "updatedAt": "2026-11-06T13:00:00.000Z",
+      "observedAt": "2026-11-06T13:00:00.000Z"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000032",
+      "device": {
+        "id": "00000000-0000-4000-8000-000000000016",
+        "name": "pc-atelier-08",
+        "reachability": "unreachable"
+      },
+      "dependsOn": {
+        "id": "00000000-0000-4000-8000-00000000000e",
+        "name": "Passerelle atelier",
+        "reachability": "down"
+      },
+      "source": "discovered",
+      "status": "validated",
+      "usedByCorrelation": true,
+      "createdAt": "2026-11-06T12:50:00.000Z",
+      "updatedAt": "2026-11-06T13:00:00.000Z",
+      "observedAt": "2026-11-06T13:00:00.000Z"
+    }
+  ],
+  "issues": [],
+  "counts": {
+    "suggested": 0,
+    "validated": 26,
+    "rejected": 0
+  }
+}

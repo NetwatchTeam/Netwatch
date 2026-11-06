@@ -6,7 +6,10 @@ export interface NetworkSummaryDto {
   devices: {
     total: number;
     up: number;
+    /** En panne (la machine elle-même). */
     down: number;
+    /** Coupées du réseau par la panne de leur passerelle. */
+    unreachable: number;
     unknown: number;
     pendingClassification: number;
   };

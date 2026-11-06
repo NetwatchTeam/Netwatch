@@ -5,17 +5,24 @@ import {
   type Device,
   type DeviceObservation,
 } from '../../domain/entities/device.js';
+import { validatedEdges } from '../../domain/entities/dependency.js';
 import type { ThroughputSample } from '../../domain/entities/measurement.js';
 import { openEvent, resolveEvent, type MonitoringEvent } from '../../domain/entities/monitoring-event.js';
+import { applySync, syncDiscoveredDependencies } from '../../domain/rules/dependency-graph.js';
 import { detectDiscovery } from '../../domain/rules/discovery.js';
 import { detectExposedPorts } from '../../domain/rules/exposed-ports.js';
 import type { DetectionIntent } from '../../domain/rules/intents.js';
-import { detectReachabilityChange } from '../../domain/rules/reachability.js';
+import { detectPacketLoss } from '../../domain/rules/packet-loss.js';
+import { DOWNSTREAM_KEY, detectDownstreamOutage, detectReachabilityChange } from '../../domain/rules/reachability.js';
+import { detectResourceSaturation } from '../../domain/rules/resources.js';
 import { detectThroughputDegradation } from '../../domain/rules/throughput.js';
 import { detectTlsExpiry } from '../../domain/rules/tls-expiry.js';
+import { detectTlsValidity } from '../../domain/rules/tls-validity.js';
+import { Topology } from '../../domain/rules/topology.js';
 import type { MonitoringPolicy } from '../../domain/policy.js';
 import type { ScanSnapshot } from '../ports/scanner-gateway.js';
 import type {
+  DependencyRepository,
   DeviceRepository,
   EventRepository,
   PolicyRepository,
@@ -45,18 +52,22 @@ export class IngestScanSnapshot {
     private readonly throughput: ThroughputRepository,
     private readonly policies: PolicyRepository,
     private readonly ids: IdGenerator,
+    private readonly dependencies: DependencyRepository,
   ) {}
 
   async execute(snapshot: ScanSnapshot): Promise<IngestResult> {
     const policy = await this.policies.get();
     const known = await this.devices.findAll();
     const openEvents = await this.events.findOpen();
+    const knownDependencies = await this.dependencies.list();
 
     const byMac = new Map(known.filter((d) => d.mac).map((d) => [normalizeMac(d.mac!), d]));
     const byIp = new Map(known.map((d) => [d.ip, d]));
     const openByDevice = groupOpenEvents(openEvents);
 
     const touched = new Map<string, Device>();
+    /** État de chaque machine avant ce scan ; absent pour une machine découverte à l'instant. */
+    const befores = new Map<string, Device>();
     const intents: DetectionIntent[] = [];
     const seenIds = new Set<string>();
     let devicesDiscovered = 0;
@@ -77,28 +88,60 @@ export class IngestScanSnapshot {
 
       seenIds.add(after.id);
       touched.set(after.id, after);
+      if (before !== null) befores.set(after.id, before);
 
       const keys = openByDevice.get(after.id) ?? new Set<string>();
-      if (before !== null) {
-        intents.push(...detectReachabilityChange(before, after, keys, snapshot.scannedAt));
-      }
       intents.push(...detectDiscovery(after, keys, snapshot.scannedAt));
       intents.push(...detectExposedPorts(after, keys, policy, snapshot.scannedAt));
       intents.push(...detectTlsExpiry(after, keys, policy, snapshot.scannedAt));
+      intents.push(...detectTlsValidity(after, keys, snapshot.scannedAt));
+      intents.push(...detectPacketLoss(after, keys, policy, snapshot.scannedAt));
+      intents.push(...detectResourceSaturation(after, keys, policy, snapshot.scannedAt));
     }
 
     // Les machines connues absentes du scan sont candidates à un incident.
     for (const device of known) {
       if (seenIds.has(device.id)) continue;
-      const after = applyMiss(device, snapshot.scannedAt, policy.missedScansBeforeIncident);
-      touched.set(after.id, after);
+      touched.set(device.id, applyMiss(device, snapshot.scannedAt, policy.missedScansBeforeIncident));
+      befores.set(device.id, device);
+    }
+
+    // Les passerelles vues par le collecteur deviennent des suggestions de dépendance.
+    // Elles n'influencent la corrélation qu'une fois validées par un humain.
+    const parc = [...touched.values()];
+    const dependencySync = syncDiscoveredDependencies(
+      parc.filter((device) => seenIds.has(device.id)),
+      parc,
+      knownDependencies,
+      snapshot.scannedAt,
+      () => this.ids.next(),
+    );
+    const edges = validatedEdges(applySync(knownDependencies, dependencySync));
+
+    // Une fois l'état de tout le parc connu : une machine muette derrière une passerelle
+    // muette est « injoignable », pas « en panne ». Les pannes se décident ensuite.
+    const resolvedDevices = Topology.resolveReachability(parc, edges);
+    for (const device of resolvedDevices) touched.set(device.id, device);
+    const topology = new Topology(resolvedDevices, edges);
+
+    for (const after of resolvedDevices) {
       const keys = openByDevice.get(after.id) ?? new Set<string>();
-      intents.push(...detectReachabilityChange(device, after, keys, snapshot.scannedAt));
+      // Une machine découverte à l'instant répond forcément : rien à décider pour elle.
+      if (befores.has(after.id)) {
+        intents.push(...detectReachabilityChange(after, keys, snapshot.scannedAt, topology));
+      }
+      if (topology.isGateway(after) || keys.has(DOWNSTREAM_KEY)) {
+        intents.push(...detectDownstreamOutage(after, keys, snapshot.scannedAt, topology));
+      }
     }
 
     const samples = await this.handleThroughput(snapshot, byIp, touched, openByDevice, policy, intents);
 
     await this.devices.saveMany([...touched.values()]);
+    // Après les machines : une suggestion peut viser une machine découverte à ce scan.
+    if (dependencySync.inserted.length > 0) await this.dependencies.insertMany(dependencySync.inserted);
+    if (dependencySync.updated.length > 0) await this.dependencies.saveMany(dependencySync.updated);
+    if (dependencySync.deleted.length > 0) await this.dependencies.deleteMany(dependencySync.deleted.map((d) => d.id));
     if (samples.length > 0) await this.throughput.insertMany(samples);
 
     const { opened, resolved } = await this.applyIntents(intents, openEvents);
@@ -177,6 +220,7 @@ export class IngestScanSnapshot {
           severity: intent.severity,
           summary: intent.summary,
           details: intent.details,
+          peerDeviceId: intent.peerDeviceId === undefined ? existing.peerDeviceId : intent.peerDeviceId,
         });
       } else {
         toUpdate.push(resolveEvent(existing, intent.at));

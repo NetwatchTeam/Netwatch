@@ -1,0 +1,167 @@
+{
+  "weekStart": "2026-11-02T00:00:00.000Z",
+  "weekEnd": "2026-11-06T13:10:00.000Z",
+  "headline": "9 équipement(s) sur 38 ont connu une panne, pour 45 minutes d'indisponibilité cumulée (disponibilité 99,98 %). Le plus touché est Passerelle atelier : 5 minutes hors service en 1 panne(s). La coupure la plus large a touché 9 machines en même temps pendant 5 minutes. 9 signalement(s) de sécurité restent à traiter. 38 nouvel(le)(s) machine(s) détectée(s) à identifier.",
+  "devicesMonitored": 38,
+  "devicesImpacted": 9,
+  "totalDowntimeMinutes": 45,
+  "availability": 0.9998192044997991,
+  "topOutagesByDowntime": [
+    {
+      "deviceId": "00000000-0000-4000-8000-00000000000e",
+      "deviceName": "Passerelle atelier",
+      "critical": true,
+      "outageCount": 1,
+      "downtimeMinutes": 5,
+      "longestOutageMinutes": 5,
+      "availability": 0.999236641221374
+    },
+    {
+      "deviceId": "00000000-0000-4000-8000-00000000000f",
+      "deviceName": "pc-atelier-01",
+      "critical": false,
+      "outageCount": 1,
+      "downtimeMinutes": 5,
+      "longestOutageMinutes": 5,
+      "availability": 0.999236641221374
+    },
+    {
+      "deviceId": "00000000-0000-4000-8000-000000000010",
+      "deviceName": "pc-atelier-02",
+      "critical": false,
+      "outageCount": 1,
+      "downtimeMinutes": 5,
+      "longestOutageMinutes": 5,
+      "availability": 0.999236641221374
+    },
+    {
+      "deviceId": "00000000-0000-4000-8000-000000000011",
+      "deviceName": "pc-atelier-03",
+      "critical": false,
+      "outageCount": 1,
+      "downtimeMinutes": 5,
+      "longestOutageMinutes": 5,
+      "availability": 0.999236641221374
+    },
+    {
+      "deviceId": "00000000-0000-4000-8000-000000000012",
+      "deviceName": "pc-atelier-04",
+      "critical": false,
+      "outageCount": 1,
+      "downtimeMinutes": 5,
+      "longestOutageMinutes": 5,
+      "availability": 0.999236641221374
+    },
+    {
+      "deviceId": "00000000-0000-4000-8000-000000000013",
+      "deviceName": "pc-atelier-05",
+      "critical": false,
+      "outageCount": 1,
+      "downtimeMinutes": 5,
+      "longestOutageMinutes": 5,
+      "availability": 0.999236641221374
+    },
+    {
+      "deviceId": "00000000-0000-4000-8000-000000000014",
+      "deviceName": "pc-atelier-06",
+      "critical": false,
+      "outageCount": 1,
+      "downtimeMinutes": 5,
+      "longestOutageMinutes": 5,
+      "availability": 0.999236641221374
+    },
+    {
+      "deviceId": "00000000-0000-4000-8000-000000000015",
+      "deviceName": "pc-atelier-07",
+      "critical": false,
+      "outageCount": 1,
+      "downtimeMinutes": 5,
+      "longestOutageMinutes": 5,
+      "availability": 0.999236641221374
+    },
+    {
+      "deviceId": "00000000-0000-4000-8000-000000000016",
+      "deviceName": "pc-atelier-08",
+      "critical": false,
+      "outageCount": 1,
+      "downtimeMinutes": 5,
+      "longestOutageMinutes": 5,
+      "availability": 0.999236641221374
+    }
+  ],
+  "topOutagesByImpact": [
+    {
+      "startedAt": "2026-11-06T13:05:00.000Z",
+      "endedAt": null,
+      "devicesImpacted": 9,
+      "deviceNames": [
+        "Passerelle atelier",
+        "pc-atelier-01",
+        "pc-atelier-02",
+        "pc-atelier-03",
+        "pc-atelier-04",
+        "pc-atelier-05",
+        "pc-atelier-06",
+        "pc-atelier-07",
+        "pc-atelier-08"
+      ],
+      "durationMinutes": 5
+    }
+  ],
+  "eventsByCategory": {
+    "incident": 9,
+    "observation": 7,
+    "signalement": 9,
+    "configuration": 38
+  },
+  "newDevices": 38,
+  "openSecurityFindings": [
+    {
+      "deviceName": "srv-fichiers",
+      "summary": "srv-fichiers expose le port 445 — partage de fichiers Windows (SMB)",
+      "severity": "warning"
+    },
+    {
+      "deviceName": "Serveur ERP",
+      "summary": "srv-erp expose le port 1433 — base de données SQL Server",
+      "severity": "warning"
+    },
+    {
+      "deviceName": "Serveur ERP",
+      "summary": "srv-erp expose le port 3389 — bureau à distance (RDP)",
+      "severity": "warning"
+    },
+    {
+      "deviceName": "Serveur ERP",
+      "summary": "Le certificat de sécurité de Serveur ERP (port 443) n'est pas valide : certificat auto-signé",
+      "severity": "warning"
+    },
+    {
+      "deviceName": "srv-messagerie",
+      "summary": "srv-messagerie expose le port 25 — messagerie (SMTP)",
+      "severity": "warning"
+    },
+    {
+      "deviceName": "srv-messagerie",
+      "summary": "Le certificat de sécurité de srv-messagerie (port 443) expire dans 12 jour(s)",
+      "severity": "warning"
+    },
+    {
+      "deviceName": "cam-parking",
+      "summary": "cam-parking expose le port 23 — administration non chiffrée (Telnet)",
+      "severity": "warning"
+    },
+    {
+      "deviceName": "Caméra quai de chargement",
+      "summary": "Le certificat de sécurité de Caméra quai de chargement (port 443) expire dans 5 jour(s)",
+      "severity": "critical"
+    },
+    {
+      "deviceName": "pc-direction-02",
+      "summary": "pc-direction-02 expose le port 5900 — prise en main à distance (VNC)",
+      "severity": "warning"
+    }
+  ],
+  "averageThroughputMbps": 848.3333333333334,
+  "previousWeekAvailability": null
+}

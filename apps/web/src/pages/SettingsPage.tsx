@@ -116,6 +116,39 @@ export function SettingsPage() {
                 onChange={(value) => update('throughputFloorMbps', value)}
               />
               <NumberField
+                label="Perte de paquets signalée"
+                hint="En %. Une observation est ouverte au-delà. 5 par défaut."
+                value={draft.packetLossWarningPercent}
+                min={0.1}
+                max={100}
+                step={0.1}
+                onChange={(value) => update('packetLossWarningPercent', value)}
+              />
+              <NumberField
+                label="Charge processeur signalée"
+                hint="En %. 90 par défaut."
+                value={draft.cpuWarningPercent}
+                min={1}
+                max={100}
+                onChange={(value) => update('cpuWarningPercent', value)}
+              />
+              <NumberField
+                label="Occupation mémoire signalée"
+                hint="En %. 90 par défaut."
+                value={draft.memoryWarningPercent}
+                min={1}
+                max={100}
+                onChange={(value) => update('memoryWarningPercent', value)}
+              />
+              <NumberField
+                label="Occupation disque signalée"
+                hint="En %, pour chaque disque. 90 par défaut."
+                value={draft.diskWarningPercent}
+                min={1}
+                max={100}
+                onChange={(value) => update('diskWarningPercent', value)}
+              />
+              <NumberField
                 label="Conservation des données"
                 hint="En jours. Au-delà, mesures et événements résolus sont supprimés."
                 value={draft.retentionDays}

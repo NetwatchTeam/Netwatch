@@ -1,15 +1,20 @@
 import type {
+  CertificateStatus,
+  DependencySource,
+  DependencyStatus,
   DeviceKind,
   DeviceLifecycle,
   DeviceReachability,
   EventCategory,
   EventSeverity,
   EventStatus,
+  OpenPortDto,
 } from '@netwatch/contracts';
 
 export const REACHABILITY_LABELS: Record<DeviceReachability, string> = {
   up: 'En ligne',
   down: 'Hors ligne',
+  unreachable: 'Injoignable (passerelle en panne)',
   unknown: 'Inconnu',
 };
 
@@ -102,4 +107,76 @@ export function formatMbps(mbps: number | null): string {
 
 export function formatLatency(ms: number | null): string {
   return ms === null ? '—' : `${ms} ms`;
+}
+
+const decimal = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 });
+
+/** Valeur déjà exprimée en pourcentage (0 à 100) : « 42,5 % ». */
+export function formatPercentValue(value: number | null): string {
+  return value === null ? '—' : `${decimal.format(value)} %`;
+}
+
+export function formatMegabytes(mb: number | null): string {
+  if (mb === null) return '—';
+  return mb >= 1024 ? `${decimal.format(mb / 1024)} Go` : `${decimal.format(mb)} Mo`;
+}
+
+export function formatGigabytes(gb: number | null): string {
+  if (gb === null) return '—';
+  return gb >= 1024 ? `${decimal.format(gb / 1024)} To` : `${decimal.format(gb)} Go`;
+}
+
+/**
+ * Teinte d'affichage d'une charge (CPU, mémoire, disque). Repère visuel seulement :
+ * les alertes, elles, suivent les seuils de la page « Réglages ».
+ */
+export type Tone = 'good' | 'warning' | 'critical' | 'neutral';
+
+export function usageTone(percent: number | null): Tone {
+  if (percent === null) return 'neutral';
+  if (percent >= 90) return 'critical';
+  if (percent >= 75) return 'warning';
+  return 'good';
+}
+
+export function packetLossTone(percent: number | null): Tone {
+  if (percent === null) return 'neutral';
+  if (percent >= 5) return 'critical';
+  if (percent > 0) return 'warning';
+  return 'good';
+}
+
+export function certificateDaysTone(days: number): Tone {
+  if (days <= 7) return 'critical';
+  if (days <= 30) return 'warning';
+  return 'good';
+}
+
+export const DEPENDENCY_STATUS_LABELS: Record<DependencyStatus, string> = {
+  suggested: 'Suggérée',
+  validated: 'Validée',
+  rejected: 'Rejetée',
+};
+
+export const DEPENDENCY_SOURCE_LABELS: Record<DependencySource, string> = {
+  discovered: 'Collecteur',
+  manual: 'Manuelle',
+};
+
+export const CERTIFICATE_STATUS_LABELS: Record<CertificateStatus, string> = {
+  valid: 'Valide',
+  invalid: 'Invalide',
+  expired: 'Expiré',
+  unverified: 'Non vérifié',
+};
+
+/** « https (nginx 1.24) », plusieurs services séparés par des virgules. */
+export function formatServices(port: OpenPortDto): string {
+  if (port.services.length === 0) return 'Service non identifié';
+  return port.services
+    .map((service) => {
+      const software = [service.product, service.version].filter(Boolean).join(' ');
+      return software ? `${service.name} (${software})` : service.name;
+    })
+    .join(', ');
 }

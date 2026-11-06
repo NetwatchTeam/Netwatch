@@ -1,0 +1,12 @@
+{
+  "error": {
+    "code": "bad_request",
+    "message": "Requête invalide",
+    "details": [
+      {
+        "path": "cpuWarningPercent",
+        "message": "Number must be less than or equal to 100"
+      }
+    ]
+  }
+}

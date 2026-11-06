@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import type { AppContainer } from '../../../container.js';
+import { renderWeeklyReportPdf, weeklyReportFileName } from '../pdf/weekly-report-pdf.js';
 import { toSummaryDto, toThroughputDto, toWeeklyReportDto } from '../presenters.js';
 
 const weekSchema = z.object({
@@ -16,7 +17,12 @@ const throughputSchema = z.object({
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export function dashboardRoutes(container: AppContainer): Router {
+export interface DashboardRoutesOptions {
+  /** Fuseau des heures affichées dans le rapport PDF. */
+  reportTimeZone: string;
+}
+
+export function dashboardRoutes(container: AppContainer, options: DashboardRoutesOptions): Router {
   const router = Router();
 
   router.get('/summary', async (_req, res) => {
@@ -26,6 +32,22 @@ export function dashboardRoutes(container: AppContainer): Router {
   router.get('/reports/weekly', async (req, res) => {
     const { week } = weekSchema.parse(req.query);
     res.json(toWeeklyReportDto(await container.generateWeeklyReport.execute(week)));
+  });
+
+  // Même rapport, mis en page pour être imprimé ou transmis à la direction.
+  router.get('/reports/weekly.pdf', async (req, res) => {
+    const { week } = weekSchema.parse(req.query);
+    const report = await container.generateWeeklyReport.execute(week);
+    const pdf = await renderWeeklyReportPdf(report, {
+      timeZone: options.reportTimeZone,
+      generatedAt: new Date(),
+    });
+
+    res
+      .type('application/pdf')
+      .attachment(weeklyReportFileName(report))
+      .setHeader('Cache-Control', 'no-store')
+      .send(pdf);
   });
 
   router.get('/metrics/throughput', async (req, res) => {

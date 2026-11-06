@@ -15,6 +15,14 @@ export interface MonitoringSettingsDto {
   throughputDropPercent: number;
   /** Débit en dessous duquel une mesure est signalée quelle que soit la référence, en Mbit/s. */
   throughputFloorMbps: number;
+  /** Perte de paquets, en pourcentage, à partir de laquelle une observation est ouverte. */
+  packetLossWarningPercent: number;
+  /** Charge processeur, en pourcentage, à partir de laquelle une saturation est signalée. */
+  cpuWarningPercent: number;
+  /** Occupation mémoire, en pourcentage, à partir de laquelle une saturation est signalée. */
+  memoryWarningPercent: number;
+  /** Occupation d'un disque, en pourcentage, à partir de laquelle une saturation est signalée. */
+  diskWarningPercent: number;
   /** Durée de conservation des mesures et des événements résolus, en jours. */
   retentionDays: number;
 }
@@ -28,5 +36,9 @@ export const DEFAULT_MONITORING_SETTINGS: MonitoringSettingsDto = {
   watchedPorts: [21, 23, 25, 110, 143, 445, 1433, 3306, 3389, 5432, 5900],
   throughputDropPercent: 40,
   throughputFloorMbps: 10,
+  packetLossWarningPercent: 5,
+  cpuWarningPercent: 90,
+  memoryWarningPercent: 90,
+  diskWarningPercent: 90,
   retentionDays: 180,
 };

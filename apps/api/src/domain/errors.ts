@@ -11,3 +11,6 @@ export class NotFoundError extends DomainError {}
 export class ValidationError extends DomainError {}
 
 export class ScannerUnavailableError extends DomainError {}
+
+/** L'opération contredit l'état existant (ex. une dépendance qui créerait un cycle). */
+export class ConflictError extends DomainError {}

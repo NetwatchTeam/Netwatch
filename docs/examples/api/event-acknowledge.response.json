@@ -1,0 +1,28 @@
+{
+  "id": "00000000-0000-4000-8000-00000000008a",
+  "deviceId": "00000000-0000-4000-8000-00000000000e",
+  "deviceName": "Passerelle atelier",
+  "peerDeviceId": null,
+  "peerDeviceName": null,
+  "type": "device_unreachable",
+  "category": "incident",
+  "severity": "critical",
+  "status": "acknowledged",
+  "summary": "Passerelle atelier en panne : 8 machine(s) sur 8 derrière elle sont injoignables",
+  "details": {
+    "ip": "10.20.0.12",
+    "hostname": "gw-atelier",
+    "lastSeenAt": "2026-11-06T13:00:00.000Z",
+    "missedScans": 1,
+    "gatewayIp": null,
+    "cause": "device",
+    "role": "gateway",
+    "dependents": 8,
+    "dependentsCut": 8,
+    "dependentNames": "pc-atelier-01, pc-atelier-02, pc-atelier-03, pc-atelier-04, pc-atelier-05, pc-atelier-06 et 2 autre(s)"
+  },
+  "startedAt": "2026-11-06T13:05:00.000Z",
+  "resolvedAt": null,
+  "acknowledgedAt": "2026-11-06T13:10:00.000Z",
+  "durationSeconds": 39
+}

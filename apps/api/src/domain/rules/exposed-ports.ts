@@ -1,4 +1,4 @@
-import { deviceDisplayName, isMonitored, type Device } from '../entities/device.js';
+import { describeServices, deviceDisplayName, isMonitored, openPortNumbers, type Device } from '../entities/device.js';
 import type { MonitoringPolicy } from '../policy.js';
 import { keysWithPrefix, type DetectionIntent, type OpenEventKeys } from './intents.js';
 
@@ -32,14 +32,21 @@ export function detectExposedPorts(
 ): DetectionIntent[] {
   if (!isMonitored(device)) return [];
 
-  const watched = policy.watchedPorts.filter((port) => device.openPorts.includes(port));
+  const open = openPortNumbers(device);
+  const watched = policy.watchedPorts.filter((port) => open.includes(port));
   const expectedKeys = new Set(watched.map(portKey));
   const name = deviceDisplayName(device);
   const intents: DetectionIntent[] = [];
 
   for (const port of watched) {
     if (openKeys.has(portKey(port))) continue;
-    const label = PORT_LABELS[port];
+    // Le libellé maison explique le risque ; à défaut, on reprend le service vu par le scanner.
+    const detected = device.ports
+      .filter((entry) => entry.port === port)
+      .map(describeServices)
+      .filter((service): service is string => service !== null)
+      .join(', ');
+    const label = PORT_LABELS[port] ?? (detected || undefined);
     intents.push({
       action: 'open',
       event: {
@@ -49,7 +56,7 @@ export function detectExposedPorts(
         summary: label
           ? `${name} expose le port ${port} — ${label}`
           : `${name} expose le port ${port}`,
-        details: { ip: device.ip, port, service: label ?? null },
+        details: { ip: device.ip, port, service: label ?? null, detectedService: detected || null },
         dedupeKey: portKey(port),
         startedAt: at,
       },

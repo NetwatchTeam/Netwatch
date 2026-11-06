@@ -16,6 +16,7 @@ export interface OutageSummary {
 /** Période continue pendant laquelle au moins une machine était en panne. */
 export interface OutageEpisode {
   startedAt: Date;
+  /** `null` si au moins une des pannes de l'épisode n'était pas résolue à la fin de la période. */
   endedAt: Date | null;
   devicesImpacted: number;
   deviceNames: string[];
@@ -57,6 +58,8 @@ interface Interval {
   deviceId: string;
   start: number;
   end: number;
+  /** Panne non résolue à la fin de la période analysée. */
+  ongoing: boolean;
 }
 
 /** Ramène une panne à la portion qui tombe dans la semaine analysée. */
@@ -64,7 +67,7 @@ function clipToWeek(event: MonitoringEvent, start: number, end: number): Interva
   const eventStart = Math.max(event.startedAt.getTime(), start);
   const eventEnd = Math.min((event.resolvedAt ?? new Date(end)).getTime(), end);
   if (eventEnd <= eventStart) return null;
-  return { deviceId: event.deviceId, start: eventStart, end: eventEnd };
+  return { deviceId: event.deviceId, start: eventStart, end: eventEnd, ongoing: event.resolvedAt === null };
 }
 
 function toMinutes(ms: number): number {
@@ -166,13 +169,14 @@ function buildEpisodes(intervals: Interval[], nameById: Map<string, string>): Ou
 
   let currentStart = 0;
   let currentEnd = 0;
+  let ongoing = false;
   let devices = new Set<string>();
 
   const flush = () => {
     if (devices.size === 0) return;
     episodes.push({
       startedAt: new Date(currentStart),
-      endedAt: new Date(currentEnd),
+      endedAt: ongoing ? null : new Date(currentEnd),
       devicesImpacted: devices.size,
       deviceNames: [...devices].map((id) => nameById.get(id) ?? id),
       durationMinutes: toMinutes(currentEnd - currentStart),
@@ -183,17 +187,20 @@ function buildEpisodes(intervals: Interval[], nameById: Map<string, string>): Ou
     if (devices.size === 0) {
       currentStart = interval.start;
       currentEnd = interval.end;
+      ongoing = interval.ongoing;
       devices = new Set([interval.deviceId]);
       continue;
     }
 
     if (interval.start <= currentEnd) {
       currentEnd = Math.max(currentEnd, interval.end);
+      ongoing = ongoing || interval.ongoing;
       devices.add(interval.deviceId);
     } else {
       flush();
       currentStart = interval.start;
       currentEnd = interval.end;
+      ongoing = interval.ongoing;
       devices = new Set([interval.deviceId]);
     }
   }

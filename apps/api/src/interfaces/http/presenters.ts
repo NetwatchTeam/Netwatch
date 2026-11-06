@@ -1,5 +1,9 @@
 import type {
+  CertificateStatus,
+  DependencyDto,
+  DependencyGraphDto,
   DeviceDto,
+  DeviceLinkDto,
   EventDto,
   MonitoringSettingsDto,
   NetworkSummaryDto,
@@ -7,8 +11,10 @@ import type {
   ThroughputPointDto,
   WeeklyReportDto,
 } from '@netwatch/contracts';
-import { deviceDisplayName, type Device } from '../../domain/entities/device.js';
+import { deviceDisplayName, type Device, type TlsCertificate } from '../../domain/entities/device.js';
+import { isUsedByCorrelation, type Dependency } from '../../domain/entities/dependency.js';
 import type { ScanRun, ThroughputSample } from '../../domain/entities/measurement.js';
+import type { DependencyIssue } from '../../domain/rules/dependency-graph.js';
 import { eventDurationSeconds, type MonitoringEvent } from '../../domain/entities/monitoring-event.js';
 import type { MonitoringPolicy } from '../../domain/policy.js';
 import type { WeeklyReport } from '../../domain/reporting/weekly-report.js';
@@ -19,7 +25,56 @@ import { daysBeforeExpiry } from '../../domain/rules/tls-expiry.js';
  * Traduction du domaine vers le contrat HTTP.
  * Le domaine manipule des `Date` ; l'extérieur ne voit que des chaînes ISO.
  */
-export function toDeviceDto(device: Device, openEvents: number, now: Date): DeviceDto {
+export function certificateStatus(certificate: TlsCertificate, now: Date): CertificateStatus {
+  if (certificate.expiresAt.getTime() <= now.getTime()) return 'expired';
+  if (certificate.valid === false) return 'invalid';
+  if (certificate.valid === true) return 'valid';
+  return 'unverified';
+}
+
+export function toDeviceLinkDto(device: Device): DeviceLinkDto {
+  return { id: device.id, name: deviceDisplayName(device), reachability: device.reachability };
+}
+
+export function toDependencyDto(dependency: Dependency, devices: Map<string, Device>): DependencyDto {
+  const link = (id: string) => {
+    const device = devices.get(id);
+    return device ? toDeviceLinkDto(device) : { id, name: id, reachability: 'unknown' as const };
+  };
+  return {
+    id: dependency.id,
+    device: link(dependency.deviceId),
+    dependsOn: link(dependency.dependsOnId),
+    source: dependency.source,
+    status: dependency.status,
+    usedByCorrelation: isUsedByCorrelation(dependency),
+    createdAt: dependency.createdAt.toISOString(),
+    updatedAt: dependency.updatedAt.toISOString(),
+    observedAt: dependency.observedAt?.toISOString() ?? null,
+  };
+}
+
+export function toDependencyGraphDto(
+  dependencies: Dependency[],
+  issues: DependencyIssue[],
+  devices: Device[],
+): DependencyGraphDto {
+  const byId = new Map(devices.map((device) => [device.id, device]));
+  const counts = { suggested: 0, validated: 0, rejected: 0 };
+  for (const dependency of dependencies) counts[dependency.status] += 1;
+  return {
+    dependencies: dependencies.map((dependency) => toDependencyDto(dependency, byId)),
+    issues: issues.map((issue) => ({ ...issue })),
+    counts,
+  };
+}
+
+export function toDeviceDto(
+  device: Device,
+  openEvents: number,
+  now: Date,
+  gateway: Device | null = null,
+): DeviceDto {
   return {
     id: device.id,
     ip: device.ip,
@@ -31,14 +86,24 @@ export function toDeviceDto(device: Device, openEvents: number, now: Date): Devi
     critical: device.critical,
     lifecycle: device.lifecycle,
     reachability: device.reachability,
+    gatewayIp: device.gatewayIp,
+    gateway: gateway ? toDeviceLinkDto(gateway) : null,
     latencyMs: device.latencyMs,
-    openPorts: device.openPorts,
+    packetLossPercent: device.packetLossPercent,
+    cpuPercent: device.cpuPercent,
+    memory: device.memory,
+    disks: device.disks,
+    ports: device.ports,
     certificates: device.certificates.map((certificate) => ({
       port: certificate.port,
       subject: certificate.subject,
       issuer: certificate.issuer,
+      validFrom: certificate.validFrom?.toISOString() ?? null,
       expiresAt: certificate.expiresAt.toISOString(),
       daysBeforeExpiry: daysBeforeExpiry(certificate.expiresAt, now),
+      valid: certificate.valid,
+      validationError: certificate.validationError,
+      status: certificateStatus(certificate, now),
     })),
     firstSeenAt: device.firstSeenAt.toISOString(),
     lastSeenAt: device.lastSeenAt.toISOString(),

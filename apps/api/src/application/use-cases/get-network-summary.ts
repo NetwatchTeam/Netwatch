@@ -11,7 +11,14 @@ import type { Clock } from '../ports/system.js';
 
 export interface NetworkSummary {
   health: 'good' | 'attention' | 'critical';
-  devices: { total: number; up: number; down: number; unknown: number; pendingClassification: number };
+  devices: {
+    total: number;
+    up: number;
+    down: number;
+    unreachable: number;
+    unknown: number;
+    pendingClassification: number;
+  };
   openEvents: Record<EventCategory, number>;
   availability7d: number;
   averageThroughputMbps: number | null;
@@ -79,6 +86,7 @@ export class GetNetworkSummary {
         total: monitored.length,
         up: monitored.filter((d) => d.reachability === 'up').length,
         down: monitored.filter((d) => d.reachability === 'down').length,
+        unreachable: monitored.filter((d) => d.reachability === 'unreachable').length,
         unknown: monitored.filter((d) => d.reachability === 'unknown').length,
         pendingClassification: allDevices.filter(isPendingClassification).length,
       },

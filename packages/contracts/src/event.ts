@@ -8,12 +8,20 @@ export type EventCategory = (typeof EVENT_CATEGORIES)[number];
 export const EVENT_TYPES = [
   /** incident — l'équipement ne répond plus */
   'device_unreachable',
+  /** incident — la passerelle répond, mais toutes les machines derrière elle sont en panne */
+  'downstream_outage',
   /** observation — débit entre deux machines nettement inférieur à l'habitude */
   'throughput_degraded',
+  /** observation — perte de paquets au-dessus du seuil */
+  'packet_loss',
+  /** observation — processeur, mémoire ou disque saturé */
+  'resource_saturation',
   /** signalement — port sensible ouvert */
   'exposed_port',
   /** signalement — certificat TLS proche de l'expiration */
   'tls_expiring',
+  /** signalement — certificat TLS refusé par la vérification (auto-signé, nom d'hôte, chaîne…) */
+  'tls_invalid',
   /** configuration — nouvel équipement à classer */
   'device_discovered',
 ] as const;
@@ -21,9 +29,13 @@ export type EventType = (typeof EVENT_TYPES)[number];
 
 export const EVENT_CATEGORY_BY_TYPE: Record<EventType, EventCategory> = {
   device_unreachable: 'incident',
+  downstream_outage: 'incident',
   throughput_degraded: 'observation',
+  packet_loss: 'observation',
+  resource_saturation: 'observation',
   exposed_port: 'signalement',
   tls_expiring: 'signalement',
+  tls_invalid: 'signalement',
   device_discovered: 'configuration',
 };
 

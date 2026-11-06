@@ -2,7 +2,7 @@ import type { ApiErrorDto } from '@netwatch/contracts';
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 import type { Logger } from '../../../application/ports/system.js';
-import { NotFoundError, ScannerUnavailableError, ValidationError } from '../../../domain/errors.js';
+import { ConflictError, NotFoundError, ScannerUnavailableError, ValidationError } from '../../../domain/errors.js';
 
 /** Traduction des erreurs métier en codes HTTP : le domaine ignore tout du protocole. */
 export function errorHandler(logger: Logger) {
@@ -32,6 +32,11 @@ export function errorHandler(logger: Logger) {
 
     if (error instanceof NotFoundError) {
       body(404, { error: { code: 'not_found', message: error.message } });
+      return;
+    }
+
+    if (error instanceof ConflictError) {
+      body(409, { error: { code: 'conflict', message: error.message } });
       return;
     }
 

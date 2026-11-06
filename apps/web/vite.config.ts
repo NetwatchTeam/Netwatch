@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       // En développement, l'interface et l'API sont sur deux ports :
-      // le proxy évite les problèmes de CORS et de cookie de session.
+      // le proxy évite les problèmes de CORS.
       proxy: {
         '/api': {
           target: env.API_URL || 'http://localhost:3001',

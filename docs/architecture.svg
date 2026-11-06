@@ -62,7 +62,7 @@
     <rect x="70" y="402" width="160" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
     <text x="150" y="421" font-size="11">routes /api/v1</text>
     <rect x="242" y="402" width="160" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
-    <text x="322" y="421" font-size="11">middleware/auth</text>
+    <text x="322" y="421" font-size="11">middleware/erreurs</text>
     <rect x="414" y="402" width="160" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
     <text x="494" y="421" font-size="11">presenters (DTO)</text>
     <rect x="586" y="402" width="160" height="30" rx="5" fill="#f4f6f9" stroke="#c9d1dc"/>
@@ -165,7 +165,7 @@
   <!-- Libellés des flèches -->
   <g font-size="11" fill="#64717f">
     <text x="1042" y="206" text-anchor="end">scanne (ping, ports, TLS, débit)</text>
-    <text x="416" y="322">HTTPS · JSON · cookie de session (httpOnly)</text>
+    <text x="416" y="322">HTTP · JSON · accès libre (réseau de confiance)</text>
     <text x="416" y="486">appelle les cas d’usage</text>
     <text x="416" y="638">applique les règles du domaine</text>
     <text x="781" y="548" text-anchor="middle">implémente</text>

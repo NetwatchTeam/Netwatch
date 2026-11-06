@@ -57,6 +57,13 @@ export function OverviewPage() {
                 to="/technique/equipements?reachability=down"
               />
               <StatCard
+                label="Injoignables"
+                value={data.devices.unreachable}
+                hint="Coupées du réseau par une passerelle en panne"
+                tone={data.devices.unreachable > 0 ? 'warning' : 'good'}
+                to="/technique/equipements?reachability=unreachable"
+              />
+              <StatCard
                 label="Disponibilité (7 jours)"
                 value={formatPercent(data.availability7d)}
                 hint="Temps pendant lequel les machines ont répondu"

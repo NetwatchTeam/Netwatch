@@ -2,7 +2,7 @@ import { DEVICE_KINDS, DEVICE_LIFECYCLES, DEVICE_REACHABILITIES } from '@netwatc
 import { Router } from 'express';
 import { z } from 'zod';
 import type { AppContainer } from '../../../container.js';
-import { deviceNameIndex, toDeviceDto, toEventDto } from '../presenters.js';
+import { deviceNameIndex, toDeviceDto, toDeviceLinkDto, toEventDto } from '../presenters.js';
 
 const querySchema = z.object({
   q: z.string().trim().min(1).optional(),
@@ -21,12 +21,16 @@ const classifySchema = z.object({
 export function deviceRoutes(container: AppContainer): Router {
   const router = Router();
 
+  // Topologie validée, calculée sur tout le parc : la passerelle d'une machine peut être exclue par un filtre.
+  const loadTopology = () => container.getTopology.execute();
+
   router.get('/devices', async (req, res) => {
     const query = querySchema.parse(req.query);
     const now = new Date();
-    const [devices, openEvents] = await Promise.all([
+    const [devices, openEvents, topology] = await Promise.all([
       container.listDevices.execute(query),
       container.listOpenEvents.execute(),
+      loadTopology(),
     ]);
 
     const openCount = new Map<string, number>();
@@ -34,17 +38,29 @@ export function deviceRoutes(container: AppContainer): Router {
       openCount.set(event.deviceId, (openCount.get(event.deviceId) ?? 0) + 1);
     }
 
-    res.json(devices.map((device) => toDeviceDto(device, openCount.get(device.id) ?? 0, now)));
+    res.json(
+      devices.map((device) =>
+        toDeviceDto(device, openCount.get(device.id) ?? 0, now, topology.gatewayOf(device)),
+      ),
+    );
   });
 
   router.get('/devices/:id', async (req, res) => {
     const now = new Date();
-    const device = await container.getDevice.execute(req.params.id);
+    const [device, topology] = await Promise.all([container.getDevice.execute(req.params.id), loadTopology()]);
     const events = await container.listEvents.execute({ deviceId: device.id, limit: 100 });
-    const names = deviceNameIndex([device]);
+    const gateway = topology.gatewayOf(device);
+    const names = deviceNameIndex(gateway ? [device, gateway] : [device]);
 
     res.json({
-      device: toDeviceDto(device, events.filter((event) => event.status !== 'resolved').length, now),
+      device: toDeviceDto(
+        device,
+        events.filter((event) => event.status !== 'resolved').length,
+        now,
+        gateway,
+      ),
+      // Pour une passerelle : les machines qui en dépendent.
+      dependents: topology.dependentsOf(device).map(toDeviceLinkDto),
       events: events.map((event) => toEventDto(event, names, now)),
     });
   });

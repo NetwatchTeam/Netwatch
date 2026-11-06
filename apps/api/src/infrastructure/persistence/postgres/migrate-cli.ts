@@ -3,6 +3,10 @@ import { createPool, waitForDatabase } from './pool.js';
 import { runMigrations } from './migrate.js';
 
 const env = loadEnv();
+if (!env.DATABASE_URL) {
+  console.log('STORAGE=memory : aucune base à migrer.');
+  process.exit(0);
+}
 const pool = createPool(env.DATABASE_URL);
 
 try {

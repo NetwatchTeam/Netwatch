@@ -1,8 +1,12 @@
 export type EventType =
   | 'device_unreachable'
+  | 'downstream_outage'
   | 'throughput_degraded'
+  | 'packet_loss'
+  | 'resource_saturation'
   | 'exposed_port'
   | 'tls_expiring'
+  | 'tls_invalid'
   | 'device_discovered';
 
 export type EventCategory = 'incident' | 'observation' | 'signalement' | 'configuration';
@@ -13,9 +17,13 @@ export type EventStatus = 'open' | 'acknowledged' | 'resolved';
 
 export const CATEGORY_BY_TYPE: Record<EventType, EventCategory> = {
   device_unreachable: 'incident',
+  downstream_outage: 'incident',
   throughput_degraded: 'observation',
+  packet_loss: 'observation',
+  resource_saturation: 'observation',
   exposed_port: 'signalement',
   tls_expiring: 'signalement',
+  tls_invalid: 'signalement',
   device_discovered: 'configuration',
 };
 

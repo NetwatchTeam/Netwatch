@@ -2,6 +2,7 @@ import type { ClassifyDeviceInput } from '@netwatch/contracts';
 import { api } from '../api/netwatch';
 import { AsyncState } from '../components/AsyncState';
 import { ClassifyDeviceForm } from '../components/ClassifyDeviceForm';
+import { PortChips } from '../components/Metrics';
 import { PageHeader } from '../components/PageHeader';
 import { usePolling } from '../hooks/usePolling';
 import { formatDateTime, formatRelative } from '../utils/format';
@@ -50,15 +51,9 @@ export function PendingDevicesPage() {
                       <dd>{device.vendor ?? '—'}</dd>
                     </div>
                     <div>
-                      <dt>Ports ouverts</dt>
+                      <dt>Ports et services</dt>
                       <dd>
-                        {device.openPorts.length === 0
-                          ? '—'
-                          : device.openPorts.map((port) => (
-                              <span key={port} className="port">
-                                {port}
-                              </span>
-                            ))}
+                        <PortChips ports={device.ports} />
                       </dd>
                     </div>
                     <div>

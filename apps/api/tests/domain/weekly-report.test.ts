@@ -14,8 +14,13 @@ function device(id: string, label: string, critical = false): Device {
       mac: null,
       hostname: label,
       vendor: null,
+      gatewayIp: null,
       latencyMs: 1,
-      openPorts: [],
+      packetLossPercent: 0,
+      cpuPercent: null,
+      memory: null,
+      disks: [],
+      ports: [],
       certificates: [],
     }, WEEK_START),
     lifecycle: 'active',
@@ -94,6 +99,24 @@ describe('rapport hebdomadaire', () => {
     expect(worst?.devicesImpacted).toBe(3);
     expect(worst?.durationMinutes).toBe(60);
     expect(report.headline).toContain('3 machines en même temps');
+  });
+
+  it('signale une coupure encore en cours à la fin de la période', () => {
+    const ongoing = { ...outage('e2', 'dev-2', 330, 0), status: 'open' as const, resolvedAt: null };
+    const report = buildWeeklyReport({
+      weekStart: WEEK_START,
+      weekEnd: WEEK_END,
+      devices,
+      incidents: [outage('e1', 'dev-1', 300, 60), ongoing, outage('e3', 'dev-3', 100, 10)],
+      eventsInWeek: [],
+      openSecurityEvents: [],
+      averageThroughputMbps: null,
+      previousWeekAvailability: null,
+    });
+
+    const [widest, isolated] = report.topOutagesByImpact;
+    expect(widest).toMatchObject({ devicesImpacted: 2, endedAt: null });
+    expect(isolated?.endedAt).toEqual(new Date(WEEK_START.getTime() + 110 * MINUTE));
   });
 
   it('limite la panne à la semaine analysée', () => {

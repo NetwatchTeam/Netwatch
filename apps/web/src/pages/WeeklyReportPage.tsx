@@ -25,6 +25,14 @@ export function WeeklyReportPage() {
         }
         actions={
           <div className="page-actions">
+            <a
+              className="btn btn-primary"
+              href={api.weeklyReportPdfUrl(week)}
+              download
+              title="Rapport de la semaine affichée, avec les incidents les plus conséquents en tête"
+            >
+              Exporter en PDF
+            </a>
             <button type="button" className="btn" onClick={() => setOffset((value) => value + 1)}>
               Semaine précédente
             </button>

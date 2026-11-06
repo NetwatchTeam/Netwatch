@@ -1,4 +1,15 @@
-export * from './auth.js';
+/**
+ * Version du contrat d'échange (collecteur ↔ API ↔ dashboard), au format MAJEUR.MINEUR.CORRECTIF.
+ * - MINEUR : ajout rétrocompatible (nouveau champ facultatif, nouvelle route) ;
+ * - MAJEUR : rupture (champ retiré ou renommé, sens modifié) → nouvelle base d'URL `/api/v2`.
+ * Voir docs/api-contract.md, section « Versionnement ».
+ */
+export const CONTRACT_VERSION = '1.0.0';
+
+/** En-tête HTTP portant la version du contrat, dans les deux sens. */
+export const CONTRACT_VERSION_HEADER = 'X-NetWatch-Contract';
+
+export * from './dependency.js';
 export * from './device.js';
 export * from './event.js';
 export * from './report.js';
@@ -9,9 +20,8 @@ export interface ApiErrorDto {
   error: {
     code:
       | 'bad_request'
-      | 'unauthorized'
-      | 'forbidden'
       | 'not_found'
+      | 'conflict'
       | 'conflict'
       | 'scanner_unavailable'
       | 'internal_error';

@@ -1,0 +1,18 @@
+# Remplace le collecteur simulé par le collecteur Python (développé dans son propre dépôt).
+#
+#   COLLECTOR_IMAGE=registre/netwatch-collector:1.0 \
+#     docker compose -f docker-compose.yml -f docker-compose.collector-python.yml up -d
+#
+# L'image doit répondre à GET :8080/scan selon docs/scanner-contract.md (contrat 1.x).
+services:
+  collector:
+    image: ${COLLECTOR_IMAGE:?image du collecteur Python manquante (COLLECTOR_IMAGE dans .env)}
+    # On reprend la commande, le dossier et les fichiers de l'image elle-même.
+    command: !reset null
+    working_dir: !reset null
+    volumes: !reset []
+    healthcheck: !reset null
+    # Seul le jeton partagé est transmis (l'API l'envoie en `Authorization: Bearer`) :
+    # le collecteur n'a pas à connaître les autres secrets, comme le mot de passe de la base.
+    environment: !override
+      SCANNER_TOKEN: ${SCANNER_TOKEN:-}

@@ -54,6 +54,11 @@ h2 {
   font-size: 1.05rem;
 }
 
+h3 {
+  margin: 20px 0 8px;
+  font-size: 0.95rem;
+}
+
 .muted {
   color: var(--muted);
   margin: 4px 0 0;
@@ -61,35 +66,6 @@ h2 {
 
 .mono {
   font-family: ui-monospace, Consolas, monospace;
-}
-
-.boot {
-  padding: 40px;
-  color: var(--muted);
-}
-
-/* Connexion */
-
-.login-page {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 16px;
-}
-
-.login-card {
-  width: min(400px, 100%);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.login-card h1 {
-  margin: 0;
 }
 
 /* Mise en page */
@@ -144,14 +120,6 @@ h2 {
 .nav-link.active {
   background: var(--primary);
   color: #fff;
-}
-
-.sidebar-footer {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 0 12px;
 }
 
 .content {
@@ -322,6 +290,10 @@ a.stat-card:hover {
 
 .state-up, .scan-succeeded { color: var(--good); background: var(--good-bg); }
 .state-down, .severity-critical, .scan-failed { color: var(--critical); background: var(--critical-bg); }
+.dependency-suggested { color: var(--warning); background: var(--warning-bg); }
+.dependency-validated { color: var(--good); background: var(--good-bg); }
+.dependency-rejected { color: var(--neutral); background: var(--neutral-bg); }
+.state-unreachable { color: var(--warning); background: var(--warning-bg); }
 .state-unknown, .event-resolved { color: var(--neutral); background: var(--neutral-bg); }
 .severity-warning, .lifecycle-pending_classification { color: var(--warning); background: var(--warning-bg); }
 .severity-info, .scan-running { color: var(--info); background: var(--info-bg); }
@@ -330,6 +302,41 @@ a.stat-card:hover {
 .category-incident { color: var(--critical); background: var(--critical-bg); }
 .category-observation { color: var(--info); background: var(--info-bg); }
 .category-signalement { color: var(--warning); background: var(--warning-bg); }
+.cert-good { color: var(--good); background: var(--good-bg); }
+.cert-critical { color: var(--critical); background: var(--critical-bg); }
+.cert-neutral, .cert-warning { color: var(--neutral); background: var(--neutral-bg); }
+
+/* Mesures : CPU, mémoire, disques, perte de paquets */
+
+.metric { font-variant-numeric: tabular-nums; font-weight: 600; }
+.metric-good { color: var(--good); }
+.metric-warning { color: var(--warning); }
+.metric-critical { color: var(--critical); }
+.metric-neutral { color: var(--muted); }
+
+.usage {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 160px;
+}
+
+.usage-track {
+  flex: 1;
+  height: 8px;
+  min-width: 80px;
+  border-radius: 4px;
+  background: var(--neutral-bg);
+  overflow: hidden;
+}
+
+.usage-fill { height: 100%; border-radius: 4px; }
+.fill-good { background: var(--good); }
+.fill-warning { background: #d97706; }
+.fill-critical { background: var(--critical); }
+.fill-neutral { background: var(--neutral); }
+
+.small { font-size: 0.85em; }
 .category-configuration { color: var(--neutral); background: var(--neutral-bg); }
 .event-open { color: var(--critical); background: var(--critical-bg); }
 .event-acknowledged { color: var(--info); background: var(--info-bg); }
@@ -582,8 +589,7 @@ tbody tr:hover {
 }
 
 .classify-form label,
-.settings-form label,
-.login-card label {
+.settings-form label {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -638,6 +644,14 @@ select {
   border-color: var(--primary);
 }
 
+a.btn {
+  display: inline-block;
+}
+
+a.btn:hover {
+  text-decoration: none;
+}
+
 .btn:disabled {
   opacity: 0.6;
   cursor: default;
@@ -664,4 +678,30 @@ select {
   color: var(--critical);
   background: var(--critical-bg);
   margin: 0 0 12px;
+}
+
+.dependent-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+}
+
+.dependent-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row-flagged td { background: var(--warning-bg); }
+
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.notice {
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: var(--good-bg);
+  color: var(--good);
 }

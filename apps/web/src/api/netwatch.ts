@@ -1,33 +1,39 @@
 import type {
   ClassifyDeviceInput,
+  CreateDependencyInput,
+  DeleteDependencyResultDto,
+  DependencyDto,
+  DependencyGraphDto,
+  UpdateDependencyInput,
+  ValidateSuggestionsResultDto,
   DeviceDto,
+  DeviceLinkDto,
   DeviceFilters,
   EventDto,
   EventFilters,
   MonitoringSettingsDto,
   NetworkSummaryDto,
   ScanRunDto,
-  SessionUserDto,
   ThroughputPointDto,
   UpdateMonitoringSettingsInput,
   WeeklyReportDto,
 } from '@netwatch/contracts';
+import { config } from '../config';
 import { request, toQuery } from './client';
 
 export interface DeviceDetail {
   device: DeviceDto;
+  /** Machines qui passent par cet équipement (vide s'il n'est la passerelle de personne). */
+  dependents: DeviceLinkDto[];
   events: EventDto[];
 }
 
 /** Toutes les routes de l'API, en un seul endroit. */
 export const api = {
-  login: (password: string) =>
-    request<SessionUserDto>('/auth/login', { method: 'POST', body: JSON.stringify({ password }) }),
-  logout: () => request<void>('/auth/logout', { method: 'POST' }),
-  me: () => request<SessionUserDto>('/auth/me'),
-
   getSummary: () => request<NetworkSummaryDto>('/summary'),
   getWeeklyReport: (week?: string) => request<WeeklyReportDto>(`/reports/weekly${toQuery({ week })}`),
+  /** Lien direct : le navigateur télécharge le fichier lui-même. */
+  weeklyReportPdfUrl: (week?: string) => `${config.apiBaseUrl}/reports/weekly.pdf${toQuery({ week })}`,
   getThroughput: (params: { from?: string; to?: string; deviceId?: string } = {}) =>
     request<ThroughputPointDto[]>(`/metrics/throughput${toQuery(params)}`),
 
@@ -38,6 +44,16 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(input),
     }),
+
+  getDependencies: () => request<DependencyGraphDto>('/dependencies'),
+  createDependency: (input: CreateDependencyInput) =>
+    request<DependencyDto>('/dependencies', { method: 'POST', body: JSON.stringify(input) }),
+  updateDependency: (id: string, input: UpdateDependencyInput) =>
+    request<DependencyDto>(`/dependencies/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(input) }),
+  deleteDependency: (id: string) =>
+    request<DeleteDependencyResultDto>(`/dependencies/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  validateAllSuggestions: () =>
+    request<ValidateSuggestionsResultDto>('/dependencies/validate-suggestions', { method: 'POST' }),
 
   getEvents: (filters: EventFilters = {}) => request<EventDto[]>(`/events${toQuery({ ...filters })}`),
   acknowledgeEvent: (id: string) =>
