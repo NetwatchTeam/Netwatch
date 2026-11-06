@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DEV_HINT, StartupError } from '../system/startup-error.js';
 
 function isValidTimeZone(timeZone: string): boolean {
   try {
@@ -43,16 +44,26 @@ export type Env = z.infer<typeof schema>;
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   const parsed = schema.safeParse(source);
   if (!parsed.success) {
-    const details = parsed.error.issues.map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`);
-    throw new Error(`Configuration invalide :\n${details.join('\n')}`);
+    const details = parsed.error.issues.map((issue) => `  - ${issue.path.join('.')} : ${issue.message}`);
+    throw new StartupError(
+      `Configuration invalide :\n${details.join('\n')}\n\n` +
+        'Corrigez la variable dans apps/api/.env (modèle : apps/api/.env.example), ou dans le .env racine avec Docker.',
+    );
   }
 
   if (parsed.data.STORAGE === 'postgres' && !parsed.data.DATABASE_URL) {
-    throw new Error('Configuration invalide :\n  - DATABASE_URL est obligatoire (ou STORAGE=memory pour un essai sans base)');
+    throw new StartupError(
+      'DATABASE_URL est absente : l’API ne sait pas à quelle base PostgreSQL se connecter.\n' +
+        'C’est le cas quand on lance `npm run dev` sans avoir créé apps/api/.env.\n\n' +
+        DEV_HINT,
+    );
   }
 
   if (parsed.data.SCANNER_MODE === 'http' && !parsed.data.SCANNER_URL) {
-    throw new Error('Configuration invalide :\n  - SCANNER_URL est obligatoire quand SCANNER_MODE=http');
+    throw new StartupError(
+      'SCANNER_MODE=http mais SCANNER_URL est vide : indiquez l’adresse du collecteur\n' +
+        '(collecteur simulé en développement : SCANNER_URL=http://localhost:8090), ou passez SCANNER_MODE=demo.',
+    );
   }
 
   return parsed.data;

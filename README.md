@@ -142,10 +142,12 @@ méthode A tourne aussi, arrêtez d'abord son API : `docker compose stop app` (e
 
 | Symptôme | Cause et solution |
 | --- | --- |
+| « NetWatch ne peut pas démarrer. DATABASE_URL est absente » après `npm run dev` | `npm run dev` attend une base (méthode C) et le fichier `apps/api/.env` n'existe pas. Pour essayer sans base : `npm run dev:demo`. Sinon, suivre la méthode C (copier `apps/api/.env.example`, démarrer la base), puis relancer `npm run dev` |
+| « PostgreSQL ne répond pas à localhost:5433 » | La base de développement n'est pas démarrée : `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --no-deps db collector` (Docker Desktop doit tourner) |
 | `Cannot connect to the Docker daemon` / `open //./pipe/dockerDesktopLinuxEngine` | Docker Desktop n'est pas démarré : lancez-le et attendez qu'il soit prêt |
 | `required variable POSTGRES_PASSWORD is missing a value` | Le fichier `.env` manque ou `POSTGRES_PASSWORD` est vide : `cp .env.example .env` puis renseigner le mot de passe |
 | `Bind for 0.0.0.0:3001 failed: port is already allocated` (ou 8090, 5173) | Le port est déjà pris (autre stack NetWatch, `npm run dev` lancé ailleurs) : arrêtez-la, ou changez `APP_PORT` / `COLLECTOR_PORT` dans `.env` |
-| `password authentication failed for user "netwatch"` | Le mot de passe a changé après le premier démarrage : la base garde l'ancien. Remettez l'ancien dans `.env`, ou repartez de zéro avec `docker compose down -v` |
+| « PostgreSQL refuse le mot de passe » / `password authentication failed for user "netwatch"` | Le mot de passe a changé après le premier démarrage : la base garde l'ancien. Remettez l'ancien dans `.env`, ou repartez de zéro avec `docker compose down -v` |
 | Page « Scans » : « connexion refusée — le scanner n'est pas démarré » | Le collecteur ne tourne pas : `docker compose up -d collector` (méthode A ou C) |
 | Le dashboard affiche « Impossible de joindre l'API NetWatch » | L'API n'est pas démarrée ou a planté : regardez le terminal de `npm run dev`, ou `docker compose logs app` |
 | `'cp' n'est pas reconnu` (invite de commandes Windows, cmd) | Utilisez PowerShell ou Git Bash, ou `copy .env.example .env` |
