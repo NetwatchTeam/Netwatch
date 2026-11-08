@@ -24,7 +24,7 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
     dépendre de la découverte ICMP, ce qui est nécessaire pour scanner localhost de façon fiable."""
     targets = targets or DEFAULT_TARGETS
 
-    scan = NmapProcess(" ".join(targets), "-sV -Pn")
+    scan = NmapProcess(" ".join(targets), "-sn")
     return_code = scan.run()
 
     if return_code != 0:
