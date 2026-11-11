@@ -5,28 +5,27 @@ from entities.certificat import Certificat
 from usecases.scan_network import scan_network
 from usecases.check_tls_use_case import check_machine_tls
 
-TLS_PORTS = {443, 8443}
+TLS_PORTS = {443, 8443}  # Ports standards pour les services HTTPS
 
-
+"""Détermine si une machine dispose d'un service TLS/HTTPS actif en vérifiant ses ports ouverts."""
 def _has_tls_service(machine) -> bool:
-    """Détermine si la machine a un service TLS/HTTPS ouvert."""
     if hasattr(machine, "open_ports") and machine.open_ports:
         return any(port in TLS_PORTS for port in machine.open_ports)
     return False
 
-
+"""Vérifie les machines découvertes sur le réseau et récupère les informations TLS si un service HTTPS est actif."""
 def scan(targets: Optional[List[str]] = None) -> List[dict]:
-    """Lance le scan réseau et vérifie les certificats TLS uniquement pour les services hébergés."""
     discovered = scan_network(targets)
     machines_data = []
 
     for machine in discovered:
         machine_dict = asdict(machine)
 
-        # On ne vérifie le certificat TLS que si un service HTTPS/TLS est ouvert
+        # Vérification du certificat TLS uniquement si un port HTTPS est ouvert
         if _has_tls_service(machine):
             tls_info = check_machine_tls(machine.ip, port=443)
 
+            # Si le certificat a pu être lu
             if tls_info and tls_info.get("status") in ("ok", "expired", "expiring_soon"):
                 certificat = Certificat(
                     identifiant_certificat=tls_info.get("identifiant_certificat"),
@@ -44,12 +43,13 @@ def scan(targets: Optional[List[str]] = None) -> List[dict]:
                 machine_dict["tls_days_remaining"] = tls_info.get("days_remaining")
                 machine_dict["tls_not_after"] = tls_info.get("not_after")
             else:
+                # Échec de négociation TLS ou port inaccessible
                 machine_dict["certificat"] = None
                 machine_dict["tls_status"] = tls_info.get("status") if tls_info else "unreachable"
                 machine_dict["tls_days_remaining"] = None
                 machine_dict["tls_not_after"] = None
         else:
-            # Simple poste client sans service HTTPS
+            # Machine sans port HTTPS
             machine_dict["certificat"] = None
             machine_dict["tls_status"] = "no_service"
             machine_dict["tls_days_remaining"] = None

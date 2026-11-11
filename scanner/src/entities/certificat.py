@@ -9,7 +9,7 @@ def _now_iso() -> str:
 
 @dataclass
 class Certificat:
-    """Entité représentant un certificat TLS extrait d'une machine/service."""
+    """Entité représentant un certificat TLS extrait d'un service"""
     empreinte: str
     sujet: str
     emetteur: str

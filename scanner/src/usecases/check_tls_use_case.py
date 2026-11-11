@@ -6,26 +6,31 @@ from typing import Optional
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
 
-EXPIRING_SOON_DAYS = 30
+EXPIRING_SOON_DAYS = 30  # Seuil en jours pour l'alerte d'expiration imminente
 
 
+"""Interroge un service TLS/HTTPS pour récupérer son certificat et vérifier sa validité."""
 def check_machine_tls(
     ip: str,
     port: int = 443,
     timeout: float = 3.0,
     expiring_soon_days: int = EXPIRING_SOON_DAYS,
 ) -> dict:
-    """Récupère le certificat TLS d'une machine et extrait ses métadonnées."""
+
     context = ssl.create_default_context()
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
+
     now = datetime.now(timezone.utc)
     date_observation = now.isoformat()
 
     try:
+        # Établissement de la connexion TCP
         with socket.create_connection((ip, port), timeout=timeout) as sock:
             with context.wrap_socket(sock) as tls_sock:
                 der = tls_sock.getpeercert(binary_form=True)
+
+        # Décodage du certificat X.509
         cert = x509.load_der_x509_certificate(der)
 
         empreinte = cert.fingerprint(hashes.SHA256()).hex()
@@ -36,6 +41,7 @@ def check_machine_tls(
         expires_at = cert.not_valid_after_utc
 
     except (OSError, TypeError, ValueError) as e:
+        # En cas de port fermé, timeout ou échec TLS, on renvoie une erreur
         return {
             "ip": ip,
             "port": port,
@@ -52,8 +58,10 @@ def check_machine_tls(
             "erreur_validation": str(e),
         }
 
+    # Calcul du nombre de jours restants avant expiration
     days_left = (expires_at - now).days
 
+    # Détermination du statut du certificat et de sa validité
     if days_left < 0:
         status = "expired"
         est_valide = False
