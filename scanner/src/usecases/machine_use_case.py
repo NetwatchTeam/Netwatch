@@ -36,6 +36,8 @@ def scan(targets: Optional[List[str]] = None) -> List[dict]:
                     date_debut_validite=tls_info["date_debut_validite"],
                     date_expiration=tls_info["date_expiration"],
                     date_observation=tls_info["date_observation"],
+                    est_valide=tls_info.get("est_valide"),
+                    erreur_validation=tls_info.get("erreur_validation"),
                 )
                 machine_dict["certificat"] = asdict(certificat)
                 machine_dict["tls_status"] = tls_info.get("status")
