@@ -32,6 +32,8 @@ def test_check_machine_tls_ok(mock_socket, mock_ssl, mock_x509):
     assert result["emetteur"] == "CN=MonAutorite"
     assert result["date_debut_validite"] == past_start.isoformat()
     assert result["date_expiration"] == future_date.isoformat()
+    assert result["est_valide"] is True
+    assert result["erreur_validation"] is None
     assert "date_observation" in result
 
 
@@ -52,6 +54,8 @@ def test_check_machine_tls_expiring_soon(mock_socket, mock_ssl, mock_x509):
     assert result["status"] == "expiring_soon"
     assert result["days_remaining"] >= 9
     assert result["date_expiration"] == expiring_date.isoformat()
+    assert result["est_valide"] is True
+    assert result["erreur_validation"] is None
 
 
 @patch("usecases.check_tls_use_case.x509.load_der_x509_certificate")
@@ -71,6 +75,8 @@ def test_check_machine_tls_expired(mock_socket, mock_ssl, mock_x509):
     assert result["status"] == "expired"
     assert result["days_remaining"] < 0
     assert result["date_expiration"] == past_date.isoformat()
+    assert result["est_valide"] is False
+    assert result["erreur_validation"] == "certificat expiré"
 
 
 @patch("usecases.check_tls_use_case.socket.create_connection")
@@ -82,6 +88,8 @@ def test_check_machine_tls_unreachable(mock_socket):
     assert result["ip"] == "192.168.1.10"
     assert result["port"] == 443
     assert result["status"] == "unreachable"
+    assert result["est_valide"] is False
+    assert result["erreur_validation"] == "Connection refused"
     assert "Connection refused" in result["message"]
     assert result["empreinte"] is None
     assert result["sujet"] is None
