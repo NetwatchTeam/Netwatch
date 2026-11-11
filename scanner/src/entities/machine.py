@@ -28,3 +28,4 @@ class Machine:
     mac: Optional[str] = None
     first_seen: str = field(default_factory=_now_iso)
     last_seen: str = field(default_factory=_now_iso)
+    ports: list[dict] = field(default_factory=list)

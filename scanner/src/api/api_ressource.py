@@ -6,8 +6,8 @@ delegates all the work to the controller.
 """
 
 from flask import Flask, jsonify, request
-
 from controllers.main_controller import MainController
+import os
 
 
 def create_app(controller: MainController) -> Flask:
@@ -43,4 +43,27 @@ def create_app(controller: MainController) -> Flask:
             # The scan backend (nmap) failed: report it as a bad gateway.
             return jsonify({"error": str(exc)}), 502
 
+    @app.get("/scan")
+    def get_scan():
+        # Par défaut, on reste strictement sur la machine locale.
+        targets = [
+            target.strip()
+            for target in os.getenv(
+                "SCANNER_TARGETS",
+                "127.0.0.1",
+            ).split(",")
+            if target.strip()
+        ]
+
+        if not targets:
+            return jsonify({
+                "error": "Aucune cible de scan configurée."
+            }), 503
+
+        try:
+            snapshot = controller.scan_machines(targets)
+            return jsonify(snapshot)
+        except RuntimeError as exc:
+            app.logger.exception("Échec du scan Nmap")
+            return jsonify({"error": str(exc)}), 502
     return app
