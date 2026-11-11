@@ -8,10 +8,11 @@ from entities.machine import Machine
 from usecases.scan_network import scan_network
 
 
-def make_host(address, up=True):
+def make_host(address, up=True, mac=None):
     host = MagicMock()
     host.address = address
     host.is_up.return_value = up
+    host.mac = mac
     return host
 
 
@@ -94,17 +95,23 @@ def test_scan_meme_timestamp_pour_toutes_les_machines(nmap):
     assert parsed.tzinfo is not None  # UTC
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Bug connu : mac=host.address au lieu de _extract_mac(host) (TODO dans le code)",
-)
 def test_scan_mac_n_est_pas_l_adresse_ip(nmap):
     _, parser_cls = nmap
-    parser_cls.parse.return_value.hosts = [make_host("10.0.0.1")]
+    parser_cls.parse.return_value.hosts = [make_host("10.0.0.1", mac="00:11:22:33:44:55")]
 
     (machine,) = scan_network(["10.0.0.1"])
 
     assert machine.mac != machine.ip
+    assert machine.mac == "00:11:22:33:44:55"
+
+
+def test_scan_mac_est_none_si_absente(nmap):
+    _, parser_cls = nmap
+    parser_cls.parse.return_value.hosts = [make_host("127.0.0.1", mac=None)]
+
+    (machine,) = scan_network(["127.0.0.1"])
+
+    assert machine.mac is None
 
 
 FIXTURES = Path(__file__).parent.parent / "fixtures"

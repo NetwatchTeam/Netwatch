@@ -14,7 +14,9 @@ def _now_iso() -> str:
 
 
 def _extract_mac(host) -> Optional[str]:
-    #TODO
+    """Extrait l'adresse MAC d'un hôte si elle existe."""
+    if host.mac:
+        return host.mac
     return None
 
 
@@ -43,7 +45,7 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
         machines.append(
             Machine(
                 ip=host.address,
-                mac=host.address, # à remplacer par le mac
+                mac=mac,
                 first_seen=timestamp,
                 last_seen=timestamp,
             )
