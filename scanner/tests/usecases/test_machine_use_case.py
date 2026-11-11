@@ -25,6 +25,8 @@ def test_scan_convertit_les_machines_en_dict_avec_tls(mock_scan_network, mock_ch
         "date_debut_validite": "2026-01-01T00:00:00+00:00",
         "date_expiration": "2026-12-31T23:59:59+00:00",
         "date_observation": "2026-11-06T12:00:00+00:00",
+        "est_valide": True,
+        "erreur_validation": None,
     }
 
     assert scan() == [
@@ -43,6 +45,8 @@ def test_scan_convertit_les_machines_en_dict_avec_tls(mock_scan_network, mock_ch
                 "date_debut_validite": "2026-01-01T00:00:00+00:00",
                 "date_expiration": "2026-12-31T23:59:59+00:00",
                 "date_observation": "2026-11-06T12:00:00+00:00",
+                "est_valide": True,
+                "erreur_validation": None,
             },
             "tls_status": "ok",
             "tls_days_remaining": 42,
