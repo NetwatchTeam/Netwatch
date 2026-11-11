@@ -48,16 +48,24 @@ def check_machine_tls(
             "date_debut_validite": None,
             "date_expiration": None,
             "date_observation": date_observation,
+            "est_valide": False,
+            "erreur_validation": str(e),
         }
 
     days_left = (expires_at - now).days
 
     if days_left < 0:
         status = "expired"
+        est_valide = False
+        erreur_validation = "certificat expiré"
     elif days_left <= expiring_soon_days:
         status = "expiring_soon"
+        est_valide = True
+        erreur_validation = None
     else:
         status = "ok"
+        est_valide = True
+        erreur_validation = None
 
     return {
         "ip": ip,
@@ -72,4 +80,6 @@ def check_machine_tls(
         "date_debut_validite": date_debut_validite,
         "date_expiration": date_expiration,
         "date_observation": date_observation,
+        "est_valide": est_valide,
+        "erreur_validation": erreur_validation,
     }
