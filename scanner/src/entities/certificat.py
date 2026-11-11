@@ -17,3 +17,5 @@ class Certificat:
     date_expiration: str
     date_observation: str = field(default_factory=_now_iso)
     identifiant_certificat: Optional[int] = None
+    est_valide: Optional[bool] = None
+    erreur_validation: Optional[str] = None
