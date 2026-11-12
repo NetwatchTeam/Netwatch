@@ -2,8 +2,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import List, Optional
 
-from entities.certificat import Certificat
-
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -17,4 +15,4 @@ class Machine:
     first_seen: str = field(default_factory=_now_iso)
     last_seen: str = field(default_factory=_now_iso)
     open_ports: List[int] = field(default_factory=list)
-    certificat: Optional[Certificat] = None             # Certificat TLS associé si service HTTPS actif
+    certificates: list[dict] = field(default_factory=list)
