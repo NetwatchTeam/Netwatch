@@ -22,6 +22,9 @@ def test_scan_machines_transmet_targets_et_retourne_le_resultat(mock_scan):
             "ports": [],
             "latencyMs": None,
             "packetLossPercent": None,
+            "cpuPercent": None,
+            "memory": None,
+            "disks": [],
             "certificates": [],
         }
     ]
