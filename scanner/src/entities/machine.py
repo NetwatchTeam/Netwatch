@@ -23,6 +23,9 @@ class Machine:
         ports: List of port service details discovered on the machine.
         open_ports: List of open port numbers.
         certificates: List of TLS certificates discovered on the machine.
+        cpuPercent: CPU usage percentage (0-100), or None if unavailable.
+        memory: Dictionary with usedPercent and totalMb, or None if unavailable.
+        disks: List of disk usage dictionaries (name, usedPercent, totalGb).
     """
     ip: str
     id: Optional[int] = None
@@ -32,3 +35,6 @@ class Machine:
     ports: list[dict] = field(default_factory=list)
     open_ports: List[int] = field(default_factory=list)
     certificates: list[dict] = field(default_factory=list)
+    cpuPercent: Optional[float] = None
+    memory: Optional[dict] = None
+    disks: list[dict] = field(default_factory=list)
