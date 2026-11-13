@@ -6,6 +6,7 @@ from dataclasses import asdict
 from usecases.scan_network import scan_network
 from usecases.check_tls_use_case import check_machine_tls
 from usecases.check_availability import check_availability
+from usecases.collect_system_metrics import collect_system_metrics
 
 TLS_PORTS = {443, 8443}  # Ports standards pour les services HTTPS
 
@@ -32,7 +33,7 @@ def scan(targets: Optional[List[str]] = None) -> List[dict]:
     Returns:
         A list of dictionaries, one per discovered machine, with keys including
         ip, id, mac, first_seen, last_seen, ports, open_ports, latencyMs,
-        packetLossPercent, and certificates.
+        packetLossPercent, cpuPercent, memory, disks, and certificates.
 
     Raises:
         RuntimeError: If the underlying network scan fails.
@@ -46,6 +47,10 @@ def scan(targets: Optional[List[str]] = None) -> List[dict]:
         # Mesures de disponibilité et latence
         measurements = check_availability(machine.ip)
         machine_dict.update(measurements)
+
+        # Mesures des métriques système (CPU, RAM, Disques)
+        system_metrics = collect_system_metrics(machine.ip)
+        machine_dict.update(system_metrics)
 
         # Vérification du certificat TLS uniquement si un port HTTPS est ouvert
         if _has_tls_service(machine):
