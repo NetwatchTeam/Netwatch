@@ -49,11 +49,14 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
     """
     targets = targets or DEFAULT_TARGETS
 
-    # -sV: probe open ports to determine service versions.
-    # -Pn: treat every host as up and skip ICMP host discovery, which is
-    # required to scan localhost reliably.
+    # "-sn" : découverte d'hôtes seulement, pas de scan de ports.
     scan = NmapProcess(" ".join(targets), "-sn")
     return_code = scan.run()
+
+    if return_code != 0:
+        raise RuntimeError(
+            f"Le scan nmap a échoué : {scan.stderr}"
+        )
 
     # Lire les résultats de la découverte réalisée avec -sn.
     discovery_report = NmapParser.parse(scan.stdout)
@@ -90,6 +93,12 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
     machines: List[Machine] = []
 
     for host in service_report.hosts:
+        if not host.is_up():
+            continue
+
+        if host.address not in discovered_hosts:
+            continue
+
         discovery_host = discovered_hosts[host.address]
 
         machines.append(
