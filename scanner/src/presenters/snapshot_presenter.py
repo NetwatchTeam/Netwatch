@@ -13,6 +13,8 @@ class SnapshotPresenter:
                 "ip": machine["ip"],
                 "mac": machine.get("mac"),
                 "ports": machine.get("ports", []),
+                "latencyMs": machine.get("latencyMs"),
+                "packetLossPercent": machine.get("packetLossPercent"),
             }
 
             if machine.get("hostname"):

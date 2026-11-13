@@ -55,3 +55,8 @@ scan.sh
 uml_gen.py
 sql/migrate.py
 uv.lock
+
+# ========================
+# Dépendances JavaScript installées localement
+# ========================
+node_modules/
