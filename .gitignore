@@ -1,21 +1,21 @@
 # ========================
 # Python
 # ========================
-# Fichiers compilés
+# Compiled files
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Environnements virtuels
+# Virtual environments
 venv/
 .venv/
 env/
 .env/
 
 # ========================
-# Base de données
+# Database
 # ========================
-# Ignorer la base SQLite de développement
+# Ignore the SQLite development database
 netwatch.db
 *.sqlite3
 *.db
@@ -23,12 +23,12 @@ netwatch.db
 # ========================
 # Configuration & Secrets
 # ========================
-# Fichiers de variables d'environnement (très important pour la sécurité)
+# Environment variable files (very important for security)
 .env
 .env.local
 
 # ========================
-# IDE & Editeurs
+# IDEs & Editors
 # ========================
 .vscode/
 .idea/
@@ -55,3 +55,8 @@ scan.sh
 uml_gen.py
 sql/migrate.py
 uv.lock
+
+# ========================
+# Dépendances JavaScript installées localement
+# ========================
+node_modules/

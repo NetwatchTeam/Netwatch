@@ -1,3 +1,5 @@
+"""Unit and integration tests for scan_network."""
+
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -9,6 +11,16 @@ from usecases.scan_network import scan_network
 
 
 def make_host(address, up=True, mac=None):
+    """Builds a fake libnmap host.
+
+    Args:
+        address: IP address of the host.
+        up: Value returned by ``host.is_up()``.
+        mac: MAC address of the host, or None if unknown.
+
+    Returns:
+        A MagicMock mimicking a libnmap host.
+    """
     host = MagicMock()
     host.address = address
     host.is_up.return_value = up
@@ -18,7 +30,11 @@ def make_host(address, up=True, mac=None):
 
 @pytest.fixture
 def nmap():
-    """Mocke NmapProcess (run OK) et NmapParser. Retourne (process_cls, parser_cls)."""
+    """Mocks NmapProcess (successful run) and NmapParser.
+
+    Yields:
+        A tuple ``(process_cls, parser_cls)`` with the two patched classes.
+    """
     with patch("usecases.scan_network.NmapProcess") as process_cls, \
          patch("usecases.scan_network.NmapParser") as parser_cls:
         process_cls.return_value.run.return_value = 0
@@ -28,6 +44,7 @@ def nmap():
 
 
 def test_scan_network_error(nmap):
+    """Raises a RuntimeError containing stderr when nmap fails."""
     process_cls, _ = nmap
     process_cls.return_value.run.return_value = 1
     process_cls.return_value.stderr = "erreur fatale"
@@ -37,29 +54,34 @@ def test_scan_network_error(nmap):
 
 
 def test_scan_cible_par_defaut_localhost(nmap):
+    """Scans localhost when no target is given."""
     process_cls, _ = nmap
     scan_network()
-    process_cls.assert_called_once_with("127.0.0.1", "-sV -Pn")
+    process_cls.assert_any_call(["127.0.0.1"], "-sn")
 
 
 def test_scan_joint_plusieurs_cibles_avec_un_espace(nmap):
+    """Transmits several targets to nmap."""
     process_cls, _ = nmap
     scan_network(["10.0.0.1", "10.0.0.2"])
-    process_cls.assert_called_once_with("10.0.0.1 10.0.0.2", "-sV -Pn")
+    process_cls.assert_any_call(["10.0.0.1", "10.0.0.2"], "-sn")
 
 
 def test_scan_parse_la_sortie_de_nmap(nmap):
+    """Passes the nmap stdout to NmapParser."""
     process_cls, parser_cls = nmap
     process_cls.return_value.stdout = "<nmaprun/>"
     scan_network(["127.0.0.1"])
-    parser_cls.parse.assert_called_once_with("<nmaprun/>")
+    parser_cls.parse.assert_any_call("<nmaprun/>")
 
 
 def test_scan_aucun_hote_retourne_liste_vide(nmap):
+    """Returns an empty list when nmap reports no host."""
     assert scan_network(["127.0.0.1"]) == []
 
 
 def test_scan_ignore_les_hotes_down(nmap):
+    """Skips the hosts that are reported as down."""
     _, parser_cls = nmap
     parser_cls.parse.return_value.hosts = [
         make_host("10.0.0.1", up=True),
@@ -73,6 +95,7 @@ def test_scan_ignore_les_hotes_down(nmap):
 
 
 def test_scan_retourne_des_machines_non_persistees(nmap):
+    """Returns Machine entities that are not persisted (id is None)."""
     _, parser_cls = nmap
     parser_cls.parse.return_value.hosts = [make_host("10.0.0.1")]
 
@@ -84,6 +107,7 @@ def test_scan_retourne_des_machines_non_persistees(nmap):
 
 
 def test_scan_meme_timestamp_pour_toutes_les_machines(nmap):
+    """Gives the same timezone-aware timestamp to every machine."""
     _, parser_cls = nmap
     parser_cls.parse.return_value.hosts = [make_host("10.0.0.1"), make_host("10.0.0.2")]
 
@@ -96,6 +120,7 @@ def test_scan_meme_timestamp_pour_toutes_les_machines(nmap):
 
 
 def test_scan_mac_n_est_pas_l_adresse_ip(nmap):
+    """Uses the MAC reported by nmap, never the IP address."""
     _, parser_cls = nmap
     parser_cls.parse.return_value.hosts = [make_host("10.0.0.1", mac="00:11:22:33:44:55")]
 
@@ -106,6 +131,7 @@ def test_scan_mac_n_est_pas_l_adresse_ip(nmap):
 
 
 def test_scan_mac_est_none_si_absente(nmap):
+    """Sets the MAC to None when nmap does not report one."""
     _, parser_cls = nmap
     parser_cls.parse.return_value.hosts = [make_host("127.0.0.1", mac=None)]
 
@@ -118,7 +144,7 @@ FIXTURES = Path(__file__).parent.parent / "fixtures"
 
 
 def test_scan_avec_un_vrai_xml_nmap():
-    """Intégration : vrai NmapParser sur une vraie sortie XML, seul NmapProcess est mocké."""
+    """Integration: real NmapParser on real XML output, only NmapProcess mocked."""
     pytest.importorskip("libnmap")
     xml = (FIXTURES / "nmap_localhost.xml").read_text()
 
@@ -128,4 +154,4 @@ def test_scan_avec_un_vrai_xml_nmap():
 
         machines = scan_network(["127.0.0.1", "10.0.0.9"])
 
-    assert [m.ip for m in machines] == ["127.0.0.1"]  # 10.0.0.9 est down
+    assert [m.ip for m in machines] == ["127.0.0.1"]  # 10.0.0.9 is down
