@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 
-from presenters.snapshot_presenter import SnapshotPresenter
+from presenters.presenter import MachinePresenter
 from usecases.machine_use_case import scan
 
 
@@ -28,4 +28,4 @@ class MainController:
             RuntimeError: If the underlying network scan fails.
         """
         machines_data = scan(targets)
-        return SnapshotPresenter.to_snapshot(machines_data)
+        return MachinePresenter.to_list(machines_data)
