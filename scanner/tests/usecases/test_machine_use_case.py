@@ -13,7 +13,13 @@ def test_scan_convertit_les_machines_en_dict(mock_scan_network):
     ]
 
     assert scan() == [
-        {"ip": "10.0.0.1", "id": 3, "mac": "aa:bb", "first_seen": "t1", "last_seen": "t2"}
+        {
+            "ip": "10.0.0.1",
+            "id": 3,
+            "mac": "aa:bb",
+            "first_seen": "t1",
+            "last_seen": "t2",
+        }
     ]
 
 

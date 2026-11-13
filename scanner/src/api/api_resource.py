@@ -1,13 +1,24 @@
+"""Flask REST API resource definitions for network scanning."""
+
 from flask import Flask, jsonify, request
 
 from controllers.main_controller import MainController
 
 
 def create_app(controller: MainController) -> Flask:
+    """Creates and configures the Flask application instance.
+
+    Args:
+        controller: The MainController instance handling business logic orchestration.
+
+    Returns:
+        A configured Flask application.
+    """
     app = Flask(__name__)
 
     @app.post("/scan")
     def scan():
+        """Handles POST /scan requests to trigger a network scan."""
         payload = request.get_json(silent=True) or {}
         targets = payload.get("targets")
         try:

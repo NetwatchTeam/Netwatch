@@ -18,8 +18,10 @@ def make_host(address, up=True):
 @pytest.fixture
 def nmap():
     """Mocke NmapProcess (run OK) et NmapParser. Retourne (process_cls, parser_cls)."""
-    with patch("usecases.scan_network.NmapProcess") as process_cls, \
-         patch("usecases.scan_network.NmapParser") as parser_cls:
+    with (
+        patch("usecases.scan_network.NmapProcess") as process_cls,
+        patch("usecases.scan_network.NmapParser") as parser_cls,
+    ):
         process_cls.return_value.run.return_value = 0
         process_cls.return_value.stdout = "<xml/>"
         parser_cls.parse.return_value.hosts = []
