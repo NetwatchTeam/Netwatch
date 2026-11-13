@@ -8,14 +8,22 @@ from entities.machine import Machine
 from usecases.machine_use_case import scan
 
 
+@patch("usecases.machine_use_case.collect_system_metrics")
 @patch("usecases.machine_use_case.check_availability")
 @patch("usecases.machine_use_case.check_machine_tls")
 @patch("usecases.machine_use_case.scan_network")
-def test_scan_convertit_les_machines_en_dict_avec_tls(mock_scan_network, mock_check_tls, mock_check_availability):
+def test_scan_convertit_les_machines_en_dict_avec_tls(
+    mock_scan_network, mock_check_tls, mock_check_availability, mock_collect_metrics
+):
     mock_scan_network.return_value = [
         Machine(ip="10.0.0.1", mac="aa:bb", first_seen="t1", last_seen="t2", id=3, open_ports=[443])
     ]
     mock_check_availability.return_value = {"latencyMs": 1.5, "packetLossPercent": 0.0}
+    mock_collect_metrics.return_value = {
+        "cpuPercent": 35.0,
+        "memory": {"usedPercent": 50.0, "totalMb": 4096.0},
+        "disks": [{"name": "/", "usedPercent": 45.0, "totalGb": 50.0}],
+    }
     mock_check_tls.return_value = {
         "ip": "10.0.0.1",
         "port": 443,
@@ -44,6 +52,9 @@ def test_scan_convertit_les_machines_en_dict_avec_tls(mock_scan_network, mock_ch
             "open_ports": [443],
             "latencyMs": 1.5,
             "packetLossPercent": 0.0,
+            "cpuPercent": 35.0,
+            "memory": {"usedPercent": 50.0, "totalMb": 4096.0},
+            "disks": [{"name": "/", "usedPercent": 45.0, "totalGb": 50.0}],
             "certificates": [
                 {
                     "port": 443,
@@ -58,17 +69,22 @@ def test_scan_convertit_les_machines_en_dict_avec_tls(mock_scan_network, mock_ch
         }
     ]
     mock_check_availability.assert_called_once_with("10.0.0.1")
+    mock_collect_metrics.assert_called_once_with("10.0.0.1")
     mock_check_tls.assert_called_once_with("10.0.0.1", port=443)
 
 
+@patch("usecases.machine_use_case.collect_system_metrics")
 @patch("usecases.machine_use_case.check_availability")
 @patch("usecases.machine_use_case.check_machine_tls")
 @patch("usecases.machine_use_case.scan_network")
-def test_scan_enrichit_machine_avec_tls_unreachable(mock_scan_network, mock_check_tls, mock_check_availability):
+def test_scan_enrichit_machine_avec_tls_unreachable(
+    mock_scan_network, mock_check_tls, mock_check_availability, mock_collect_metrics
+):
     mock_scan_network.return_value = [
         Machine(ip="10.0.0.1", mac="aa:bb", first_seen="t1", last_seen="t2", id=3, open_ports=[443])
     ]
     mock_check_availability.return_value = {"latencyMs": 1.5, "packetLossPercent": 0.0}
+    mock_collect_metrics.return_value = {"cpuPercent": None, "memory": None, "disks": []}
     mock_check_tls.return_value = {
         "ip": "10.0.0.1",
         "port": 443,
@@ -87,19 +103,26 @@ def test_scan_enrichit_machine_avec_tls_unreachable(mock_scan_network, mock_chec
             "open_ports": [443],
             "latencyMs": 1.5,
             "packetLossPercent": 0.0,
+            "cpuPercent": None,
+            "memory": None,
+            "disks": [],
             "certificates": [],
         }
     ]
 
 
+@patch("usecases.machine_use_case.collect_system_metrics")
 @patch("usecases.machine_use_case.check_availability")
 @patch("usecases.machine_use_case.check_machine_tls")
 @patch("usecases.machine_use_case.scan_network")
-def test_scan_poste_client_sans_port_tls_ne_declenche_pas_de_check_tls(mock_scan_network, mock_check_tls, mock_check_availability):
+def test_scan_poste_client_sans_port_tls_ne_declenche_pas_de_check_tls(
+    mock_scan_network, mock_check_tls, mock_check_availability, mock_collect_metrics
+):
     mock_scan_network.return_value = [
         Machine(ip="10.0.0.2", mac="cc:dd", first_seen="t1", last_seen="t2", id=4, open_ports=[22])
     ]
     mock_check_availability.return_value = {"latencyMs": 2.0, "packetLossPercent": 0.0}
+    mock_collect_metrics.return_value = {"cpuPercent": None, "memory": None, "disks": []}
 
     result = scan()
 
@@ -116,6 +139,9 @@ def test_scan_poste_client_sans_port_tls_ne_declenche_pas_de_check_tls(mock_scan
             "open_ports": [22],
             "latencyMs": 2.0,
             "packetLossPercent": 0.0,
+            "cpuPercent": None,
+            "memory": None,
+            "disks": [],
             "certificates": [],
         }
     ]
