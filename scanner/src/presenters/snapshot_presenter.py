@@ -15,10 +15,14 @@ class SnapshotPresenter:
                 "ports": machine.get("ports", []),
                 "latencyMs": machine.get("latencyMs"),
                 "packetLossPercent": machine.get("packetLossPercent"),
+                "tcpChecks": machine.get("tcpChecks", []),
             }
 
             if machine.get("hostname"):
                 device["hostname"] = machine["hostname"]
+            
+            if machine.get("icmpError"):
+                device["icmpError"] = machine["icmpError"]
 
             devices.append(device)
 
