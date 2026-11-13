@@ -15,6 +15,9 @@ class SnapshotPresenter:
                 "ports": machine.get("ports", []),
                 "latencyMs": machine.get("latencyMs"),
                 "packetLossPercent": machine.get("packetLossPercent"),
+                "cpuPercent": machine.get("cpuPercent") if machine.get("cpuPercent") is not None else machine.get("cpu_percent"),
+                "memory": machine.get("memory"),
+                "disks": machine.get("disks", []),
                 "certificates": machine.get("certificates", []),
             }
 
