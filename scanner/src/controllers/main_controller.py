@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from presenters.snapshot_presenter import SnapshotPresenter
 from usecases.machine_use_case import scan
+from usecases.check_expected_services import check_expected_services
 
 
 class MainController:
@@ -29,3 +30,7 @@ class MainController:
         """
         machines_data = scan(targets)
         return SnapshotPresenter.to_snapshot(machines_data)
+
+    def check_tcp_services(self) -> list[dict]:
+        """Contrôle les services configurés, sans lancer Nmap."""
+        return check_expected_services()
