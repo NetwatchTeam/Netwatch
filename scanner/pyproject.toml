@@ -16,5 +16,6 @@ dependencies = [
    "pathlib>=1.0.1",
    "pytest>=9.1.1",
    "cryptography>=41.0.0",
-   "ping3"
+   "ping3",
+   "paramiko>=3.0.0"
 ]
