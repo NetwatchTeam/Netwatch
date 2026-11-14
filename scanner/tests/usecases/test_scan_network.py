@@ -57,14 +57,15 @@ def test_scan_cible_par_defaut_localhost(nmap):
     """Scans localhost when no target is given."""
     process_cls, _ = nmap
     scan_network()
-    process_cls.assert_any_call(["127.0.0.1"], "-sn")
+    process_cls.assert_any_call("127.0.0.1", "-sn")
 
 
 def test_scan_joint_plusieurs_cibles_avec_un_espace(nmap):
-    """Transmits several targets to nmap."""
+    """Transmits several targets to the discovery scan, joined by a space."""
     process_cls, _ = nmap
     scan_network(["10.0.0.1", "10.0.0.2"])
-    process_cls.assert_any_call(["10.0.0.1", "10.0.0.2"], "-sn")
+    # Aucun hôte découvert : seule la phase de découverte est lancée.
+    process_cls.assert_called_once_with("10.0.0.1 10.0.0.2", "-sn")
 
 
 def test_scan_parse_la_sortie_de_nmap(nmap):
@@ -194,11 +195,11 @@ def test_scan_execute_decouverte_puis_scan_services(nmap):
 
     assert process_cls.call_count == 2
     assert process_cls.call_args_list[0].args == (
-        ["10.0.0.1"],
+        "10.0.0.1",
         "-sn",
     )
     assert process_cls.call_args_list[1].args == (
-        ["10.0.0.1"],
+        "10.0.0.1",
         "-sT -sV --version-light -Pn -F",
     )
 

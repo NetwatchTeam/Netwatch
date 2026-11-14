@@ -1,5 +1,6 @@
 """Network scanning based on nmap."""
 
+import uuid
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -49,7 +50,7 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
     targets = targets or DEFAULT_TARGETS
 
     # "-sn" : découverte d'hôtes seulement, pas de scan de ports.
-    scan = NmapProcess(targets, "-sn")
+    scan = NmapProcess(" ".join(targets), "-sn")
     return_code = scan.run()
 
     if return_code != 0:
@@ -74,7 +75,7 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
 
     # Scanner les ports et services des machines découvertes.
     service_scan = NmapProcess(
-        active_ips,
+        " ".join(active_ips),
         "-sT -sV --version-light -Pn -F",
     )
 
@@ -95,6 +96,9 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
         if not host.is_up():
             continue
 
+        if host.address not in discovered_hosts:
+            continue
+
         discovery_host = discovered_hosts.get(host.address, host)
 
         machines.append(
@@ -108,7 +112,6 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
         )
 
     return machines
-
 
 def _extract_open_ports(host) -> list[dict]:
     """Normalise les ports ouverts et les informations fournies par Nmap."""

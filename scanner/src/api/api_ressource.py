@@ -66,4 +66,15 @@ def create_app(controller: MainController) -> Flask:
         except RuntimeError as exc:
             app.logger.exception("Échec du scan Nmap")
             return jsonify({"error": str(exc)}), 502
+
+    @app.get("/tcp-checks")
+    def get_tcp_checks():
+        """Contrôle les services TCP configurés, sans lancer Nmap."""
+        try:
+            checks = controller.check_tcp_services()
+        except ValueError as exc:
+            app.logger.exception("Configuration TCP invalide")
+            return jsonify({"error": str(exc)}), 503
+
+        return jsonify({"checks": checks})
     return app

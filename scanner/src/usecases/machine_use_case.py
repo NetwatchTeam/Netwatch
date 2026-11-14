@@ -1,92 +1,184 @@
-"""Use case: discover machines and expose them as plain data."""
-
-from typing import List, Optional
+import ipaddress
+import logging
 from dataclasses import asdict
+from typing import List, Optional, Set
 
-from usecases.scan_network import scan_network
-from usecases.check_tls_use_case import check_machine_tls
+from usecases.scan_network import DEFAULT_TARGETS, scan_network
 from usecases.check_availability import check_availability
+from usecases.check_tcp_service import check_tcp_service
+from usecases.check_tls_use_case import check_machine_tls
 from usecases.collect_system_metrics import collect_system_metrics
 
-TLS_PORTS = {443, 8443}  # Ports standards pour les services HTTPS
+
+logger = logging.getLogger(__name__)
+
+# Profil de contrôle du lab, pas une liste de services obligatoires.
+DEFAULT_TCP_PORTS = {22, 80, 443}
+TCP_TIMEOUT = 1.0
+
+TLS_PORTS = (443, 8443)  # Ports standards HTTPS, par ordre de préférence
+TLS_VALID_STATUSES = ("ok", "expired", "expiring_soon")
 
 
-def _has_tls_service(machine) -> bool:
-    """Détermine si une machine dispose d'un service TLS/HTTPS actif en vérifiant ses ports ouverts."""
-    if hasattr(machine, "open_ports") and machine.open_ports:
-        if any(port in TLS_PORTS for port in machine.open_ports):
-            return True
-    if hasattr(machine, "ports") and machine.ports:
-        detected = [p.get("port") for p in machine.ports if isinstance(p, dict)]
-        if any(port in TLS_PORTS for port in detected):
-            return True
-    return False
+def _detected_ports(machine_data: dict) -> Set[int]:
+    """Retourne les ports TCP détectés par Nmap (open_ports + ports)."""
+    detected = set()
+
+    for port in machine_data.get("open_ports") or []:
+        detected.add(int(port))
+
+    for port_data in machine_data.get("ports") or []:
+        if not isinstance(port_data, dict):
+            continue
+        if port_data.get("protocol", "tcp") != "tcp":
+            continue
+        if port_data.get("port") is not None:
+            detected.add(int(port_data["port"]))
+
+    return detected
+
+
+def _tls_port(machine_data: dict) -> Optional[int]:
+    """Retourne le port TLS à contrôler (443 en priorité), sinon None."""
+    detected = _detected_ports(machine_data)
+
+    for port in TLS_PORTS:
+        if port in detected:
+            return port
+
+    return None
+
+
+def _collect_certificates(ip: str, machine_data: dict) -> List[dict]:
+    """Lit le certificat TLS uniquement si un port HTTPS est ouvert."""
+    port = _tls_port(machine_data)
+    if port is None:
+        return []
+
+    tls_info = check_machine_tls(ip, port=port)
+
+    # Le certificat n'a pas pu être lu.
+    if not tls_info or tls_info.get("status") not in TLS_VALID_STATUSES:
+        return []
+
+    return [
+        {
+            "port": port,
+            "subject": tls_info["sujet"],
+            "issuer": tls_info["emetteur"],
+            "validFrom": tls_info["date_debut_validite"],
+            "expiresAt": tls_info["date_expiration"],
+            "valid": tls_info["est_valide"],
+            "validationError": tls_info["erreur_validation"],
+        }
+    ]
 
 
 def scan(targets: Optional[List[str]] = None) -> List[dict]:
-    """Runs a network scan and returns simple data structures.
+    """Collecte les résultats Nmap, ICMP, TCP, métriques système et TLS.
+
+    Les IP explicitement demandées sont contrôlées même si Nmap
+    ne les découvre pas.
+
+    Les CIDR et noms DNS restent pris en charge par Nmap :
+    seules leurs IP découvertes sont ensuite contrôlées.
 
     Args:
-        targets: IP addresses, hostnames or CIDR ranges to scan. If omitted,
-            the scanner default (localhost) is used.
+        targets: adresses IP, noms DNS ou plages CIDR à scanner. Si omis,
+            DEFAULT_TARGETS est utilisé.
 
     Returns:
-        A list of dictionaries, one per discovered machine, with keys including
+        Une liste de dictionnaires, un par machine, avec notamment les clés :
         ip, id, mac, first_seen, last_seen, ports, open_ports, latencyMs,
-        packetLossPercent, cpuPercent, memory, disks, and certificates.
+        packetLossPercent, cpuPercent, memory, disks, tcpChecks
+        et certificates.
 
     Raises:
-        RuntimeError: If the underlying network scan fails.
+        RuntimeError: si le scan réseau sous-jacent échoue.
     """
-    discovered = scan_network(targets)
-    machines_data = []
+    requested_targets = targets or DEFAULT_TARGETS
+    discovered = scan_network(requested_targets)
 
+    machines_by_ip = {}
+
+    # Récupérer les machines et services découverts par Nmap.
     for machine in discovered:
-        machine_dict = asdict(machine)
+        machine_data = asdict(machine)
+        ip = str(ipaddress.ip_address(machine_data["ip"]))
+        machine_data["ip"] = ip
+        machines_by_ip[ip] = machine_data
 
-        # Mesures de disponibilité et latence
-        measurements = check_availability(machine.ip)
-        machine_dict.update(measurements)
+    # Conserver aussi les IP demandées mais non découvertes par Nmap.
+    for target in requested_targets:
+        try:
+            ip = str(ipaddress.ip_address(target))
+        except ValueError:
+            # Ne pas développer un CIDR ou résoudre un nom DNS ici.
+            continue
 
-        # Mesures des métriques système (CPU, RAM, Disques)
-        system_metrics = collect_system_metrics(machine.ip)
-        machine_dict.update(system_metrics)
+        machines_by_ip.setdefault(
+            ip,
+            {
+                "ip": ip,
+                "mac": None,
+                "ports": [],
+            },
+        )
 
-        # Vérification du certificat TLS uniquement si un port HTTPS est ouvert
-        if _has_tls_service(machine):
-            port = 443
-            detected_ports = []
-            if hasattr(machine, "open_ports") and machine.open_ports:
-                detected_ports.extend(machine.open_ports)
-            if hasattr(machine, "ports") and machine.ports:
-                detected_ports.extend([p.get("port") for p in machine.ports if isinstance(p, dict)])
+    machines = []
 
-            if 443 in detected_ports:
-                port = 443
-            elif 8443 in detected_ports:
-                port = 8443
+    for ip, machine_data in machines_by_ip.items():
+        # Une erreur ICMP ne doit pas empêcher les contrôles suivants.
+        try:
+            measurements = check_availability(ip)
+        except RuntimeError as exc:
+            logger.warning(
+                "Mesure ICMP impossible pour %s : %s",
+                ip,
+                exc,
+            )
+            measurements = {
+                "latencyMs": None,
+                "packetLossPercent": None,
+                "icmpError": str(exc),
+            }
 
-            tls_info = check_machine_tls(machine.ip, port=port)
+        machine_data.update(measurements)
 
-            # Si le certificat a pu être lu
-            if tls_info and tls_info.get("status") in ("ok", "expired", "expiring_soon"):
-                machine_dict["certificates"] = [
-                    {
-                        "port": port,
-                        "subject": tls_info["sujet"],
-                        "issuer": tls_info["emetteur"],
-                        "validFrom": tls_info["date_debut_validite"],
-                        "expiresAt": tls_info["date_expiration"],
-                        "valid": tls_info["est_valide"],
-                        "validationError": tls_info["erreur_validation"],
-                    }
-                ]
-            else:
-                machine_dict["certificates"] = []
-        else:
-            # Machine sans port HTTPS
-            machine_dict["certificates"] = []
+        # Métriques système (CPU, RAM, disques) : idem, non bloquant.
+        try:
+            system_metrics = collect_system_metrics(ip)
+        except RuntimeError as exc:
+            logger.warning(
+                "Collecte des métriques impossible pour %s : %s",
+                ip,
+                exc,
+            )
+            system_metrics = {
+                "cpuPercent": None,
+                "memory": None,
+                "disks": [],
+                "metricsError": str(exc),
+            }
 
-        machines_data.append(machine_dict)
+        machine_data.update(system_metrics)
 
-    return machines_data
+        # Essayer les ports du profil, même sans découverte Nmap,
+        # en y ajoutant les ports TCP découverts (sans doublons).
+        tcp_ports = set(DEFAULT_TCP_PORTS) | _detected_ports(machine_data)
+
+        machine_data["tcpChecks"] = [
+            check_tcp_service(
+                ip=ip,
+                port=port,
+                timeout=TCP_TIMEOUT,
+            )
+            for port in sorted(tcp_ports)
+        ]
+
+        # Certificat TLS, uniquement si un port HTTPS est ouvert.
+        machine_data["certificates"] = _collect_certificates(ip, machine_data)
+
+        machines.append(machine_data)
+
+    return machines
