@@ -48,11 +48,14 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
     """
     targets = targets or DEFAULT_TARGETS
 
+    # "-sn" : découverte d'hôtes seulement, pas de scan de ports.
     scan = NmapProcess(targets, "-sn")
     return_code = scan.run()
 
     if return_code != 0:
-        raise RuntimeError(f"Le scan nmap a échoué : {scan.stderr}")
+        raise RuntimeError(
+            f"Le scan nmap a échoué : {scan.stderr}"
+        )
 
     # Lire les résultats de la découverte réalisée avec -sn.
     discovery_report = NmapParser.parse(scan.stdout)
