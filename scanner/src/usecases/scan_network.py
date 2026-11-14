@@ -26,7 +26,7 @@ def _extract_mac(host) -> Optional[str]:
     Returns:
         The MAC address, or None if nmap did not report one.
     """
-    if host.mac:
+    if hasattr(host, "mac") and host.mac:
         return host.mac
     return None
 
@@ -99,7 +99,7 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
         if host.address not in discovered_hosts:
             continue
 
-        discovery_host = discovered_hosts[host.address]
+        discovery_host = discovered_hosts.get(host.address, host)
 
         machines.append(
             Machine(
@@ -117,16 +117,19 @@ def _extract_open_ports(host) -> list[dict]:
     """Normalise les ports ouverts et les informations fournies par Nmap."""
     ports = []
 
+    if not hasattr(host, "services") or not host.services:
+        return ports
+
     for service in host.services:
         if service.state != "open":
             continue
 
-        details = service.service_dict or {}
+        details = getattr(service, "service_dict", None) or {}
 
         services = []
-        
+
         # Certains champs peuvent manquer, d'où les "or None"
-        if service.service:
+        if getattr(service, "service", None):
             services.append({
                 "name": service.service,
                 "product": details.get("product") or None,
