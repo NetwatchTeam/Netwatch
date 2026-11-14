@@ -194,11 +194,11 @@ def test_scan_execute_decouverte_puis_scan_services(nmap):
 
     assert process_cls.call_count == 2
     assert process_cls.call_args_list[0].args == (
-        "10.0.0.1",
+        ["10.0.0.1"],
         "-sn",
     )
     assert process_cls.call_args_list[1].args == (
-        "10.0.0.1",
+        ["10.0.0.1"],
         "-sT -sV --version-light -Pn -F",
     )
 
