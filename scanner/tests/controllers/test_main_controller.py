@@ -13,4 +13,18 @@ def test_scan_machines_transmet_targets_et_retourne_le_resultat(mock_scan):
     result = MainController().scan_machines(["10.0.0.1"])
 
     mock_scan.assert_called_once_with(["10.0.0.1"])
-    assert result == [{"ip": "10.0.0.1"}]
+    assert result["contractVersion"] == "1.0.0"
+    assert "scannedAt" in result
+    assert result["devices"] == [
+        {
+            "ip": "10.0.0.1",
+            "mac": None,
+            "ports": [],
+            "latencyMs": None,
+            "packetLossPercent": None,
+            "cpuPercent": None,
+            "memory": None,
+            "disks": [],
+            "certificates": [],
+        }
+    ]

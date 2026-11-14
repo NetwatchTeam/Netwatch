@@ -15,5 +15,7 @@ dependencies = [
    "dotenv>=0.9.9",
    "pathlib>=1.0.1",
    "pytest>=9.1.1",
-   "ping3"
+   "cryptography>=41.0.0",
+   "ping3",
+   "paramiko>=3.0.0"
 ]
