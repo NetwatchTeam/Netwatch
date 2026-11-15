@@ -49,11 +49,13 @@ def test_scan_error(nmap):
         NmapScanner().scan_hosts(["127.0.0.1"])
 
 
-def test_scan_joint_plusieurs_cibles_avec_un_espace(nmap):
+def test_scan_passe_les_cibles_en_liste(nmap):
     process_cls, _ = nmap
     NmapScanner().scan_hosts(["10.0.0.1", "10.0.0.2"])
     # Aucun hôte découvert : seule la phase de découverte est lancée.
-    process_cls.assert_called_once_with("10.0.0.1 10.0.0.2", "-sn")
+    # Une liste (et non une chaîne jointe) : libnmap supprime les espaces
+    # d'une chaîne et collerait les IP ensemble.
+    process_cls.assert_called_once_with(["10.0.0.1", "10.0.0.2"], "-sn")
 
 
 def test_scan_parse_la_sortie_de_nmap(nmap):
@@ -136,9 +138,9 @@ def test_scan_execute_decouverte_puis_scan_services_et_traduit_en_port(nmap):
 
     hosts = NmapScanner().scan_hosts(["10.0.0.1"])
 
-    assert process_cls.call_args_list[0].args == ("10.0.0.1", "-sn")
+    assert process_cls.call_args_list[0].args == (["10.0.0.1"], "-sn")
     assert process_cls.call_args_list[1].args == (
-        "10.0.0.1",
+        ["10.0.0.1"],
         "-sT -sV --version-light -Pn -F",
     )
     discovery_process.run.assert_called_once_with()
@@ -156,6 +158,28 @@ def test_scan_execute_decouverte_puis_scan_services_et_traduit_en_port(nmap):
             ),
         )
     ]
+
+
+def test_scan_services_recoit_les_ip_en_liste(nmap):
+    process_cls, parser_cls = nmap
+    discovery_process = MagicMock()
+    discovery_process.run.return_value = 0
+    service_process = MagicMock()
+    service_process.run.return_value = 0
+    process_cls.side_effect = [discovery_process, service_process]
+
+    discovery_report = MagicMock()
+    discovery_report.hosts = [make_host("10.0.0.1"), make_host("10.0.0.2")]
+    service_report = MagicMock()
+    service_report.hosts = []
+    parser_cls.parse.side_effect = [discovery_report, service_report]
+
+    NmapScanner().scan_hosts(["10.0.0.0/24"])
+
+    assert process_cls.call_args_list[1].args == (
+        ["10.0.0.1", "10.0.0.2"],
+        "-sT -sV --version-light -Pn -F",
+    )
 
 
 def test_scan_services_propage_son_erreur(nmap):
