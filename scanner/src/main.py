@@ -20,6 +20,7 @@ from usecases.check_tls_use_case import CheckMachineTls
 from usecases.collect_system_metrics import CollectSystemMetrics
 from usecases.machine_use_case import ScanMachines
 from usecases.scan_network import ScanNetwork
+from apscheduler_requests import launch_scheduler
 
 
 def build_controller() -> MainController:
@@ -47,7 +48,8 @@ def build_controller() -> MainController:
 def main() -> None:
     """Builds the controller, creates the Flask app, and starts the development server."""
     app = create_app(build_controller())
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    launch_scheduler()
+    app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)
 
 
 if __name__ == "__main__":
