@@ -76,7 +76,7 @@ class NmapScanner(NetworkScanner):
             RuntimeError: If one of the nmap executions fails.
         """
         # "-sn" : découverte d'hôtes seulement, pas de scan de ports.
-        scan = NmapProcess(" ".join(targets), "-sn")
+        scan = NmapProcess(targets, "-sn")
         if scan.run() != 0:
             raise RuntimeError(f"Le scan nmap a échoué : {scan.stderr}")
 
@@ -92,11 +92,10 @@ class NmapScanner(NetworkScanner):
             return []
 
         # Scanner les ports et services des machines découvertes.
-        service_scan = NmapProcess(" ".join(active_ips), "-sT -sV --version-light -Pn -F")
-        if service_scan.run() != 0:
-            raise RuntimeError(
-                f"Le scan des ports et services a échoué : {service_scan.stderr}"
-            )
+        service_scan = NmapProcess(
+            active_ips,
+            "-sT -sV --version-light -Pn -F",
+        )
 
         hosts = []
         for host in NmapParser.parse(service_scan.stdout).hosts:
