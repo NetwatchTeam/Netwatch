@@ -50,7 +50,8 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
     targets = targets or DEFAULT_TARGETS
 
     # "-sn" : découverte d'hôtes seulement, pas de scan de ports.
-    scan = NmapProcess(" ".join(targets), "-sn")
+    scan = NmapProcess(targets, "-sn")
+
     return_code = scan.run()
 
     if return_code != 0:
@@ -75,7 +76,7 @@ def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
 
     # Scanner les ports et services des machines découvertes.
     service_scan = NmapProcess(
-        " ".join(active_ips),
+        active_ips,
         "-sT -sV --version-light -Pn -F",
     )
 
