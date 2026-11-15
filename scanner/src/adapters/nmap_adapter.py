@@ -92,10 +92,11 @@ class NmapScanner(NetworkScanner):
             return []
 
         # Scanner les ports et services des machines découvertes.
-        service_scan = NmapProcess(
-            active_ips,
-            "-sT -sV --version-light -Pn -F",
-        )
+        service_scan = NmapProcess(active_ips, "-sT -sV --version-light -Pn -F")
+        if service_scan.run() != 0:
+            raise RuntimeError(
+                f"Le scan des ports et services a échoué : {service_scan.stderr}"
+            )
 
         hosts = []
         for host in NmapParser.parse(service_scan.stdout).hosts:
