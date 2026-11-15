@@ -11,10 +11,10 @@ class CheckAvailability:
         self._prober = prober
 
     def execute(
-        self,
-        ip: str,  # L'adresse IP de la machine à sonder.
-        attempts: int = 3,  # Les tentatives de ping à effectuer.
-        timeout: float = 1.0,  # Le délai d'attente en secondes pour chaque tentative.
+            self,
+            ip: str,  # L'adresse IP de la machine à sonder.
+            attempts: int = 3,  # Les tentatives de ping à effectuer.
+            timeout: float = 1.0,  # Le délai d'attente en secondes pour chaque tentative.
     ) -> dict:
         """Retourne la latence moyenne en ms et la perte des sondes ICMP.
 

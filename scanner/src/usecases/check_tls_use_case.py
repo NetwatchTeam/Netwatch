@@ -16,11 +16,11 @@ class CheckMachineTls:
         self._reader = reader
 
     def execute(
-        self,
-        ip: str,
-        port: int = 443,
-        timeout: float = 3.0,
-        expiring_soon_days: int = EXPIRING_SOON_DAYS,
+            self,
+            ip: str,
+            port: int = 443,
+            timeout: float = 3.0,
+            expiring_soon_days: int = EXPIRING_SOON_DAYS,
     ) -> dict:
         now = datetime.now(timezone.utc)
         date_observation = now.isoformat()

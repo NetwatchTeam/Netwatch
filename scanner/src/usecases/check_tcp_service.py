@@ -14,10 +14,10 @@ class CheckTcpService:
         self._prober = prober
 
     def execute(
-        self,
-        ip: str,
-        port: int,
-        timeout: float = 3.0,
+            self,
+            ip: str,
+            port: int,
+            timeout: float = 3.0,
     ) -> dict:
         """Teste une connexion TCP vers une adresse IP et un port.
 
@@ -35,10 +35,10 @@ class CheckTcpService:
 
         # Le timeout doit être un nombre fini positif.
         if (
-            isinstance(timeout, bool)
-            or not isinstance(timeout, (int, float))
-            or not math.isfinite(timeout)
-            or timeout <= 0
+                isinstance(timeout, bool)
+                or not isinstance(timeout, (int, float))
+                or not math.isfinite(timeout)
+                or timeout <= 0
         ):
             raise ValueError("timeout doit être un nombre fini positif.")
 

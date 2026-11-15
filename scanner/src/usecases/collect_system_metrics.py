@@ -45,13 +45,13 @@ class CollectSystemMetrics:
         self._fetcher = fetcher
 
     def collect_ssh_metrics(
-        self,
-        ip: str,
-        username: str = "supervision",
-        password: Optional[str] = None,
-        key_filename: Optional[str] = None,
-        port: int = 22,
-        timeout: float = 3.0,
+            self,
+            ip: str,
+            username: str = "supervision",
+            password: Optional[str] = None,
+            key_filename: Optional[str] = None,
+            port: int = 22,
+            timeout: float = 3.0,
     ) -> dict:
         """Collects system metrics from a remote machine via SSH without agent.
 
@@ -101,9 +101,9 @@ class CollectSystemMetrics:
         return _to_contract(metrics)
 
     def execute(
-        self,
-        ip: str,
-        ssh_credentials: Optional[dict] = None,
+            self,
+            ip: str,
+            ssh_credentials: Optional[dict] = None,
     ) -> dict:
         """Entry point for system metrics collection for a discovered machine.
 
