@@ -11,4 +11,4 @@ class Memory:
     """
 
     percentage_used: float
-    total_mb: int
+    total_mb: float

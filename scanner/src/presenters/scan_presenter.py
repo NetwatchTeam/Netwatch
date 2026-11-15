@@ -1,8 +1,7 @@
 from datetime import UTC, datetime
 
-from entities.scan_result import ScanResult
-from entities.throughput import Throughput
 from presenters.machine_presenter import MachinePresenter
+from usecases.responses.scan_response import ScanResponse, ThroughputResponse
 
 CONTRACT_VERSION = "1.0.0"
 
@@ -38,11 +37,11 @@ class ScanPresenter:
     """Presenter responsible for formatting scan results into API contracts."""
 
     @staticmethod
-    def _throughput(x: Throughput) -> dict:
-        """Formats a throughput object into a dictionary.
+    def _throughput(x: ThroughputResponse) -> dict:
+        """Formats a throughput measurement into a dictionary.
 
         Args:
-            x: The Throughput instance.
+            x: The ThroughputResponse instance.
 
         Returns:
             A dictionary representation of the throughput.
@@ -50,11 +49,11 @@ class ScanPresenter:
         return {"sourceIp": x.source_ip, "targetIp": x.target_ip, "mbps": x.mbps}
 
     @staticmethod
-    def present(scan_result: ScanResult) -> dict:
+    def present(scan_result: ScanResponse) -> dict:
         """Presents the scan result data as a dictionary adhering to the API contract.
 
         Args:
-            scan_result: The ScanResult instance to present.
+            scan_result: The ScanResponse produced by the use case.
 
         Returns:
             A dictionary containing the formatted scan report.

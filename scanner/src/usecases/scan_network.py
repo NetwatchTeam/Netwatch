@@ -1,34 +1,74 @@
-"""Use case for scanning network targets and enriching discovered machines with probe data."""
+"""Use case for scanning network targets and returning the discovered machines."""
 
-from adapters.nmap_adapter import scan_hosts
 from entities.machine import Machine
+from entities.port import Port
+from entities.service import Service
+from usecases.ports.network_scanner import NetworkScanner, ScannedHost, ScannedService
 
 DEFAULT_TARGETS = ["127.0.0.1"]
 
 
-def _enrich(machine: Machine) -> None:
-    """Enriches a Machine entity with ping metrics, TLS certificates, and local stats.
+def _to_service(scanned: ScannedService) -> Service:
+    """Builds a Service entity from a scanned service."""
+    name = scanned.name or "unknown"
+    if scanned.tls and name == "http":
+        name = "https"  # http over TLS is https
+    return Service(
+        name=name,
+        port=Port(number=scanned.port, protocol=scanned.protocol),
+        product=scanned.product,
+        version=scanned.version,
+        tls=scanned.tls or name == "https",
+    )
 
-    Args:
-        machine: The Machine instance to enrich in-place.
-    """
-    # TODO: CPU/RAM/disk metrics for remote hosts via lightweight agent or PySNMP (switch, NAS)
-    # TODO: gateway inferred via traceroute for dependency graph
-    return machine
+
+def _to_port_details(scanned: ScannedService) -> dict:
+    """Builds the port detail dictionary stored in ``Machine.ports``."""
+    services = []
+    if scanned.name:
+        services.append(
+            {
+                "name": scanned.name,
+                "product": scanned.product,
+                "version": scanned.version,
+            }
+        )
+    return {"port": scanned.port, "protocol": scanned.protocol, "services": services}
 
 
-def scan_network(targets: list[str] | None = None) -> list[Machine]:
-    """Scans the specified targets (defaults to localhost) and returns enriched Machine entities.
+def _to_machine(host: ScannedHost) -> Machine:
+    """Builds a Machine entity from a scanned host."""
+    return Machine(
+        ip=host.ip,
+        # fallback: IP if no reverse DNS
+        hostname=host.hostname or host.ip,
+        mac=host.mac,
+        vendor=host.vendor,
+        ports=[_to_port_details(s) for s in host.services],
+        services=[_to_service(s) for s in host.services],
+    )
 
-    Args:
-        targets: Optional list of target IPs, hostnames, or CIDR blocks.
 
-    Returns:
-        A list of discovered and enriched Machine entities.
-    """
-    resolved_targets = targets or DEFAULT_TARGETS
-    machines = []
-    for machine in scan_hosts(resolved_targets):
-        _enrich(machine)
-        machines.append(machine)
-    return machines
+class ScanNetwork:
+    """Scans network targets through a NetworkScanner port."""
+
+    def __init__(self, scanner: NetworkScanner) -> None:
+        self._scanner = scanner
+
+    def execute(self, targets: list[str] | None = None) -> list[Machine]:
+        """Scans the given targets and returns the machines that are up.
+
+        The returned entities are not persisted (``id`` is None).
+
+        Args:
+            targets: IP addresses, hostnames or CIDR ranges to scan. Defaults
+                to ``DEFAULT_TARGETS`` (localhost).
+
+        Returns:
+            A list of Machine entities, one per host reported as up.
+
+        Raises:
+            RuntimeError: If the scanner fails.
+        """
+        hosts = self._scanner.scan_hosts(targets or DEFAULT_TARGETS)
+        return [_to_machine(host) for host in hosts]

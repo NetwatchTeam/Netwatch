@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 
 from entities.certificate import TLSCertificate
-from entities.disk import Disk
-from entities.memory import Memory
 from entities.service import Service
 
 
@@ -12,28 +10,31 @@ class Machine:
 
     Attributes:
         ip: The IP address of the machine.
-        hostname: The hostname of the machine.
-        mac: Optional MAC address.
+        hostname: Optional hostname (falls back to the IP when nmap finds none).
+        id: Database identifier, or None if the machine is not persisted.
+        mac: MAC address, or None if it could not be determined (for example
+            when scanning localhost or a remote subnet).
         vendor: Optional hardware vendor name.
         gateway: Optional gateway IP address.
-        latency: Optional network latency in milliseconds.
-        packet_loss: Optional packet loss percentage.
-        cpu_usage: Optional CPU usage percentage.
-        memory: Optional memory usage details.
-        disks: List of disk drives attached to the machine.
+        ports: List of port service details discovered on the machine.
+        open_ports: List of open port numbers.
         services: List of running services discovered on the machine.
-        certificates: List of TLS certificates found on the machine.
+        certificates: List of TLS certificates discovered on the machine.
+        cpuPercent: CPU usage percentage (0-100), or None if unavailable.
+        memory: Dictionary with usedPercent and totalMb, or None if unavailable.
+        disks: List of disk usage dictionaries (name, usedPercent, totalGb).
     """
 
     ip: str
-    hostname: str
+    hostname: str | None = None
+    id: int | None = None
     mac: str | None = None
     vendor: str | None = None
     gateway: str | None = None
-    latency: float | None = None  # ms
-    packet_loss: float | None = None  # %
-    cpu_usage: float | None = None  # %
-    memory: Memory | None = None
-    disks: list[Disk] = field(default_factory=list)
+    ports: list[dict] = field(default_factory=list)
+    open_ports: list[int] = field(default_factory=list)
     services: list[Service] = field(default_factory=list)
-    certificates: list[TLSCertificate] = field(default_factory=list)
+    certificates: list[TLSCertificate | dict] = field(default_factory=list)
+    cpuPercent: float | None = None
+    memory: dict | None = None
+    disks: list[dict] = field(default_factory=list)
