@@ -1,8 +1,9 @@
 # Modèle de données
 
-Le MCD de référence du projet, et sa correspondance avec les tables PostgreSQL créées par la migration
-[006_mcd_reparations_services_scans.sql](../apps/api/migrations/006_mcd_reparations_services_scans.sql).
-La migration s'applique toute seule au démarrage de l'API.
+Le MCD de référence du projet, et sa correspondance avec les tables PostgreSQL créées par les migrations
+[006_mcd_reparations_services_scans.sql](../apps/api/migrations/006_mcd_reparations_services_scans.sql) et
+[007_validation_et_ajout_manuel.sql](../apps/api/migrations/007_validation_et_ajout_manuel.sql).
+Les migrations s'appliquent toutes seules au démarrage de l'API.
 
 ![MCD de NetWatch](mcd.png)
 
@@ -10,14 +11,16 @@ La migration s'applique toute seule au démarrage de l'API.
 migration (`007_….sql`, jamais la modification d'une migration déjà poussée), la mise à jour de ce document et celle
 du MCD ([mcd.png](mcd.png) et sa version modifiable [mcd.svg](mcd.svg)).
 
-**État actuel : les tables du MCD existent mais restent vides.** L'application continue de lire et d'écrire ses
-tables d'origine (voir [Tables d'origine](#tables-dorigine)), aucun code n'utilise encore celles-ci.
+**État actuel : les tables issues de la migration 006 existent mais restent vides.** L'application continue de lire
+et d'écrire ses tables d'origine (voir [Tables d'origine](#tables-dorigine)), aucun code ne les utilise encore.
+Celles de la migration 007 (`devices.origin`, `device_decisions`) sont, elles, **utilisées** par l'application
+(tickets #31 et #32).
 
 ## Correspondance
 
 | MCD | Table | Colonnes (nom du MCD → colonne) |
 | --- | --- | --- |
-| Equipement | `devices` (existante) | id_equipement → `id`, mac → `mac`, hostname → `hostname`, est_identifie → `is_identified` |
+| Equipement | `devices` (existante) | id_equipement → `id`, mac → `mac`, hostname → `hostname`, est_identifie → `is_identified`, origine → `origin` |
 | Reparation | `repairs` | id_reparation → `id`, etat_courant → `status`, date_deposee → `dropped_off_at`, date_rep_finie → `finished_at` |
 | Service | `services` | id_service → `id`, nom → `name` |
 | Port | `service_ports` | port → `port`, protocole → `protocol` |
@@ -26,6 +29,7 @@ tables d'origine (voir [Tables d'origine](#tables-dorigine)), aucun code n'utili
 | Scan_equipement | `device_scans` | id_scan → `id`, date → `scanned_at`, usage_cpu → `cpu_percent`, perte_paquets → `packet_loss_percent`, charge_memoire → `memory_percent`, joignable → `reachable`, latence_ms → `latency_ms`, ip → `ip` |
 | Observation_Port | `device_scan_ports` | port → `port`, protocole → `protocol` |
 | Observation_Disque | `device_scan_disks` | nom → `name`, usage_pourcent → `used_percent`, capacite_go → `capacity_gb` |
+| Decision | `device_decisions` | id_decision → `id`, action → `action`, auteur → `author`, date_decision → `decided_at`, etat_avant → `previous_lifecycle`, etat_apres → `lifecycle`, role → `kind`, nom → `label`, critique → `critical` |
 
 | Association | Cardinalités | Traduction |
 | --- | --- | --- |
@@ -38,11 +42,17 @@ tables d'origine (voir [Tables d'origine](#tables-dorigine)), aucun code n'utili
 | revele (R) | Scan_equipement 0,n — Observation_Port 1,1 | clé primaire `device_scan_ports (scan_id, port, protocol)` |
 | mesure (R) | Scan_equipement 0,n — Observation_Disque 1,1 | clé primaire `device_scan_disks (scan_id, name)` |
 | Dependance | Equipement 0,n — Equipement 0,n | `device_dependencies` (existante, migration 005) |
+| concerne | Equipement 0,n — Decision 1,1 | `device_decisions.device_id` (obligatoire) |
 
 Détails :
 
 - `devices.is_identified` est **calculée** depuis `lifecycle` et ne s'écrit pas : elle est fausse tant que la
-  machine est `pending_classification`.
+  machine est `pending_classification` (« à valider »).
+- `devices.lifecycle` accepte `pending_classification`, `active` (validé : seul état supervisé), `ignored` et
+  `excluded` (contrainte posée par la migration 007). `devices.origin` vaut `discovered` ou `manual`.
+- `devices.last_seen_at` est nulle pour un équipement ajouté à la main que le collecteur n'a encore jamais vu.
+- `device_decisions` est un journal : une ligne par action humaine (`created`, `merged`, `validated`, `ignored`,
+  `excluded`, `updated`), avec son auteur obligatoire et l'état obtenu. Il n'est jamais modifié après coup.
 - `repairs.status` accepte `planned`, `in_progress`, `finished` et `cancelled`. Pour changer ces valeurs, modifier
   la contrainte dans une nouvelle migration.
 - `repairs.dropped_off_at` peut être dans le futur : c'est ce qui permet de déclarer une réparation à l'avance.
@@ -50,8 +60,8 @@ Détails :
 - `device_incidents.role` est un texte libre (par exemple `cause`, `impactee`).
 - Un incident n'est pas relié à un service : il concerne des équipements. Les services touchés se retrouvent par
   leur équipement.
-- Supprimer un équipement supprime ses réparations, services, ports, certificats et scans, ainsi que ses liens
-  vers les incidents. L'incident lui-même reste.
+- Supprimer un équipement supprime ses réparations, services, ports, certificats, scans et décisions, ainsi que
+  ses liens vers les incidents. L'incident lui-même reste.
 
 ## Brancher la fonctionnalité de réparation
 

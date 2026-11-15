@@ -3,11 +3,16 @@ import { config } from '../config';
 
 export class ApiError extends Error {
   readonly status: number;
+  /** Code d'erreur du contrat (`duplicate_device`, `bad_request`…), quand l'API en renvoie un. */
+  readonly code: string | null;
+  readonly details: unknown;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, code: string | null = null, details: unknown = undefined) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.code = code;
+    this.details = details;
   }
 }
 
@@ -37,7 +42,12 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as ApiErrorDto | null;
-      throw new ApiError(response.status, payload?.error.message ?? response.statusText);
+      throw new ApiError(
+        response.status,
+        payload?.error.message ?? response.statusText,
+        payload?.error.code ?? null,
+        payload?.error.details,
+      );
     }
 
     if (response.status === 204) return undefined as T;

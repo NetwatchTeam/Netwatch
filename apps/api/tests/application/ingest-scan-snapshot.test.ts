@@ -5,6 +5,7 @@ import { ClassifyDevice } from '../../src/application/use-cases/devices.js';
 import { IngestScanSnapshot } from '../../src/application/use-cases/ingest-scan-snapshot.js';
 import {
   InMemoryDependencyRepository,
+  InMemoryDeviceDecisionRepository,
   InMemoryDeviceRepository,
   InMemoryEventRepository,
   InMemoryPolicyRepository,
@@ -13,6 +14,14 @@ import {
 } from '../support/in-memory-repositories.js';
 
 const T0 = new Date('2026-09-14T08:00:00Z');
+
+/** Un humain valide tout le parc découvert : seuls les équipements validés sont supervisés. */
+async function validateAll(devices: InMemoryDeviceRepository, events: InMemoryEventRepository): Promise<void> {
+  const classify = new ClassifyDevice(devices, events, new InMemoryDeviceDecisionRepository(), { now: () => T0 }, sequentialIds('decision'));
+  for (const device of await devices.findAll()) {
+    await classify.execute(device.id, { kind: 'workstation', label: device.label }, 'test');
+  }
+}
 
 function snapshot(at: Date, ips: string[], extras: Partial<ScanSnapshot> = {}): ScanSnapshot {
   return {
@@ -78,19 +87,30 @@ describe('ingestion d’un scan', () => {
     await ingest.execute(snapshot(T0, ['192.168.1.10']));
     const [discovered] = await devices.findAll();
 
-    const classify = new ClassifyDevice(devices, events, { now: () => new Date(T0.getTime() + 60_000) });
-    const classified = await classify.execute(discovered!.id, {
-      kind: 'server',
-      label: 'Serveur de fichiers',
-      critical: true,
-    });
+    const decisions = new InMemoryDeviceDecisionRepository();
+    const classify = new ClassifyDevice(
+      devices,
+      events,
+      decisions,
+      { now: () => new Date(T0.getTime() + 60_000) },
+      sequentialIds('decision'),
+    );
+    const classified = await classify.execute(
+      discovered!.id,
+      { kind: 'server', label: 'Serveur de fichiers', critical: true },
+      'Amir',
+    );
 
     expect(classified.lifecycle).toBe('active');
     expect(await events.findOpen()).toHaveLength(0);
+    expect(await decisions.listByDevice(discovered!.id)).toEqual([
+      expect.objectContaining({ action: 'validated', author: 'Amir', previousLifecycle: 'pending_classification' }),
+    ]);
   });
 
   it('ouvre puis referme un incident selon la présence de la machine', async () => {
     await ingest.execute(snapshot(T0, ['192.168.1.10']));
+    await validateAll(devices, events);
 
     const absent = await ingest.execute(snapshot(new Date(T0.getTime() + 5 * 60_000), []));
     expect(absent.eventsOpened).toBe(1);
@@ -119,6 +139,7 @@ describe('ingestion d’un scan', () => {
 
   it('signale une chute de débit par rapport à la référence', async () => {
     await ingest.execute(snapshot(T0, ['192.168.1.10', '192.168.1.11']));
+    await validateAll(devices, events);
     throughput.baselineValue = 900;
 
     await ingest.execute({
@@ -179,6 +200,7 @@ describe('ingestion : passerelle en panne ou panne derrière la passerelle', () 
         .sort();
 
     await ingest.execute(network(true, true, at(0)));
+    await validateAll(devices, events);
     // Les passerelles vues par le collecteur ne sont que des suggestions : un humain les valide.
     expect((await dependencies.list()).map((d) => d.status)).toEqual(['suggested', 'suggested', 'suggested']);
     await new ValidateAllSuggestions(dependencies, { now: () => at(1) }).execute();
@@ -240,6 +262,53 @@ describe('ingestion : seules les dépendances validées servent à la corrélati
 
     expect((await devices.findAll()).map((d) => d.reachability)).toEqual(['down', 'down']);
     expect((await dependencies.list())[0]).toMatchObject({ status: 'suggested', source: 'discovered' });
+  });
+
+  it('ne supervise pas une machine encore à valider : ni panne, ni signalement', async () => {
+    const devices = new InMemoryDeviceRepository();
+    const events = new InMemoryEventRepository();
+    const ingest = new IngestScanSnapshot(
+      devices,
+      events,
+      new InMemoryThroughputRepository(),
+      new InMemoryPolicyRepository(),
+      sequentialIds(),
+      new InMemoryDependencyRepository(),
+    );
+
+    await ingest.execute(snapshot(T0, ['192.168.1.10']));
+    await ingest.execute(snapshot(new Date(T0.getTime() + 5 * 60_000), []));
+
+    // Seul l'événement « à identifier » est ouvert : la machine n'est pas encore au référentiel.
+    expect((await events.findOpen()).map((event) => event.type)).toEqual(['device_discovered']);
+  });
+
+  it('ne repropose jamais comme nouvelle une machine ignorée ou exclue', async () => {
+    const devices = new InMemoryDeviceRepository();
+    const events = new InMemoryEventRepository();
+    const ingest = new IngestScanSnapshot(
+      devices,
+      events,
+      new InMemoryThroughputRepository(),
+      new InMemoryPolicyRepository(),
+      sequentialIds(),
+      new InMemoryDependencyRepository(),
+    );
+    const decisions = new InMemoryDeviceDecisionRepository();
+    const classify = new ClassifyDevice(devices, events, decisions, { now: () => T0 }, sequentialIds('decision'));
+
+    await ingest.execute(snapshot(T0, ['192.168.1.10', '192.168.1.11']));
+    const [first, second] = await devices.findAll();
+    await classify.execute(first!.id, { kind: 'phone', lifecycle: 'ignored' }, 'Amir');
+    await classify.execute(second!.id, { kind: 'other', lifecycle: 'excluded' }, 'Amir');
+
+    for (let scan = 1; scan <= 5; scan += 1) {
+      const result = await ingest.execute(snapshot(new Date(T0.getTime() + scan * 5 * 60_000), ['192.168.1.10', '192.168.1.11']));
+      expect(result.devicesDiscovered).toBe(0);
+    }
+
+    expect((await devices.findAll()).map((device) => device.lifecycle).sort()).toEqual(['excluded', 'ignored']);
+    expect(await events.findOpen()).toEqual([]);
   });
 
   it('ne repropose pas une suggestion rejetée', async () => {

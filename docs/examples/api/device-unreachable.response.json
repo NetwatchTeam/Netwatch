@@ -5,10 +5,11 @@
     "mac": "02:20:00:00:0c:01",
     "hostname": "pc-atelier-01",
     "vendor": "Lenovo",
-    "kind": "unknown",
+    "kind": "workstation",
     "label": null,
     "critical": false,
-    "lifecycle": "pending_classification",
+    "lifecycle": "active",
+    "origin": "discovered",
     "reachability": "unreachable",
     "gatewayIp": "10.20.0.12",
     "gateway": {
@@ -52,15 +53,15 @@
       }
     ],
     "certificates": [],
-    "firstSeenAt": "2026-11-06T12:50:00.000Z",
-    "lastSeenAt": "2026-11-06T13:00:00.000Z",
-    "lastChangeAt": "2026-11-06T13:05:00.000Z",
-    "openEvents": 2
+    "firstSeenAt": "2026-11-15T11:05:00.000Z",
+    "lastSeenAt": "2026-11-15T11:15:00.000Z",
+    "lastChangeAt": "2026-11-15T11:20:00.000Z",
+    "openEvents": 1
   },
   "dependents": [],
   "events": [
     {
-      "id": "00000000-0000-4000-8000-00000000008b",
+      "id": "00000000-0000-4000-8000-0000000000b4",
       "deviceId": "00000000-0000-4000-8000-00000000000f",
       "deviceName": "pc-atelier-01",
       "peerDeviceId": "00000000-0000-4000-8000-00000000000e",
@@ -73,19 +74,19 @@
       "details": {
         "ip": "10.20.12.101",
         "hostname": "pc-atelier-01",
-        "lastSeenAt": "2026-11-06T13:00:00.000Z",
+        "lastSeenAt": "2026-11-15T11:15:00.000Z",
         "missedScans": 1,
         "gatewayIp": "10.20.0.12",
         "cause": "gateway",
         "gateway": "Passerelle atelier"
       },
-      "startedAt": "2026-11-06T13:05:00.000Z",
+      "startedAt": "2026-11-15T11:20:00.000Z",
       "resolvedAt": null,
       "acknowledgedAt": null,
-      "durationSeconds": 39
+      "durationSeconds": 6
     },
     {
-      "id": "00000000-0000-4000-8000-00000000005f",
+      "id": "00000000-0000-4000-8000-000000000053",
       "deviceId": "00000000-0000-4000-8000-00000000000f",
       "deviceName": "pc-atelier-01",
       "peerDeviceId": null,
@@ -93,7 +94,7 @@
       "type": "device_discovered",
       "category": "configuration",
       "severity": "info",
-      "status": "open",
+      "status": "resolved",
       "summary": "Nouvel équipement détecté : pc-atelier-01 — à identifier",
       "details": {
         "ip": "10.20.12.101",
@@ -102,10 +103,24 @@
         "vendor": "Lenovo",
         "openPorts": "135, 139"
       },
-      "startedAt": "2026-11-06T12:50:00.000Z",
-      "resolvedAt": null,
+      "startedAt": "2026-11-15T11:05:00.000Z",
+      "resolvedAt": "2026-11-15T11:15:00.000Z",
       "acknowledgedAt": null,
-      "durationSeconds": 939
+      "durationSeconds": 600
+    }
+  ],
+  "decisions": [
+    {
+      "id": "00000000-0000-4000-8000-00000000007b",
+      "deviceId": "00000000-0000-4000-8000-00000000000f",
+      "action": "validated",
+      "author": "Technicien réseau",
+      "decidedAt": "2026-11-15T11:15:00.000Z",
+      "previousLifecycle": "pending_classification",
+      "lifecycle": "active",
+      "kind": "workstation",
+      "label": null,
+      "critical": false
     }
   ]
 }

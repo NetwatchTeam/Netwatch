@@ -1,6 +1,7 @@
 import type { AddressInfo } from 'node:net';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { CONTRACT_VERSION } from '@netwatch/contracts';
 import type { ScannerGateway } from '../src/application/ports/scanner-gateway.js';
 import { buildUseCases } from '../src/container.js';
 import type { Env } from '../src/infrastructure/config/env.js';
@@ -44,7 +45,7 @@ export async function generateContractExamples(): Promise<ContractExamples> {
   // Le collecteur simulé passe par la validation du contrat, comme un vrai collecteur.
   const scanner: ScannerGateway = {
     async fetchSnapshot() {
-      const payload = { contractVersion: '1.0.0', ...scenario.default({ scanNumber, now }) };
+      const payload = { contractVersion: CONTRACT_VERSION, ...scenario.default({ scanNumber, now }) };
       scanNumber += 1;
       lastCollectorPayload = payload;
       return toDomainSnapshot(snapshotSchema.parse(payload));
@@ -83,13 +84,28 @@ export async function generateContractExamples(): Promise<ContractExamples> {
     ((await get(`/devices?q=${hostname}`)) as Array<{ id: string; hostname: string }>).find((d) => d.hostname === hostname)!.id;
 
   try {
-    // Scans 0 à 2 : réseau normal. Un technicien identifie quelques équipements et valide le graphe.
+    // Scans 0 à 2 : réseau normal. Un technicien valide le parc découvert (seuls les équipements
+    // validés sont supervisés), nomme quelques équipements et valide le graphe.
     await scan();
     await scan();
+    const author = 'Technicien réseau';
     const gatewayId = await idOf('gw-atelier');
-    await call(`/devices/${gatewayId}`, 'PATCH', { kind: 'router', label: 'Passerelle atelier', critical: true });
-    await call(`/devices/${await idOf('srv-erp')}`, 'PATCH', { kind: 'server', label: 'Serveur ERP', critical: true });
-    await call(`/devices/${await idOf('cam-quai')}`, 'PATCH', { kind: 'camera', label: 'Caméra quai de chargement' });
+    await call(`/devices/${gatewayId}`, 'PATCH', { kind: 'router', label: 'Passerelle atelier', critical: true, author });
+    await call(`/devices/${await idOf('srv-erp')}`, 'PATCH', { kind: 'server', label: 'Serveur ERP', critical: true, author });
+    await call(`/devices/${await idOf('cam-quai')}`, 'PATCH', { kind: 'camera', label: 'Caméra quai de chargement', author });
+    const pending = (await get('/devices?lifecycle=pending_classification')) as Array<{ id: string; hostname: string }>;
+    for (const device of pending) {
+      const kind = device.hostname.startsWith('gw-') ? 'router' : device.hostname.startsWith('cam-') ? 'camera' : device.hostname.startsWith('srv-') ? 'server' : 'workstation';
+      await call(`/devices/${device.id}`, 'PATCH', { kind, author });
+    }
+    // Un automate que le collecteur ne découvre pas seul : ajouté à la main, puis une tentative de doublon.
+    const manualInput = { ip: '10.20.0.250', label: 'Automate de quai', kind: 'iot', critical: false, author };
+    files.set('api/device-create.request.json', manualInput);
+    files.set('api/device-create.response.json', (await call('/devices', 'POST', manualInput)).body);
+    files.set(
+      'api/error-409-duplicate.response.json',
+      (await call('/devices', 'POST', { ...manualInput, ip: '10.20.0.20', label: 'Serveur ERP (doublon)' })).body,
+    );
     files.set('api/dependencies-validate-suggestions.response.json', (await call('/dependencies/validate-suggestions', 'POST')).body);
     await scan();
 
@@ -115,7 +131,13 @@ export async function generateContractExamples(): Promise<ContractExamples> {
     files.set('api/weekly-report.response.json', await get('/reports/weekly'));
 
     // Corps de requête et erreurs.
-    files.set('api/device-classify.request.json', { kind: 'router', label: 'Passerelle atelier', critical: true });
+    files.set('api/device-classify.request.json', {
+      kind: 'router',
+      label: 'Passerelle atelier',
+      critical: true,
+      lifecycle: 'active',
+      author: 'Technicien réseau',
+    });
     files.set('api/dependency-create.request.json', { deviceId: pcId, dependsOnId: gatewayId });
     files.set('api/dependency-update.request.json', { status: 'validated' });
     files.set('api/settings-update.request.json', { cpuWarningPercent: 85, packetLossWarningPercent: 3 });

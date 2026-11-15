@@ -1,4 +1,4 @@
-# Contrat entre l'API NetWatch et le collecteur — version 1.0.0
+# Contrat entre l'API NetWatch et le collecteur — version 1.1.0
 
 Ce document décrit ce que l'API attend du collecteur réseau (le « scanner »). Il s'adresse à l'équipe qui
 développe le collecteur. Le contrat entre l'API et le dashboard, les conventions communes et le
@@ -20,7 +20,7 @@ API NetWatch  ──GET /scan──►  Scanner  ──ping / ports / services /
 ```
 GET {SCANNER_URL}/scan
 Accept: application/json
-X-NetWatch-Contract: 1.0.0              (version du contrat attendue par l'API)
+X-NetWatch-Contract: 1.1.0              (version du contrat attendue par l'API)
 Authorization: Bearer {SCANNER_TOKEN}   (seulement si SCANNER_TOKEN est configuré)
 ```
 
@@ -29,11 +29,32 @@ Authorization: Bearer {SCANNER_TOKEN}   (seulement si SCANNER_TOKEN est configur
   scan en échec et affiché dans la page « Scans » ; l'état connu des équipements n'est pas modifié.
 - L'appel doit être sans effet de bord : l'API peut le rejouer (bouton « Lancer un scan maintenant »).
 
+### Équipements à sonder en plus (`targets`, depuis 1.1.0)
+
+```
+GET {SCANNER_URL}/scan?targets=192.168.1.20,10.20.0.250
+```
+
+Quand des équipements ont été **ajoutés à la main** dans NetWatch (parce que la découverte ne les trouve
+pas : hors du sous-réseau balayé, pas de réponse à l'ARP, filtrage…), l'API envoie leurs IP dans
+`targets`, séparées par des virgules. Le paramètre est absent s'il n'y en a aucun.
+
+Le collecteur doit **sonder ces IP en plus de sa découverte habituelle** (ping, puis ports, TLS et
+ressources comme pour les autres) :
+
+- un équipement qui répond figure dans `devices`, exactement comme un équipement découvert ;
+- un équipement qui ne répond pas est **simplement absent** de `devices` : c'est l'API qui décide de la panne ;
+- une IP déjà trouvée par la découverte n'apparaît qu'une fois.
+
+Un collecteur 1.0 qui ignore `targets` reste accepté, mais les équipements ajoutés à la main passeront
+en panne faute d'être sondés. Le faux collecteur [tools/scanner-test](../tools/scanner-test) montre le
+comportement attendu (les IP en `.250` à `.254` y restent muettes, pour tester une panne).
+
 ## Réponse
 
 ```json
 {
-  "contractVersion": "1.0.0",
+  "contractVersion": "1.1.0",
   "scannedAt": "2026-09-20T08:00:00Z",
   "devices": [
     {
@@ -117,7 +138,7 @@ ISO 8601 **avec fuseau** (`Z` ou `+02:00`). Un champ facultatif peut être omis 
 
 | Champ | Obligatoire | Description |
 | --- | --- | --- |
-| `contractVersion` | non (recommandé) | Version du contrat que respecte le collecteur (« 1.0.0 », ou « 1 »). Une autre version majeure que celle de l'API est refusée : le scan est enregistré en échec avec la raison |
+| `contractVersion` | non (recommandé) | Version du contrat que respecte le collecteur (« 1.1.0 », « 1.0.0 » ou « 1 »). Une autre version majeure que celle de l'API est refusée : le scan est enregistré en échec avec la raison |
 | `scannedAt` | oui | Moment du scan |
 | `devices[].ip` | oui | Adresse IPv4 ou IPv6 |
 | `devices[].mac` | non | Adresse MAC. **Fortement recommandée** : c'est elle qui identifie durablement une machine dont l'IP change |
@@ -231,7 +252,7 @@ processeur, mémoire) et garde le dernier état connu de ses disques, ports et c
 
 ## Version
 
-Ce document correspond à la version **1.0.0** du contrat (règles d'évolution :
+Ce document correspond à la version **1.1.0** du contrat (règles d'évolution :
 [api-contract.md § 1](api-contract.md#1-versionnement)). Un exemple réel et validé par les tests est dans
 [docs/examples/collecteur/scan.response.json](examples/collecteur/scan.response.json).
 

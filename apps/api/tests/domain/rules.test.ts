@@ -81,7 +81,7 @@ describe('détection des pannes', () => {
     const down = { ...device(), reachability: 'down' as const, missedScans: 2 };
     const backUp = applyObservation(down, observation(), new Date(T0.getTime() + 10 * 60_000));
 
-    const intents = detectReachabilityChange(backUp, new Set(['device_unreachable']), backUp.lastSeenAt, solo());
+    const intents = detectReachabilityChange(backUp, new Set(['device_unreachable']), backUp.lastSeenAt!, solo());
 
     expect(intents).toEqual([
       { action: 'resolve', deviceId: 'dev-1', dedupeKey: 'device_unreachable', at: backUp.lastSeenAt },

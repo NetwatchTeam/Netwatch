@@ -58,9 +58,8 @@ export function DeviceTable({ devices }: { devices: DeviceDto[] }) {
                     {device.label ?? device.hostname ?? device.ip}
                   </Link>
                   {device.critical && <span className="tag">Critique</span>}
-                  {device.lifecycle === 'pending_classification' && (
-                    <LifecycleBadge lifecycle={device.lifecycle} />
-                  )}
+                  {device.lifecycle !== 'active' && <LifecycleBadge lifecycle={device.lifecycle} />}
+                  {device.origin === 'manual' && <span className="tag">Manuel</span>}
                 </td>
                 <td className="mono">{device.ip}</td>
                 <td>{KIND_LABELS[device.kind]}</td>
@@ -85,7 +84,9 @@ export function DeviceTable({ devices }: { devices: DeviceDto[] }) {
                   <Usage percent={disk?.usedPercent ?? null} title={disk ? `Disque le plus rempli : ${disk.name}` : undefined} />
                 </td>
                 <td>{device.openEvents > 0 ? device.openEvents : '—'}</td>
-                <td title={device.lastSeenAt}>{formatRelative(device.lastSeenAt)}</td>
+                <td title={device.lastSeenAt ?? 'Jamais vu par le collecteur'}>
+                  {device.lastSeenAt ? formatRelative(device.lastSeenAt) : 'jamais'}
+                </td>
               </tr>
             );
           })}

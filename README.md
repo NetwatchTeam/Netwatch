@@ -24,7 +24,7 @@ Les écrans du dashboard, leur disposition et leurs données sont décrits dans 
 | Port sensible ouvert | **Signalement** | Liste des ports surveillés configurable ; le service détecté derrière le port est indiqué |
 | Certificat TLS proche de l'expiration | **Signalement** | Préavis de 30 jours par défaut, critique à moins de 7 jours |
 | Certificat TLS refusé par la vérification | **Signalement** | Auto-signé, nom d'hôte différent, chaîne incomplète… la raison donnée par le scanner est affichée |
-| Nouvelle machine sur le réseau | **À configurer** | Reste « à identifier » tant qu'un utilisateur n'a pas déclaré ce qu'elle est |
+| Nouvelle machine sur le réseau | **À configurer** | Reste « à valider » tant qu'un utilisateur ne l'a pas validée, ignorée ou exclue ; elle n'est supervisée qu'une fois validée |
 
 Un événement déjà ouvert n'est jamais dupliqué : une contrainte en base garantit un seul événement
 ouvert par (équipement, cause).
@@ -33,6 +33,12 @@ Le **rapport hebdomadaire** s'exporte en PDF (bouton « Exporter en PDF », ou
 `GET /api/v1/reports/weekly.pdf?week=<date>`) pour la réunion de direction : synthèse, chiffres clés,
 puis les incidents les plus conséquents en tête — machines restées le plus longtemps hors service et
 coupures ayant touché le plus de machines à la fois — suivis des points de sécurité à traiter.
+
+**Le scan propose, l'humain décide** : aucun équipement n'entre au référentiel (supervision, rapports) sans
+validation. Chaque décision (valider, ignorer, exclure) est enregistrée avec son auteur, et un équipement
+écarté n'est jamais reproposé. Un équipement que le collecteur ne voit pas peut être **ajouté à la main** :
+un doublon avec un équipement découvert (même IP ou même MAC) est signalé, avec la possibilité de fusionner.
+Détail : [docs/api-contract.md § 4.7](docs/api-contract.md#47-validation-humaine-et-ajout-manuel).
 
 Pour chaque machine, la fiche détaillée affiche aussi : les ports ouverts et le ou les services
 associés, la latence et la perte de paquets, la charge processeur, l'occupation mémoire et disques,
@@ -152,7 +158,10 @@ Ce parcours vaut pour les méthodes A et C (réseau de test de 38 équipements).
 fictif compte environ 18 machines sans passerelle : les étapes 3 et 4 ne s'appliquent pas.
 
 1. **Vue d'ensemble** : état général du parc. Le premier scan a lieu au démarrage, puis toutes les 5 minutes.
-2. **Machines à identifier** : les 38 équipements découverts attendent qu'on déclare leur type.
+2. **À valider** : les 38 équipements découverts attendent une décision. Tant qu'ils ne sont pas validés, aucun
+   n'est supervisé : sans cette étape, la panne de l'étape 4 n'apparaît pas. Indiquez votre nom (il est
+   enregistré avec chaque décision), puis **Tout valider**, ou décidez machine par machine
+   (**Valider**, **Ignorer**, **Exclure**).
 3. **Dépendances** → **Valider toutes les suggestions** : le collecteur a deviné quelle passerelle dessert chaque
    PC, mais tant que ce n'est pas validé, une panne de passerelle apparaît comme 9 pannes séparées.
 4. La passerelle `gw-atelier` tombe toutes les 50 minutes (méthodes A et C). Pour ne pas attendre, ouvrez
@@ -183,6 +192,8 @@ fictif compte environ 18 machines sans passerelle : les étapes 3 et 4 ne s'appl
 | Commande | Rôle |
 | --- | --- |
 | `npm run dev:demo` | API (en mémoire, réseau fictif) et dashboard, sans base ni Docker |
+| `npm run dev:injection` | API (en mémoire, **sans aucun scan**) et dashboard : seules les données injectées l'alimentent |
+| `npm run scan:inject -- <scénario ou fichier.json>...` | Injecte des photographies fictives dans l'API en marche, validées strictement contre le contrat ([tools/scanner-test](tools/scanner-test/README.md)) |
 | `npm run dev` | API et dashboard avec la base et le collecteur de la méthode C |
 | `npm test` | Tests (règles métier, ingestion, API HTTP, conformité des exemples du contrat) |
 | `npm run typecheck` | Vérification des types sur tout le dépôt |
@@ -262,9 +273,10 @@ une valeur manquante ou invalide arrête le service avec un message explicite.
 | `STORAGE` | `postgres` | `memory` : sans base, données perdues à l'arrêt (développement du dashboard) |
 | `DATABASE_URL` | — | Connexion PostgreSQL (obligatoire si `STORAGE=postgres`) |
 | `PORT` | `3001` | Port d'écoute |
-| `SCANNER_MODE` | `demo` | `http` pour interroger le vrai scanner |
+| `SCANNER_MODE` | `demo` | `http` pour interroger le vrai scanner ; `none` : aucun scan automatique, données injectées seulement |
 | `SCANNER_URL` | — | Obligatoire si `SCANNER_MODE=http` |
 | `SCANNER_TOKEN` | — | Envoyé en `Authorization: Bearer` au scanner |
+| `SCAN_IMPORT` | activée hors production | `enabled` / `disabled` : autorise `POST /api/v1/scans/import` (`npm run scan:inject`) ; désactivée par défaut en production |
 | `REPORT_TIME_ZONE` | `Europe/Paris` | Fuseau des heures affichées dans le rapport PDF |
 | `WEB_DIST_PATH` | — | Dossier de l'interface compilée, servie par l'API en production |
 

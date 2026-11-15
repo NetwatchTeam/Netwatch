@@ -1,6 +1,8 @@
 // Faux scanner pour tester NetWatch sans réseau réel.
 //
 //   GET /scan                   → photographie du réseau selon le scénario actif
+//   GET /scan?targets=ip1,ip2   → idem, en sondant aussi ces IP (équipements ajoutés à la main, contrat 1.1) :
+//                                 celles absentes du scénario répondent au ping, sauf .250 à .254 (muettes)
 //   GET /                       → scénarios disponibles, scénario actif, numéro du prochain scan et sa phase
 //   GET /use/<nom>              → change de scénario et repart du scan 0
 //   GET /use/<nom>?scan=<n>     → change de scénario et saute directement au scan n
@@ -60,6 +62,21 @@ async function snapshot(name, n) {
   return { body, phase: null };
 }
 
+/** Équipements ajoutés à la main dans NetWatch : le faux collecteur les « sonde » comme le ferait le vrai. */
+function addTargets(body, targets) {
+  if (!targets) return;
+  const known = new Set((body.devices ?? []).map((device) => device.ip));
+  for (const ip of targets.split(',').map((value) => value.trim()).filter(Boolean)) {
+    const last = Number(ip.split('.').at(-1));
+    if (known.has(ip) || (last >= 250 && last <= 254)) continue;
+    body.devices.push({
+      ip, mac: null, hostname: null, vendor: null, gatewayIp: null,
+      latencyMs: 4, packetLossPercent: 0, cpuPercent: null, memory: null,
+      disks: [], ports: [], certificates: [],
+    });
+  }
+}
+
 function send(res, status, body) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(body, null, 2));
@@ -72,6 +89,7 @@ createServer(async (req, res) => {
     if (url.pathname === '/scan') {
       const n = scanNumber;
       const { body, phase } = await snapshot(active, n);
+      addTargets(body, url.searchParams.get('targets'));
       scanNumber += 1;
       const label = phase ? ` — scan ${n}, phase « ${phase} »` : '';
       console.log(`[scan] scénario « ${active} »${label} — ${body.devices?.length ?? 0} équipement(s)`);

@@ -1,5 +1,6 @@
 import type {
   DependencyRepository,
+  DeviceDecisionRepository,
   DeviceRepository,
   EventRepository,
   PolicyRepository,
@@ -16,7 +17,14 @@ import {
   UpdateDependency,
   ValidateAllSuggestions,
 } from './application/use-cases/dependencies.js';
-import { ClassifyDevice, GetDevice, ListDevices } from './application/use-cases/devices.js';
+import {
+  ClassifyDevice,
+  CreateDevice,
+  GetDevice,
+  ListDeviceDecisions,
+  ListDevices,
+  ValidateAllPending,
+} from './application/use-cases/devices.js';
 import { AcknowledgeEvent, ListEvents, ListOpenEvents, ReleaseEvent } from './application/use-cases/events.js';
 import { GenerateWeeklyReport } from './application/use-cases/generate-weekly-report.js';
 import { GetNetworkSummary } from './application/use-cases/get-network-summary.js';
@@ -32,6 +40,7 @@ import { RunScan } from './application/use-cases/run-scan.js';
 import type { Env } from './infrastructure/config/env.js';
 import { inMemoryRepositories } from './infrastructure/persistence/memory/in-memory-repositories.js';
 import { PostgresDependencyRepository } from './infrastructure/persistence/postgres/dependency-repository.js';
+import { PostgresDeviceDecisionRepository } from './infrastructure/persistence/postgres/device-decision-repository.js';
 import { PostgresDeviceRepository } from './infrastructure/persistence/postgres/device-repository.js';
 import { PostgresEventRepository } from './infrastructure/persistence/postgres/event-repository.js';
 import { PostgresPolicyRepository } from './infrastructure/persistence/postgres/policy-repository.js';
@@ -40,6 +49,7 @@ import { PostgresThroughputRepository } from './infrastructure/persistence/postg
 import type { Database } from './infrastructure/persistence/postgres/pool.js';
 import { DemoScannerGateway } from './infrastructure/scanner/demo-scanner-gateway.js';
 import { HttpScannerGateway } from './infrastructure/scanner/http-scanner-gateway.js';
+import { NoScannerGateway } from './infrastructure/scanner/no-scanner-gateway.js';
 import { systemClock, uuidGenerator } from './infrastructure/system/index.js';
 
 /** Cas d'usage exposés à la couche HTTP : c'est la seule surface qu'elle connaît. */
@@ -47,6 +57,9 @@ export interface AppContainer {
   listDevices: ListDevices;
   getDevice: GetDevice;
   classifyDevice: ClassifyDevice;
+  createDevice: CreateDevice;
+  listDeviceDecisions: ListDeviceDecisions;
+  validateAllPending: ValidateAllPending;
   getTopology: GetTopology;
   listDependencies: ListDependencies;
   createDependency: CreateDependency;
@@ -69,6 +82,7 @@ export interface AppContainer {
 
 export interface Repositories {
   devices: DeviceRepository;
+  decisions: DeviceDecisionRepository;
   events: EventRepository;
   throughput: ThroughputRepository;
   scanRuns: ScanRunRepository;
@@ -88,14 +102,18 @@ export interface Runtime {
  * PostgreSQL en production, mémoire dans les tests et pour générer les exemples du contrat.
  */
 export function buildUseCases(repos: Repositories, runtime: Runtime): AppContainer {
-  const { devices, events, throughput, scanRuns, policies, dependencies } = repos;
+  const { devices, decisions, events, throughput, scanRuns, policies, dependencies } = repos;
   const { scanner, clock, ids, logger } = runtime;
   const ingest = new IngestScanSnapshot(devices, events, throughput, policies, ids, dependencies);
+  const classifyDevice = new ClassifyDevice(devices, events, decisions, clock, ids);
 
   return {
     listDevices: new ListDevices(devices),
     getDevice: new GetDevice(devices),
-    classifyDevice: new ClassifyDevice(devices, events, clock),
+    classifyDevice,
+    validateAllPending: new ValidateAllPending(devices, classifyDevice),
+    createDevice: new CreateDevice(devices, events, decisions, clock, ids),
+    listDeviceDecisions: new ListDeviceDecisions(decisions),
     getTopology: new GetTopology(dependencies, devices),
     listDependencies: new ListDependencies(dependencies, devices),
     createDependency: new CreateDependency(dependencies, devices, clock, ids),
@@ -112,7 +130,7 @@ export function buildUseCases(repos: Repositories, runtime: Runtime): AppContain
     listScanRuns: new ListScanRuns(scanRuns),
     getSettings: new GetSettings(policies),
     updateSettings: new UpdateSettings(policies),
-    runScan: new RunScan(scanner, ingest, scanRuns, ids, clock, logger),
+    runScan: new RunScan(scanner, ingest, scanRuns, devices, ids, clock, logger),
     purgeExpiredData: new PurgeExpiredData(events, throughput, policies, clock, logger),
   };
 }
@@ -122,6 +140,7 @@ export function buildUseCases(repos: Repositories, runtime: Runtime): AppContain
  * (PostgreSQL, scanner HTTP, horloge système) rencontrent les cas d'usage.
  */
 function scannerFor(env: Env): ScannerGateway {
+  if (env.SCANNER_MODE === 'none') return new NoScannerGateway();
   return env.SCANNER_MODE === 'http'
     ? new HttpScannerGateway({
         baseUrl: env.SCANNER_URL!,
@@ -142,6 +161,7 @@ export function buildContainer(db: Database, env: Env, logger: Logger): AppConta
   return buildUseCases(
     {
       devices: new PostgresDeviceRepository(db),
+      decisions: new PostgresDeviceDecisionRepository(db),
       events: new PostgresEventRepository(db),
       throughput: new PostgresThroughputRepository(db),
       scanRuns: new PostgresScanRunRepository(db),

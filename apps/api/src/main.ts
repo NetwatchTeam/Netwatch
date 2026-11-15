@@ -52,6 +52,7 @@ const scheduler = new ScanScheduler(
   container.purgeExpiredData,
   container.getSettings,
   logger,
+  env.SCANNER_MODE !== 'none',
 );
 
 const server = app.listen(env.PORT, () => {

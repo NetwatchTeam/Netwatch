@@ -1,6 +1,6 @@
 {
   "contractVersion": "1.0.0",
-  "scannedAt": "2026-11-06T13:05:00.000Z",
+  "scannedAt": "2026-11-15T11:20:00.000Z",
   "devices": [
     {
       "ip": "10.20.0.20",
@@ -60,8 +60,8 @@
           "port": 443,
           "subject": "CN=srv-erp.exemple.local",
           "issuer": "CN=srv-erp.exemple.local",
-          "validFrom": "2026-06-04T13:05:00.000Z",
-          "expiresAt": "2027-06-04T13:05:00.000Z",
+          "validFrom": "2026-06-13T11:20:00.000Z",
+          "expiresAt": "2027-06-13T11:20:00.000Z",
           "valid": false,
           "validationError": "certificat auto-signé"
         }
@@ -100,8 +100,8 @@
           "port": 443,
           "subject": "CN=cam-quai.exemple.local",
           "issuer": "CN=AC interne Exemple",
-          "validFrom": "2025-11-11T13:05:00.000Z",
-          "expiresAt": "2026-11-11T13:05:00.000Z",
+          "validFrom": "2025-11-20T11:20:00.000Z",
+          "expiresAt": "2026-11-20T11:20:00.000Z",
           "valid": true,
           "validationError": null
         }
@@ -190,8 +190,8 @@
           "port": 443,
           "subject": "CN=gw-commercial.exemple.local",
           "issuer": "CN=AC interne Exemple",
-          "validFrom": "2026-09-22T13:05:00.000Z",
-          "expiresAt": "2027-09-22T13:05:00.000Z",
+          "validFrom": "2026-10-01T11:20:00.000Z",
+          "expiresAt": "2027-10-01T11:20:00.000Z",
           "valid": true,
           "validationError": null
         }

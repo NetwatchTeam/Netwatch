@@ -3,6 +3,7 @@ import type {
   Device,
   DeviceKind,
   DeviceLifecycle,
+  DeviceOrigin,
   DeviceReachability,
   DiskUsage,
   MemoryUsage,
@@ -20,6 +21,7 @@ interface DeviceRow {
   label: string | null;
   critical: boolean;
   lifecycle: string;
+  origin: string;
   reachability: string;
   gateway_ip: string | null;
   latency_ms: number | null;
@@ -39,7 +41,7 @@ interface DeviceRow {
     validationError?: string | null;
   }>;
   first_seen_at: Date;
-  last_seen_at: Date;
+  last_seen_at: Date | null;
   last_change_at: Date;
   missed_scans: number;
 }
@@ -55,6 +57,7 @@ function toDevice(row: DeviceRow): Device {
     label: row.label,
     critical: row.critical,
     lifecycle: row.lifecycle as DeviceLifecycle,
+    origin: row.origin as DeviceOrigin,
     reachability: row.reachability as DeviceReachability,
     gatewayIp: row.gateway_ip,
     latencyMs: row.latency_ms,
@@ -83,8 +86,8 @@ const UPSERT = `
   insert into devices (
     id, ip, mac, hostname, vendor, kind, label, critical, lifecycle, reachability,
     latency_ms, packet_loss_percent, cpu_percent, memory, disks, ports, certificates,
-    first_seen_at, last_seen_at, last_change_at, missed_scans, gateway_ip
-  ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::jsonb,$17::jsonb,$18,$19,$20,$21,$22)
+    first_seen_at, last_seen_at, last_change_at, missed_scans, gateway_ip, origin
+  ) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::jsonb,$17::jsonb,$18,$19,$20,$21,$22,$23)
   on conflict (id) do update set
     ip = excluded.ip,
     mac = coalesce(excluded.mac, devices.mac),
@@ -105,7 +108,8 @@ const UPSERT = `
     last_seen_at = excluded.last_seen_at,
     last_change_at = excluded.last_change_at,
     missed_scans = excluded.missed_scans,
-    gateway_ip = excluded.gateway_ip
+    gateway_ip = excluded.gateway_ip,
+    origin = excluded.origin
 `;
 
 function toParams(device: Device): unknown[] {
@@ -142,6 +146,7 @@ function toParams(device: Device): unknown[] {
     device.lastChangeAt,
     device.missedScans,
     device.gatewayIp,
+    device.origin,
   ];
 }
 

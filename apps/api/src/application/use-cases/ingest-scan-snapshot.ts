@@ -2,6 +2,7 @@ import {
   applyMiss,
   applyObservation,
   createDiscoveredDevice,
+  normalizeMac,
   type Device,
   type DeviceObservation,
 } from '../../domain/entities/device.js';
@@ -245,11 +246,11 @@ function resolveDevice(
   return known ? (touched.get(known.id) ?? known) : undefined;
 }
 
-function normalizeMac(mac: string): string {
-  return mac.toLowerCase().replaceAll('-', ':');
-}
-
-/** Une machine est reconnue par son adresse MAC ; à défaut par son IP. */
+/**
+ * Une machine est reconnue par son adresse MAC ; à défaut par son IP. C'est ce qui empêche une machine
+ * ignorée ou exclue de revenir comme « nouvelle », et une machine ajoutée à la main d'être dédoublée
+ * le jour où le collecteur la voit.
+ */
 function matchDevice(
   observation: DeviceObservation,
   byMac: Map<string, Device>,

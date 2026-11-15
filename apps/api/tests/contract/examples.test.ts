@@ -1,7 +1,8 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { snapshotSchema } from '../../src/infrastructure/scanner/snapshot-schema.js';
+import { snapshotSchema, strictSnapshotSchema } from '../../src/infrastructure/scanner/snapshot-schema.js';
 import { EXAMPLES_DIR, generateContractExamples } from '../../scripts/contract-examples.js';
 
 /**
@@ -52,17 +53,43 @@ describe('exemples JSON versionnés (docs/examples)', () => {
     }
   });
 
-  it('l’exemple du collecteur respecte le contrat d’entrée de l’API', async () => {
-    const result = snapshotSchema.safeParse(await readExample('collecteur/scan.response.json'));
+  it('l’exemple du collecteur respecte strictement le contrat d’entrée de l’API', async () => {
+    const result = strictSnapshotSchema.safeParse(await readExample('collecteur/scan.response.json'));
     expect(result.success, JSON.stringify(result.error?.issues)).toBe(true);
   });
 
-  it('les scénarios du faux collecteur respectent aussi le contrat', async () => {
+  // « Strictement » : un champ inconnu (faute de frappe, champ renommé) fait échouer le test,
+  // alors que l'API, tolérante, l'ignorerait sans rien dire.
+  it('les jeux de données du faux collecteur respectent strictement le contrat', async () => {
     const dir = join(EXAMPLES_DIR, '../../tools/scanner-test/scenarios');
-    for (const file of (await readdir(dir)).filter((f) => f.endsWith('.json'))) {
-      const result = snapshotSchema.safeParse(JSON.parse(await readFile(join(dir, file), 'utf8')));
+    const files = await readdir(dir);
+    expect(files.filter((f) => f.endsWith('.json')).length).toBeGreaterThanOrEqual(6);
+
+    for (const file of files.filter((f) => f.endsWith('.json'))) {
+      const result = strictSnapshotSchema.safeParse(JSON.parse(await readFile(join(dir, file), 'utf8')));
       expect(result.success, `${file} : ${JSON.stringify(result.error?.issues?.slice(0, 3))}`).toBe(true);
     }
+
+    // Scénarios dynamiques : chaque scan d'un cycle complet.
+    for (const file of files.filter((f) => f.endsWith('.mjs'))) {
+      const scenario = (await import(pathToFileURL(join(dir, file)).href)) as {
+        default: (input: { scanNumber: number; now: Date }) => unknown;
+        CYCLE_LENGTH?: number;
+      };
+      for (let scanNumber = 0; scanNumber < (scenario.CYCLE_LENGTH ?? 10); scanNumber += 1) {
+        const result = strictSnapshotSchema.safeParse(scenario.default({ scanNumber, now: new Date() }));
+        expect(result.success, `${file} scan ${scanNumber} : ${JSON.stringify(result.error?.issues?.slice(0, 3))}`).toBe(true);
+      }
+    }
+  });
+
+  it('refuse en mode strict un champ hors contrat, que le mode tolérant ignore', async () => {
+    const example = (await readExample('collecteur/scan.response.json')) as { devices: Array<Record<string, unknown>> };
+    const typo = { ...example, devices: [{ ...example.devices[0], hostName: 'faute-de-frappe' }] };
+    expect(snapshotSchema.safeParse(typo).success).toBe(true);
+    const strict = strictSnapshotSchema.safeParse(typo);
+    expect(strict.success).toBe(false);
+    expect(JSON.stringify(strict.error?.issues)).toContain('hostName');
   });
 
   it('rejette un collecteur qui annonce une autre version majeure du contrat', async () => {

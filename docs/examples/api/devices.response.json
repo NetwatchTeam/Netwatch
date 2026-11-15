@@ -9,6 +9,7 @@
     "label": "Serveur ERP",
     "critical": true,
     "lifecycle": "active",
+    "origin": "discovered",
     "reachability": "up",
     "gatewayIp": null,
     "gateway": null,
@@ -66,17 +67,17 @@
         "port": 443,
         "subject": "CN=srv-erp.exemple.local",
         "issuer": "CN=srv-erp.exemple.local",
-        "validFrom": "2026-06-04T13:05:00.000Z",
-        "expiresAt": "2027-06-04T13:05:00.000Z",
+        "validFrom": "2026-06-13T11:20:00.000Z",
+        "expiresAt": "2027-06-13T11:20:00.000Z",
         "daysBeforeExpiry": 210,
         "valid": false,
         "validationError": "certificat auto-signé",
         "status": "invalid"
       }
     ],
-    "firstSeenAt": "2026-11-06T12:50:00.000Z",
-    "lastSeenAt": "2026-11-06T13:05:00.000Z",
-    "lastChangeAt": "2026-11-06T12:50:00.000Z",
+    "firstSeenAt": "2026-11-15T11:05:00.000Z",
+    "lastSeenAt": "2026-11-15T11:20:00.000Z",
+    "lastChangeAt": "2026-11-15T11:05:00.000Z",
     "openEvents": 3
   },
   {
@@ -85,10 +86,11 @@
     "mac": "02:20:00:00:00:0a",
     "hostname": "srv-fichiers",
     "vendor": "Dell",
-    "kind": "unknown",
+    "kind": "server",
     "label": null,
     "critical": false,
-    "lifecycle": "pending_classification",
+    "lifecycle": "active",
+    "origin": "discovered",
     "reachability": "up",
     "gatewayIp": null,
     "gateway": null,
@@ -136,10 +138,10 @@
       }
     ],
     "certificates": [],
-    "firstSeenAt": "2026-11-06T12:50:00.000Z",
-    "lastSeenAt": "2026-11-06T13:05:00.000Z",
-    "lastChangeAt": "2026-11-06T12:50:00.000Z",
-    "openEvents": 3
+    "firstSeenAt": "2026-11-15T11:05:00.000Z",
+    "lastSeenAt": "2026-11-15T11:20:00.000Z",
+    "lastChangeAt": "2026-11-15T11:05:00.000Z",
+    "openEvents": 2
   },
   {
     "id": "00000000-0000-4000-8000-000000000004",
@@ -147,10 +149,11 @@
     "mac": "02:20:00:00:00:1e",
     "hostname": "srv-messagerie",
     "vendor": "Dell",
-    "kind": "unknown",
+    "kind": "server",
     "label": null,
     "critical": false,
-    "lifecycle": "pending_classification",
+    "lifecycle": "active",
+    "origin": "discovered",
     "reachability": "up",
     "gatewayIp": null,
     "gateway": null,
@@ -213,8 +216,8 @@
         "port": 443,
         "subject": "CN=srv-messagerie.exemple.local",
         "issuer": "CN=AC interne Exemple",
-        "validFrom": "2025-11-18T13:05:00.000Z",
-        "expiresAt": "2026-11-18T13:05:00.000Z",
+        "validFrom": "2025-11-27T11:20:00.000Z",
+        "expiresAt": "2026-11-27T11:20:00.000Z",
         "daysBeforeExpiry": 12,
         "valid": true,
         "validationError": null,
@@ -224,17 +227,17 @@
         "port": 993,
         "subject": "CN=srv-messagerie.exemple.local",
         "issuer": "CN=AC interne Exemple",
-        "validFrom": "2026-05-25T13:05:00.000Z",
-        "expiresAt": "2027-05-25T13:05:00.000Z",
+        "validFrom": "2026-06-03T11:20:00.000Z",
+        "expiresAt": "2027-06-03T11:20:00.000Z",
         "daysBeforeExpiry": 200,
         "valid": true,
         "validationError": null,
         "status": "valid"
       }
     ],
-    "firstSeenAt": "2026-11-06T12:50:00.000Z",
-    "lastSeenAt": "2026-11-06T13:05:00.000Z",
-    "lastChangeAt": "2026-11-06T12:50:00.000Z",
-    "openEvents": 4
+    "firstSeenAt": "2026-11-15T11:05:00.000Z",
+    "lastSeenAt": "2026-11-15T11:20:00.000Z",
+    "lastChangeAt": "2026-11-15T11:05:00.000Z",
+    "openEvents": 3
   }
 ]

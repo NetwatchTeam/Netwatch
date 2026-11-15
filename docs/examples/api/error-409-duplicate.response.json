@@ -1,0 +1,20 @@
+{
+  "error": {
+    "code": "duplicate_device",
+    "message": "Même IP que l’équipement existant « Serveur ERP » (déjà dans le référentiel) : fusionnez plutôt que de créer un doublon.",
+    "details": {
+      "existing": {
+        "id": "00000000-0000-4000-8000-000000000003",
+        "name": "Serveur ERP",
+        "reachability": "up",
+        "ip": "10.20.0.20",
+        "mac": "02:20:00:00:00:14",
+        "lifecycle": "active",
+        "origin": "discovered"
+      },
+      "matchedOn": [
+        "ip"
+      ]
+    }
+  }
+}

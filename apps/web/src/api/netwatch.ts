@@ -1,5 +1,8 @@
 import type {
   ClassifyDeviceInput,
+  CreateDeviceInput,
+  DeviceDecisionDto,
+  ValidatePendingResultDto,
   CreateDependencyInput,
   DeleteDependencyResultDto,
   DependencyDto,
@@ -26,6 +29,8 @@ export interface DeviceDetail {
   /** Machines qui passent par cet équipement (vide s'il n'est la passerelle de personne). */
   dependents: DeviceLinkDto[];
   events: EventDto[];
+  /** Qui a ajouté, validé, ignoré ou exclu l'équipement — le plus récent d'abord. */
+  decisions: DeviceDecisionDto[];
 }
 
 /** Toutes les routes de l'API, en un seul endroit. */
@@ -39,6 +44,15 @@ export const api = {
 
   getDevices: (filters: DeviceFilters = {}) => request<DeviceDto[]>(`/devices${toQuery({ ...filters })}`),
   getDevice: (id: string) => request<DeviceDetail>(`/devices/${encodeURIComponent(id)}`),
+  /** 409 `duplicate_device` si l'IP ou la MAC est déjà connue : `ApiError.details` désigne l'équipement. */
+  createDevice: (input: CreateDeviceInput) =>
+    request<DeviceDto>('/devices', { method: 'POST', body: JSON.stringify(input) }),
+  /** Valide toutes les machines à valider ; une décision est tracée pour chacune, au nom de `author`. */
+  validateAllPending: (author: string) =>
+    request<ValidatePendingResultDto>('/devices/validate-pending', {
+      method: 'POST',
+      body: JSON.stringify({ author }),
+    }),
   classifyDevice: (id: string, input: ClassifyDeviceInput) =>
     request<DeviceDto>(`/devices/${encodeURIComponent(id)}`, {
       method: 'PATCH',

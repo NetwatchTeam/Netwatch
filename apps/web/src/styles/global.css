@@ -299,6 +299,7 @@ a.stat-card:hover {
 .severity-info, .scan-running { color: var(--info); background: var(--info-bg); }
 .lifecycle-active { color: var(--good); background: var(--good-bg); }
 .lifecycle-ignored { color: var(--neutral); background: var(--neutral-bg); }
+.lifecycle-excluded { color: var(--neutral); background: var(--neutral-bg); text-decoration: line-through; }
 .category-incident { color: var(--critical); background: var(--critical-bg); }
 .category-observation { color: var(--info); background: var(--info-bg); }
 .category-signalement { color: var(--warning); background: var(--warning-bg); }
@@ -666,6 +667,53 @@ a.btn:hover {
 .btn-small {
   padding: 4px 10px;
   font-size: 0.85rem;
+}
+
+.field-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.decision-help {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.bulk-validate {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.bulk-validate label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+}
+
+.duplicate-panel {
+  border-color: var(--warning);
+}
+
+.decision-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.decision-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
 }
 
 .error-box {

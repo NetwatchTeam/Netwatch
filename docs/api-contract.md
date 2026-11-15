@@ -1,4 +1,4 @@
-# Contrat d'échange NetWatch — version 1.0.0
+# Contrat d'échange NetWatch — version 1.1.0
 
 Ce document définit les échanges entre les trois modules de NetWatch. Il sert de référence pour
 développer chaque module en parallèle : tant que chacun respecte ce contrat, il peut être développé,
@@ -27,12 +27,12 @@ Les exemples de [docs/examples](examples) sont produits par le code et vérifié
 
 | Élément | Valeur |
 | --- | --- |
-| Version du contrat | `1.0.0` (`CONTRACT_VERSION` dans `packages/contracts`) |
+| Version du contrat | `1.1.0` (`CONTRACT_VERSION` dans `packages/contracts`) |
 | Base des routes | `/api/v1` — la version majeure fait partie de l'URL |
-| En-tête de réponse | `X-NetWatch-Contract: 1.0.0` sur toutes les réponses `/api/v1` |
-| Requête au collecteur | l'API envoie `X-NetWatch-Contract: 1.0.0` à chaque `GET /scan` |
-| Réponse du collecteur | champ facultatif `contractVersion` (« 1.0.0 » ou « 1 ») ; une autre version majeure est **refusée** et le scan enregistré en échec avec la raison |
-| Santé | `GET /healthz` → `{ "status": "ok", "contractVersion": "1.0.0" }` |
+| En-tête de réponse | `X-NetWatch-Contract: 1.1.0` sur toutes les réponses `/api/v1` |
+| Requête au collecteur | l'API envoie `X-NetWatch-Contract: 1.1.0` à chaque `GET /scan`, et `?targets=` quand des équipements ont été ajoutés à la main |
+| Réponse du collecteur | champ facultatif `contractVersion` (« 1.1.0 », « 1.0.0 » ou « 1 ») ; une autre version majeure est **refusée** et le scan enregistré en échec avec la raison |
+| Santé | `GET /healthz` → `{ "status": "ok", "contractVersion": "1.1.0" }` |
 
 Règles d'évolution (versionnement sémantique) :
 
@@ -45,6 +45,13 @@ Règles d'évolution (versionnement sémantique) :
 Toute modification du contrat se fait dans la même demande de fusion que : ce document, les types de
 `packages/contracts`, les exemples régénérés (`npm run contract:examples -w @netwatch/api`) et
 `CONTRACT_VERSION`.
+
+Historique :
+
+| Version | Changements |
+| --- | --- |
+| 1.1.0 | Jeux de données fictifs (#21) : `POST /scans/import`, erreur 403 `forbidden`. « Tout valider » : `POST /devices/validate-pending`. Cycle de validation humaine (#31) et ajout manuel (#32) : `lifecycle` gagne `excluded` ; `DeviceDto` gagne `origin` ; `lastSeenAt` peut être `null` (équipement ajouté à la main, jamais vu) ; `GET /devices/:id` renvoie `decisions[]` ; nouvelle route `POST /devices` et erreur 409 `duplicate_device` ; le collecteur reçoit `?targets=`. **`author` devient obligatoire dans `PATCH /devices/:id`** : c'est une rupture au sens des règles ci-dessus, acceptée sans passer en `/api/v2` parce que le seul client (le dashboard) est livré dans la même version. Un autre client de `PATCH /devices/:id` doit ajouter `author`. |
+| 1.0.0 | Première version |
 
 ## 2. Conventions
 
@@ -67,7 +74,13 @@ n'est jamais réutilisé. Événements, mesures et dépendances le référencent
 
 À chaque scan, l'API rapproche une machine observée d'un équipement connu **par l'adresse MAC d'abord,
 puis par l'IP**. Une machine dont l'IP change garde donc son `id`, à condition que le collecteur envoie sa
-MAC. Sans MAC, un changement d'IP crée un nouvel équipement, que le gestionnaire devra classer.
+MAC. Sans MAC, un changement d'IP crée un nouvel équipement, que le gestionnaire devra valider.
+
+Ce rapprochement a deux conséquences voulues :
+
+- une machine **ignorée ou exclue** reste connue : elle n'est jamais reproposée comme nouvelle ;
+- une machine **ajoutée à la main** (§ 4.7) est reconnue le jour où le collecteur la voit (même IP ou même
+  MAC) : elle n'est pas dédoublée en une seconde machine « découverte ».
 
 Le collecteur, lui, n'a pas d'identifiant à gérer : l'IP et la MAC suffisent.
 
@@ -87,7 +100,8 @@ Chaque format renvoie à son type TypeScript (la référence) et à un exemple r
 | `kind` | `server`, `workstation`, `printer`, `switch`, `router`, `access_point`, `firewall`, `nas`, `camera`, `phone`, `iot`, `other`, `unknown` | Nature, déclarée par un utilisateur |
 | `label` | string \| null | Nom métier (« Serveur ERP ») |
 | `critical` | boolean | Équipement critique : pannes en sévérité critique, en tête des rapports |
-| `lifecycle` | `pending_classification`, `active`, `ignored` | `pending_classification` tant qu'un humain ne l'a pas identifié |
+| `lifecycle` | `pending_classification`, `active`, `ignored`, `excluded` | Cycle de validation (§ 4.7) : seul `active` fait partie du référentiel et est supervisé |
+| `origin` | `discovered`, `manual` | Découvert par le collecteur, ou ajouté à la main |
 | `reachability` | `up`, `down`, `unreachable`, `unknown` | `down` : en panne ; `unreachable` : coupé par la panne de l'équipement dont il dépend (§ 4.6) |
 | `gatewayIp` | string \| null | Passerelle vue par le collecteur (donnée brute) |
 | `gateway` | `{ id, name, reachability }` \| null | Passerelle selon les dépendances **validées** |
@@ -96,7 +110,7 @@ Chaque format renvoie à son type TypeScript (la référence) et à un exemple r
 | `disks[]` | `{ name, usedPercent, totalGb }` | Dernier état connu des disques |
 | `ports[]` | `{ port, protocol, services[] }` | Ports ouverts ; `services[]` : `{ name, product, version }` |
 | `certificates[]` | voir ci-dessous | Certificats TLS présentés |
-| `firstSeenAt`, `lastSeenAt`, `lastChangeAt` | date | Première détection, dernière réponse, dernier changement d'état |
+| `firstSeenAt`, `lastSeenAt`, `lastChangeAt` | date (`lastSeenAt` : date \| null) | Première détection (ou date de l'ajout manuel), dernière réponse (`null` : jamais vu par le collecteur), dernier changement d'état |
 | `openEvents` | number | Événements non résolus sur cet équipement |
 
 Certificat (`TlsCertificateDto`) : `port`, `subject`, `issuer`, `validFrom`, `expiresAt`,
@@ -180,6 +194,42 @@ refermé. Exemples : [events-incidents.response.json](examples/api/events-incide
 incohérences à corriger : `cycle`, `conflict` (le collecteur voit une autre passerelle que celle
 validée), `ignored_upstream`, `multiple_upstreams`.
 
+### 4.7 Validation humaine et ajout manuel
+
+Le scan propose, l'humain décide : **aucun équipement n'entre au référentiel sans validation**.
+
+| `lifecycle` | Signification | Supervisé (incidents, alertes, rapports) | Visible dans le parc |
+| --- | --- | --- | --- |
+| `pending_classification` | « À valider » : découvert par le collecteur, aucune décision | non (seul l'événement « à identifier » est ouvert) | page « À valider » |
+| `active` | Validé : fait partie du référentiel | oui | oui (vue par défaut) |
+| `ignored` | Connu mais non supervisé | non | oui (filtre « Ignoré ») |
+| `excluded` | Ne fait pas partie du parc (appareil de passage, autre réseau) | non | masqué (filtre « Exclu ») |
+
+Une décision (`PATCH /devices/:id`) porte un **`author`** obligatoire. Chaque action est tracée dans
+`decisions[]` (`DeviceDecisionDto`) : `action` ∈ `created`, `merged`, `validated`, `ignored`,
+`excluded`, `updated`, `author`, `decidedAt`, état avant et après, rôle, nom et criticité retenus.
+NetWatch n'ayant pas de connexion, l'auteur est **déclaré** par la personne (le dashboard le mémorise
+dans le navigateur) : c'est une trace, pas une preuve d'identité.
+
+**Ajout manuel** (`POST /devices`, [exemple](examples/api/device-create.request.json)) : pour un
+équipement que le collecteur ne trouve pas seul. Champs obligatoires, validés par l'API : `ip` (IPv4),
+`label`, `kind` (hors `unknown`), `critical` (booléen), `author` ; `mac` facultative. L'équipement est
+créé `active`, `origin: "manual"`, `reachability: "unknown"`, `lastSeenAt: null`
+([réponse](examples/api/device-create.response.json)). Son IP est ensuite transmise au collecteur à chaque
+scan (`?targets=`, voir [scanner-contract.md](scanner-contract.md)) : il est supervisé comme les autres,
+et passe en panne s'il ne répond pas.
+
+**Doublons** : si un équipement connu a la même IP ou la même MAC, l'ajout est refusé en 409
+`duplicate_device` et `details` le désigne ([exemple](examples/api/error-409-duplicate.response.json)) :
+
+```json
+{ "existing": { "id": "…", "name": "Serveur ERP", "reachability": "up", "ip": "10.20.0.20", "mac": "02:20:00:00:00:14", "lifecycle": "active", "origin": "discovered" }, "matchedOn": ["ip"] }
+```
+
+Pour **fusionner**, renvoyer le même corps avec `mergeInto: existing.id` : l'équipement existant reçoit le
+nom, le rôle et la criticité saisis et passe `active` ; ce que le collecteur a observé est conservé ; la
+fusion est tracée (`merged`). Une fusion vers un équipement qui n'a ni cette IP ni cette MAC est refusée (400).
+
 ## 5. Routes
 
 Préfixe `/api/v1` sauf `/healthz`. Les corps de requête sont validés : un champ inconnu est ignoré,
@@ -190,8 +240,10 @@ un champ invalide donne une erreur 400 détaillée.
 | GET | `/healthz` | — | `{ status, contractVersion }` | — |
 | GET | `/summary` | — | `NetworkSummaryDto` | — |
 | GET | `/devices` | `q` (recherche IP, nom, MAC, fabricant), `kind`, `lifecycle`, `reachability` | `DeviceDto[]`, critiques d'abord | 400 |
-| GET | `/devices/:id` | — | `{ device: DeviceDto, dependents: DeviceLinkDto[], events: EventDto[] }` | 404 |
-| PATCH | `/devices/:id` | `{ kind, label?, critical?, lifecycle?: "active" \| "ignored" }` ([exemple](examples/api/device-classify.request.json)) | `DeviceDto` ; referme l'événement « à identifier » | 400, 404 |
+| GET | `/devices/:id` | — | `{ device: DeviceDto, dependents: DeviceLinkDto[], events: EventDto[], decisions: DeviceDecisionDto[] }` (décisions les plus récentes d'abord) | 404 |
+| POST | `/devices` | `{ ip, label, kind, critical, mac?, author, mergeInto? }` ([exemple](examples/api/device-create.request.json)) — ajout manuel (§ 4.7) | 201 `DeviceDto` ; 200 si fusionné (`mergeInto`) | 400, 404 (`mergeInto` inconnu), 409 `duplicate_device` |
+| POST | `/devices/validate-pending` | `{ author }` — « Tout valider » : valide chaque machine à valider, avec le rôle et le nom qu'elle a déjà | `{ validated, devices: DeviceLinkDto[] }` ; une décision `validated` tracée par machine | 400 (`author` absent) |
+| PATCH | `/devices/:id` | `{ kind, label?, critical?, lifecycle?: "active" \| "ignored" \| "excluded", author }` ([exemple](examples/api/device-classify.request.json)) — valider (par défaut), ignorer, exclure, ou corriger la fiche | `DeviceDto` ; referme l'événement « à identifier » ; décision tracée | 400 (dont `author` absent), 404 |
 | GET | `/dependencies` | `status`, `deviceId` (filtrent la liste ; `counts` et `issues` portent sur tout le graphe) | `DependencyGraphDto` | 400 |
 | POST | `/dependencies` | `{ deviceId, dependsOnId }` ([exemple](examples/api/dependency-create.request.json)) — créée `manual`, `validated` | 201 `DependencyDto` | 400 (lui-même), 404, 409 (cycle) |
 | PATCH | `/dependencies/:id` | `{ status? }` pour valider / rejeter / restaurer, `{ dependsOnId? }` pour corriger (devient `manual`, `validated`) ([exemple](examples/api/dependency-update.request.json)) | `DependencyDto` | 400, 404, 409 (cycle, doublon) |
@@ -205,6 +257,7 @@ un champ invalide donne une erreur 400 détaillée.
 | GET | `/reports/weekly.pdf` | `week` | `application/pdf` en pièce jointe | 400 |
 | GET | `/scans` | — | `ScanRunDto[]` (20 derniers) | — |
 | POST | `/scans/run` | — | 202 `ScanRunDto` ; un collecteur injoignable donne `status: "failed"` et `error`, pas une erreur HTTP | — |
+| POST | `/scans/import` | une photographie au format du collecteur ([scanner-contract.md](scanner-contract.md)), validée **strictement** (champ inconnu refusé) — injection d'un jeu de données fictif (`npm run scan:inject`) | 201 `ScanRunDto` ; ingérée comme un vrai scan | 400 (non conforme, `details[]`), 403 `forbidden` (désactivée : production sans `SCAN_IMPORT=enabled`) |
 | GET | `/settings` | — | `MonitoringSettingsDto` | — |
 | PUT | `/settings` | sous-ensemble de `MonitoringSettingsDto` ([exemple](examples/api/settings-update.request.json)) | `MonitoringSettingsDto` complet | 400 |
 
@@ -219,8 +272,10 @@ Toute réponse 4xx/5xx a la forme `ApiErrorDto` ([index.ts](../packages/contract
 | HTTP | `code` | Quand | Exemple |
 | --- | --- | --- | --- |
 | 400 | `bad_request` | Paramètre ou corps invalide (`details[]` : `{ path, message }`), ou action impossible dans l'état actuel | [error-400-validation](examples/api/error-400-validation.response.json) |
+| 403 | `forbidden` | Action désactivée sur cette instance (injection de scans en production) | — |
 | 404 | `not_found` | Équipement, événement ou dépendance inconnu | [error-404](examples/api/error-404.response.json) |
 | 409 | `conflict` | L'opération contredit le graphe existant (cycle, doublon) | [error-409-cycle](examples/api/error-409-cycle.response.json) |
+| 409 | `duplicate_device` | Ajout manuel d'un équipement déjà connu à la même IP ou MAC (`details` : l'équipement existant, § 4.7) | [error-409-duplicate](examples/api/error-409-duplicate.response.json) |
 | 502 | `scanner_unavailable` | Réservé : en v1 un échec du collecteur est rapporté dans `ScanRunDto`, pas en erreur HTTP | — |
 | 500 | `internal_error` | Erreur inattendue (détail dans le journal de l'API, jamais dans la réponse) | — |
 
@@ -234,6 +289,8 @@ que le vrai collecteur) :
 | Besoin | Commande |
 | --- | --- |
 | Développer le dashboard **sans base ni collecteur** | `npm run dev:demo` (API en mémoire avec un réseau fictif + dashboard sur http://localhost:5173) |
+| Développer sur un **jeu de données précis**, sans collecteur ni base | `npm run dev:injection` (API sans aucun scan automatique), puis `npm run scan:inject -- <scénario ou fichier>` ; détail : [tools/scanner-test](../tools/scanner-test/README.md) |
+| Tester les **cas limites** (équipement inconnu, services disparus, valeurs aux bornes) | `npm run scan:inject -- 5-cas-limites-1-reference 5-cas-limites-2-inconnu-et-services-disparus 5-cas-limites-3-valeurs-limites` |
 | Développer le dashboard sans API | lire les réponses de [docs/examples/api](examples/api) |
 | Développer le collecteur | valider sa réponse contre [collecteur/scan.response.json](examples/collecteur/scan.response.json) et [scanner-contract.md](scanner-contract.md) ; le faux collecteur [tools/scanner-test](../tools/scanner-test) sert de modèle |
 | Toute la chaîne avec un réseau qui tombe en panne régulièrement | `docker compose up` (voir README) |

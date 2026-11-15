@@ -20,11 +20,13 @@ export class ScanScheduler {
     private readonly purge: PurgeExpiredData,
     private readonly settings: GetSettings,
     private readonly logger: Logger,
+    /** `false` avec SCANNER_MODE=none : seules les données injectées alimentent l'API. */
+    private readonly automaticScans = true,
   ) {}
 
   start(): void {
     this.stopped = false;
-    void this.tick();
+    if (this.automaticScans) void this.tick();
     this.purgeTimer = setInterval(() => {
       void this.purge.execute().catch((error: unknown) => {
         this.logger.error('Purge en échec', { error: String(error) });

@@ -62,6 +62,8 @@ services:
       SCANNER_URL: ${SCANNER_URL:-http://collector:8080}
       SCANNER_TOKEN: ${SCANNER_TOKEN:-}
       REPORT_TIME_ZONE: ${REPORT_TIME_ZONE:-Europe/Paris}
+      # Injection de jeux de données fictifs (npm run scan:inject) : désactivée en production par défaut.
+      SCAN_IMPORT: ${SCAN_IMPORT:-disabled}
     ports:
       - '${APP_PORT:-3001}:3001'
     healthcheck:

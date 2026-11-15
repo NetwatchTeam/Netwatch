@@ -1,5 +1,5 @@
 import { CONTRACT_VERSION, CONTRACT_VERSION_HEADER } from '@netwatch/contracts';
-import type { ScanSnapshot, ScannerGateway } from '../../application/ports/scanner-gateway.js';
+import type { ScanRequest, ScanSnapshot, ScannerGateway } from '../../application/ports/scanner-gateway.js';
 import { ScannerUnavailableError } from '../../domain/errors.js';
 import { snapshotSchema, toDomainSnapshot } from './snapshot-schema.js';
 
@@ -38,8 +38,11 @@ export function explainFetchError(error: unknown, timeoutMs: number): string {
 export class HttpScannerGateway implements ScannerGateway {
   constructor(private readonly options: HttpScannerOptions) {}
 
-  async fetchSnapshot(): Promise<ScanSnapshot> {
-    const url = new URL('/scan', this.options.baseUrl).toString();
+  async fetchSnapshot(request: ScanRequest = { targets: [] }): Promise<ScanSnapshot> {
+    const target = new URL('/scan', this.options.baseUrl);
+    // Équipements ajoutés à la main : le collecteur les sonde en plus de sa découverte (contrat 1.1).
+    if (request.targets.length > 0) target.searchParams.set('targets', request.targets.join(','));
+    const url = target.toString();
     // Le collecteur sait ainsi quelle version du contrat l'API attend.
     const headers: Record<string, string> = { Accept: 'application/json', [CONTRACT_VERSION_HEADER]: CONTRACT_VERSION };
     if (this.options.token) headers.Authorization = `Bearer ${this.options.token}`;

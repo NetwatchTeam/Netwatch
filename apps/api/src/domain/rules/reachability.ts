@@ -47,7 +47,7 @@ function diagnose(device: Device, topology: Topology): Diagnosis {
   const base: EventDetails = {
     ip: device.ip,
     hostname: device.hostname,
-    lastSeenAt: device.lastSeenAt.toISOString(),
+    lastSeenAt: device.lastSeenAt?.toISOString() ?? null,
     missedScans: device.missedScans,
     gatewayIp: device.gatewayIp,
   };

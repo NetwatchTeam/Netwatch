@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router';
 import { Layout } from './components/Layout';
+import { AddDevicePage } from './pages/AddDevicePage';
 import { DependenciesPage } from './pages/DependenciesPage';
 import { DeviceDetailPage } from './pages/DeviceDetailPage';
 import { DevicesPage } from './pages/DevicesPage';
@@ -20,6 +21,7 @@ export function App() {
           <Route path="rapport" element={<WeeklyReportPage />} />
           <Route path="technique">
             <Route path="equipements" element={<DevicesPage />} />
+            <Route path="equipements/nouveau" element={<AddDevicePage />} />
             <Route path="equipements/:id" element={<DeviceDetailPage />} />
             <Route path="evenements" element={<EventsPage />} />
             <Route path="a-identifier" element={<PendingDevicesPage />} />

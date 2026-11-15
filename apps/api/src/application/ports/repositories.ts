@@ -1,4 +1,5 @@
 import type { Dependency } from '../../domain/entities/dependency.js';
+import type { DeviceDecision } from '../../domain/entities/device-decision.js';
 import type { Device, DeviceKind, DeviceLifecycle, DeviceReachability } from '../../domain/entities/device.js';
 import type { ScanRun, ThroughputSample } from '../../domain/entities/measurement.js';
 import type { EventCategory, EventStatus, EventType, MonitoringEvent } from '../../domain/entities/monitoring-event.js';
@@ -17,6 +18,13 @@ export interface DeviceRepository {
   findById(id: string): Promise<Device | null>;
   save(device: Device): Promise<void>;
   saveMany(devices: Device[]): Promise<void>;
+}
+
+/** Historique des décisions humaines sur les équipements (qui a validé, ignoré, exclu, ajouté). */
+export interface DeviceDecisionRepository {
+  insert(decision: DeviceDecision): Promise<void>;
+  /** Les plus récentes d'abord. */
+  listByDevice(deviceId: string, limit?: number): Promise<DeviceDecision[]>;
 }
 
 export interface EventQuery {
