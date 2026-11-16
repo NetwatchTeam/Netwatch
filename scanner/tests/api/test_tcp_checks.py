@@ -1,6 +1,6 @@
 from unittest.mock import Mock
 
-from api.api_ressource import create_app
+from api.api_resource import create_app
 
 
 def test_tcp_checks_route():

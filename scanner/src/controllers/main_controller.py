@@ -1,20 +1,22 @@
-"""Controller layer: glue between the HTTP API and the use cases."""
-
-from typing import List, Optional
+"""Controller orchestrating HTTP requests, use cases, and presenters."""
 
 from presenters.snapshot_presenter import SnapshotPresenter
-from usecases.machine_use_case import scan
-from usecases.check_expected_services import check_expected_services
+from usecases.check_expected_services import CheckExpectedServices
+from usecases.machine_use_case import ScanMachines
 
 
 class MainController:
-    """Orchestrates the flow: HTTP input -> use case -> presenter.
+    """Orchestrates HTTP input -> use case -> presenter, decoupled from Flask or SQLite."""
 
-    The controller knows neither Flask nor SQLite, which keeps it easy to
-    test and independent from the delivery mechanism.
-    """
+    def __init__(
+        self,
+        scan_machines: ScanMachines,
+        check_expected_services: CheckExpectedServices,
+    ) -> None:
+        self._scan_machines = scan_machines
+        self._check_expected_services = check_expected_services
 
-    def scan_machines(self, targets: Optional[List[str]] = None) -> List[dict]:
+    def scan_machines(self, targets: list[str] | None = None) -> dict:
         """Runs a network scan and formats the result for the API.
 
         Args:
@@ -22,15 +24,14 @@ class MainController:
                 omitted, the use case default is used.
 
         Returns:
-            A list of dictionaries, one per discovered machine, ready to be
-            serialized to JSON.
+            A snapshot dictionary formatted according to the API contract.
 
         Raises:
             RuntimeError: If the underlying network scan fails.
         """
-        machines_data = scan(targets)
+        machines_data = self._scan_machines.execute(targets)
         return SnapshotPresenter.to_snapshot(machines_data)
 
     def check_tcp_services(self) -> list[dict]:
         """Contrôle les services configurés, sans lancer Nmap."""
-        return check_expected_services()
+        return self._check_expected_services.execute()

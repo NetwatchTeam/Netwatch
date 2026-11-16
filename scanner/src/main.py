@@ -1,18 +1,55 @@
-"""Entry point of the scanner service."""
+"""Application entry point for the Netwatch scanner service.
 
+This is the composition root: the only place where the adapters are
+instantiated and injected into the use cases.
+
+    external lib -> adapter -> use case -> entities
+"""
+
+from adapters.icmp_adapter import Ping3IcmpProber
+from adapters.nmap_adapter import NmapScanner
+from adapters.ssh_adapter import ParamikoMetricsFetcher
+from adapters.tcp_adapter import SocketTcpProber
+from adapters.tls_adapter import SslTlsCertificateReader
+from api.api_resource import create_app
 from controllers.main_controller import MainController
-from api.api_ressource import create_app
-import os
-from pathlib import Path
-from dotenv import load_dotenv
+from usecases.check_availability import CheckAvailability
+from usecases.check_expected_services import CheckExpectedServices
+from usecases.check_tcp_service import CheckTcpService
+from usecases.check_tls_use_case import CheckMachineTls
+from usecases.collect_system_metrics import CollectSystemMetrics
+from usecases.machine_use_case import ScanMachines
+from usecases.scan_network import ScanNetwork
+from apscheduler_requests import launch_scheduler
 
 
-def main():
-    """Builds the application and starts the Flask development server."""
-    controller = MainController()
-    app = create_app(controller)
-    # Bound to localhost only; debug mode must be disabled in production.
-    app.run(host="127.0.0.1", port=5000, debug=True)
+def build_controller() -> MainController:
+    """Wires the adapters, the use cases and the controller together.
+
+    Returns:
+        A MainController ready to serve requests.
+    """
+    check_tcp_service = CheckTcpService(SocketTcpProber())
+
+    scan_machines = ScanMachines(
+        scan_network=ScanNetwork(NmapScanner()),
+        check_availability=CheckAvailability(Ping3IcmpProber()),
+        check_tcp_service=check_tcp_service,
+        check_tls=CheckMachineTls(SslTlsCertificateReader()),
+        collect_system_metrics=CollectSystemMetrics(ParamikoMetricsFetcher()),
+    )
+
+    return MainController(
+        scan_machines=scan_machines,
+        check_expected_services=CheckExpectedServices(check_tcp_service),
+    )
+
+
+def main() -> None:
+    """Builds the controller, creates the Flask app, and starts the development server."""
+    app = create_app(build_controller())
+    launch_scheduler()
+    app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)
 
 
 if __name__ == "__main__":
