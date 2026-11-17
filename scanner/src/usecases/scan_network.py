@@ -1,146 +1,74 @@
-"""Network scanning based on nmap."""
-
-import uuid
-from datetime import datetime, timezone
-from typing import List, Optional
-
-from libnmap.process import NmapProcess
-from libnmap.parser import NmapParser
+"""Use case for scanning network targets and returning the discovered machines."""
 
 from entities.machine import Machine
+from entities.port import Port
+from entities.service import Service
+from usecases.ports.network_scanner import NetworkScanner, ScannedHost, ScannedService
 
 DEFAULT_TARGETS = ["127.0.0.1"]
 
 
-def _now_iso() -> str:
-    """Returns the current UTC time as an ISO 8601 string."""
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _extract_mac(host) -> Optional[str]:
-    """Extracts the MAC address of a host, if available.
-
-    Args:
-        host: A host object returned by the libnmap parser.
-
-    Returns:
-        The MAC address, or None if nmap did not report one.
-    """
-    if hasattr(host, "mac") and host.mac:
-        return host.mac
-    return None
-
-
-def scan_network(targets: Optional[List[str]] = None) -> List[Machine]:
-    """Scans the given targets and returns the machines that are up.
-
-    The returned entities are not persisted (``id`` is None).
-
-    Args:
-        targets: IP addresses, hostnames or CIDR ranges to scan. Defaults to
-            ``DEFAULT_TARGETS`` (localhost).
-
-    Returns:
-        A list of Machine entities, one per host reported as up. All of them
-        share the same ``first_seen`` and ``last_seen`` timestamp.
-
-    Raises:
-        RuntimeError: If the nmap process exits with a non-zero return code.
-    """
-    targets = targets or DEFAULT_TARGETS
-
-    # "-sn" : découverte d'hôtes seulement, pas de scan de ports.
-    scan = NmapProcess(targets, "-sn")
-
-    return_code = scan.run()
-
-    if return_code != 0:
-        raise RuntimeError(
-            f"Le scan nmap a échoué : {scan.stderr}"
-        )
-
-    # Lire les résultats de la découverte réalisée avec -sn.
-    discovery_report = NmapParser.parse(scan.stdout)
-
-    # Conserver les hôtes découverts, notamment pour récupérer leur MAC.
-    discovered_hosts = {
-        host.address: host
-        for host in discovery_report.hosts
-        if host.is_up()
-    }
-
-    active_ips = list(discovered_hosts)
-
-    if not active_ips:
-        return []
-
-    # Scanner les ports et services des machines découvertes.
-    service_scan = NmapProcess(
-        active_ips,
-        "-sT -sV --version-light -Pn -F",
+def _to_service(scanned: ScannedService) -> Service:
+    """Builds a Service entity from a scanned service."""
+    name = scanned.name or "unknown"
+    if scanned.tls and name == "http":
+        name = "https"  # http over TLS is https
+    return Service(
+        name=name,
+        port=Port(number=scanned.port, protocol=scanned.protocol),
+        product=scanned.product,
+        version=scanned.version,
+        tls=scanned.tls or name == "https",
     )
 
-    return_code = service_scan.run()
 
-    if return_code != 0:
-        raise RuntimeError(
-            f"Le scan des ports et services a échoué : {service_scan.stderr}"
+def _to_port_details(scanned: ScannedService) -> dict:
+    """Builds the port detail dictionary stored in ``Machine.ports``."""
+    services = []
+    if scanned.name:
+        services.append(
+            {
+                "name": scanned.name,
+                "product": scanned.product,
+                "version": scanned.version,
+            }
         )
+    return {"port": scanned.port, "protocol": scanned.protocol, "services": services}
 
-    service_report = NmapParser.parse(service_scan.stdout)
 
-    # Construire les machines avec les résultats des deux étapes.
-    timestamp = _now_iso()
-    machines: List[Machine] = []
+def _to_machine(host: ScannedHost) -> Machine:
+    """Builds a Machine entity from a scanned host."""
+    return Machine(
+        ip=host.ip,
+        # fallback: IP if no reverse DNS
+        hostname=host.hostname or host.ip,
+        mac=host.mac,
+        vendor=host.vendor,
+        ports=[_to_port_details(s) for s in host.services],
+        services=[_to_service(s) for s in host.services],
+    )
 
-    for host in service_report.hosts:
-        if not host.is_up():
-            continue
 
-        if host.address not in discovered_hosts:
-            continue
+class ScanNetwork:
+    """Scans network targets through a NetworkScanner port."""
 
-        discovery_host = discovered_hosts.get(host.address, host)
+    def __init__(self, scanner: NetworkScanner) -> None:
+        self._scanner = scanner
 
-        machines.append(
-            Machine(
-                ip=host.address,
-                mac=_extract_mac(discovery_host),
-                first_seen=timestamp,
-                last_seen=timestamp,
-                ports=_extract_open_ports(host),
-            )
-        )
+    def execute(self, targets: list[str] | None = None) -> list[Machine]:
+        """Scans the given targets and returns the machines that are up.
 
-    return machines
+        The returned entities are not persisted (``id`` is None).
 
-def _extract_open_ports(host) -> list[dict]:
-    """Normalise les ports ouverts et les informations fournies par Nmap."""
-    ports = []
+        Args:
+            targets: IP addresses, hostnames or CIDR ranges to scan. Defaults
+                to ``DEFAULT_TARGETS`` (localhost).
 
-    if not hasattr(host, "services") or not host.services:
-        return ports
+        Returns:
+            A list of Machine entities, one per host reported as up.
 
-    for service in host.services:
-        if service.state != "open":
-            continue
-
-        details = getattr(service, "service_dict", None) or {}
-
-        services = []
-
-        # Certains champs peuvent manquer, d'où les "or None"
-        if getattr(service, "service", None):
-            services.append({
-                "name": service.service,
-                "product": details.get("product") or None,
-                "version": details.get("version") or None,
-            })
-
-        ports.append({
-            "port": service.port,
-            "protocol": service.protocol,
-            "services": services,
-        })
-
-    return ports
+        Raises:
+            RuntimeError: If the scanner fails.
+        """
+        hosts = self._scanner.scan_hosts(targets or DEFAULT_TARGETS)
+        return [_to_machine(host) for host in hosts]

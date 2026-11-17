@@ -1,89 +1,94 @@
-from datetime import datetime, timezone, timedelta
-from unittest.mock import MagicMock, patch
+from datetime import datetime, timedelta, timezone
 
-from usecases.check_tls_use_case import check_machine_tls
+import pytest
+
+from usecases.check_tls_use_case import CheckMachineTls
+from usecases.ports.tls import PeerCertificate, TlsCertificateReader
 
 
-@patch("usecases.check_tls_use_case.x509.load_der_x509_certificate")
-@patch("usecases.check_tls_use_case.ssl.create_default_context")
-@patch("usecases.check_tls_use_case.socket.create_connection")
-def test_check_machine_tls_ok(mock_socket, mock_ssl, mock_x509):
-    past_start = datetime.now(timezone.utc) - timedelta(days=30)
-    future_date = datetime.now(timezone.utc) + timedelta(days=60)
+class FakeTlsReader(TlsCertificateReader):
+    """Faux port TLS : retourne un certificat ou lève une erreur."""
 
-    mock_cert = MagicMock()
-    mock_cert.not_valid_before_utc = past_start
-    mock_cert.not_valid_after_utc = future_date
-    mock_cert.fingerprint.return_value.hex.return_value = "abcdef123456"
-    mock_cert.subject.rfc4514_string.return_value = "CN=monserveur.local"
-    mock_cert.issuer.rfc4514_string.return_value = "CN=MonAutorite"
-    mock_x509.return_value = mock_cert
+    def __init__(self, certificate=None, error=None):
+        self.certificate = certificate
+        self.error = error
+        self.calls = []
 
-    result = check_machine_tls("192.168.1.10", port=443)
+    def read_certificate(self, ip, port, timeout):
+        self.calls.append((ip, port, timeout))
+        if self.error:
+            raise self.error
+        return self.certificate
 
+
+def make_peer(valid_from_days, expires_in_days):
+    now = datetime.now(timezone.utc)
+    return PeerCertificate(
+        fingerprint="abcdef123456",
+        subject="CN=monserveur.local",
+        issuer="CN=MonAutorite",
+        valid_from=now + timedelta(days=valid_from_days),
+        expires_at=now + timedelta(days=expires_in_days),
+    )
+
+
+def test_check_machine_tls_ok():
+    peer = make_peer(-30, 60)
+    reader = FakeTlsReader(peer)
+
+    result = CheckMachineTls(reader).execute("192.168.1.10", port=443)
+
+    assert reader.calls == [("192.168.1.10", 443, 3.0)]
     assert result["ip"] == "192.168.1.10"
     assert result["port"] == 443
     assert result["status"] == "ok"
     assert result["days_remaining"] >= 59
-    assert result["not_after"] == future_date.isoformat()
+    assert result["not_after"] == peer.expires_at.isoformat()
     assert result["identifiant_certificat"] is None
     assert result["empreinte"] == "abcdef123456"
     assert result["sujet"] == "CN=monserveur.local"
     assert result["emetteur"] == "CN=MonAutorite"
-    assert result["date_debut_validite"] == past_start.isoformat()
-    assert result["date_expiration"] == future_date.isoformat()
+    assert result["date_debut_validite"] == peer.valid_from.isoformat()
+    assert result["date_expiration"] == peer.expires_at.isoformat()
     assert result["est_valide"] is True
     assert result["erreur_validation"] is None
     assert "date_observation" in result
 
 
-@patch("usecases.check_tls_use_case.x509.load_der_x509_certificate")
-@patch("usecases.check_tls_use_case.ssl.create_default_context")
-@patch("usecases.check_tls_use_case.socket.create_connection")
-def test_check_machine_tls_expiring_soon(mock_socket, mock_ssl, mock_x509):
-    past_start = datetime.now(timezone.utc) - timedelta(days=80)
-    expiring_date = datetime.now(timezone.utc) + timedelta(days=10)
+def test_check_machine_tls_expiring_soon():
+    reader = FakeTlsReader(make_peer(-80, 10))
 
-    mock_cert = MagicMock()
-    mock_cert.not_valid_before_utc = past_start
-    mock_cert.not_valid_after_utc = expiring_date
-    mock_x509.return_value = mock_cert
-
-    result = check_machine_tls("192.168.1.10")
+    result = CheckMachineTls(reader).execute("192.168.1.10")
 
     assert result["status"] == "expiring_soon"
     assert result["days_remaining"] >= 9
-    assert result["date_expiration"] == expiring_date.isoformat()
     assert result["est_valide"] is True
     assert result["erreur_validation"] is None
 
 
-@patch("usecases.check_tls_use_case.x509.load_der_x509_certificate")
-@patch("usecases.check_tls_use_case.ssl.create_default_context")
-@patch("usecases.check_tls_use_case.socket.create_connection")
-def test_check_machine_tls_expired(mock_socket, mock_ssl, mock_x509):
-    past_start = datetime.now(timezone.utc) - timedelta(days=100)
-    past_date = datetime.now(timezone.utc) - timedelta(days=5)
+def test_check_machine_tls_seuil_configurable():
+    reader = FakeTlsReader(make_peer(-80, 10))
 
-    mock_cert = MagicMock()
-    mock_cert.not_valid_before_utc = past_start
-    mock_cert.not_valid_after_utc = past_date
-    mock_x509.return_value = mock_cert
+    result = CheckMachineTls(reader).execute("192.168.1.10", expiring_soon_days=5)
 
-    result = check_machine_tls("192.168.1.10")
+    assert result["status"] == "ok"
+
+
+def test_check_machine_tls_expired():
+    reader = FakeTlsReader(make_peer(-100, -5))
+
+    result = CheckMachineTls(reader).execute("192.168.1.10")
 
     assert result["status"] == "expired"
     assert result["days_remaining"] < 0
-    assert result["date_expiration"] == past_date.isoformat()
     assert result["est_valide"] is False
     assert result["erreur_validation"] == "certificat expiré"
 
 
-@patch("usecases.check_tls_use_case.socket.create_connection")
-def test_check_machine_tls_unreachable(mock_socket):
-    mock_socket.side_effect = OSError("Connection refused")
+def test_check_machine_tls_unreachable():
+    reader = FakeTlsReader(error=RuntimeError("Connection refused"))
 
-    result = check_machine_tls("192.168.1.10")
+    result = CheckMachineTls(reader).execute("192.168.1.10")
 
     assert result["ip"] == "192.168.1.10"
     assert result["port"] == 443

@@ -2,68 +2,63 @@
 
 import ipaddress
 import math
-import socket
-from datetime import datetime, timezone
-from time import perf_counter
 
-def check_tcp_service(
-    ip: str,
-    port: int,
-    timeout: float = 3.0,
-) -> dict:
-    """Teste une connexion TCP vers une adresse IP et un port.
+from entities.tcp_check import TcpCheck
+from usecases.ports.tcp import TcpProber
 
-    Une connexion réussie ne valide pas le protocole applicatif.
-    Les erreurs de configuration lèvent ValueError.
-    Les échecs réseau sont retournés dans le résultat.
-    """
-    ip = str(ipaddress.ip_address(ip))
-    
-    if isinstance(port, bool) or not isinstance(port, int):
-        raise ValueError("port doit être un entier.")
 
-    if not 1 <= port <= 65535:
-        raise ValueError("port doit être compris entre 1 et 65535.")
-    
-    # Le timeout doit être un nombre fini positif.
-    if (
-        isinstance(timeout, bool)
-        or not isinstance(timeout, (int, float))
-        or not math.isfinite(timeout)
-        or timeout <= 0
-    ):
-        raise ValueError("timeout doit être un nombre fini positif.")
+class CheckTcpService:
+    """Contrôle une connexion TCP à travers un port TcpProber."""
 
-    # Le timeout de socket est en secondes, pas en millisecondes.
-    checked_at = datetime.now(timezone.utc).isoformat()
-    started_at = perf_counter()
+    def __init__(self, prober: TcpProber) -> None:
+        self._prober = prober
 
-    status = "open"
-    error = None
+    def execute(
+            self,
+            ip: str,
+            port: int,
+            timeout: float = 3.0,
+    ) -> dict:
+        """Teste une connexion TCP vers une adresse IP et un port.
 
-    try:
-        # On utilise create_connection pour gérer les adresses IPv4 et IPv6.
-        with socket.create_connection((ip, port), timeout=timeout):
-            pass
-    except TimeoutError as exc:
-        status = "timeout"
-        error = str(exc)
-    except ConnectionRefusedError as exc:
-        status = "refused"
-        error = str(exc)
-    except OSError as exc:
-        status = "error"
-        error = str(exc)
+        Une connexion réussie ne valide pas le protocole applicatif.
+        Les erreurs de configuration lèvent ValueError.
+        Les échecs réseau sont retournés dans le résultat.
+        """
+        ip = str(ipaddress.ip_address(ip))
 
-    # Calculer la durée de la tentative en millisecondes avec trois décimales.
-    duration_ms = round((perf_counter() - started_at) * 1000, 3)
+        if isinstance(port, bool) or not isinstance(port, int):
+            raise ValueError("port doit être un entier.")
 
-    return {
-        "ip": ip,
-        "port": port,
-        "checkedAt": checked_at,
-        "reachable": status == "open", # True si le port est ouvert, False sinon.
-        "status": status, # "open", "refused", "timeout" ou "error".
-        "durationMs": duration_ms,
-        "error": error,
-    }
+        if not 1 <= port <= 65535:
+            raise ValueError("port doit être compris entre 1 et 65535.")
+
+        # Le timeout doit être un nombre fini positif.
+        if (
+                isinstance(timeout, bool)
+                or not isinstance(timeout, (int, float))
+                or not math.isfinite(timeout)
+                or timeout <= 0
+        ):
+            raise ValueError("timeout doit être un nombre fini positif.")
+
+        result = self._prober.probe(ip, port, timeout)
+
+        check = TcpCheck(
+            ip=ip,
+            port=port,
+            status=result.status,  # "open", "refused", "timeout" ou "error".
+            checked_at=result.checked_at,
+            duration_ms=result.duration_ms,
+            error=result.error,
+        )
+
+        return {
+            "ip": check.ip,
+            "port": check.port,
+            "checkedAt": check.checked_at,
+            "reachable": check.reachable,  # True si le port est ouvert, False sinon.
+            "status": check.status,
+            "durationMs": check.duration_ms,
+            "error": check.error,
+        }

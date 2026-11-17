@@ -1,52 +1,47 @@
 """Mesure la réponse ICMP sans décider d'une panne ni créer d'alerte."""
 
-import logging
-
-from ping3 import ping
-
-
-logger = logging.getLogger(__name__)
+from entities.availability import Availability
+from usecases.ports.icmp import IcmpProber
 
 
-def check_availability(
-    ip: str, # L'adresse IP de la machine à sonder.
-    attempts: int = 3, # Les tentatives de ping à effectuer pour mesurer la disponibilité.
-    timeout: float = 1.0, # Le délai d'attente en secondes pour chaque tentative de ping.
-) -> dict:
-    """Retourne la latence moyenne en ms et la perte des sondes ICMP.
+class CheckAvailability:
+    """Mesure la disponibilité ICMP à travers un port IcmpProber."""
 
-    Les absences de réponse comptent comme des sondes sans réponse.
-    Une erreur d'exécution invalide la mesure et remonte au collecteur.
-    """
-    if attempts < 1:
-        raise ValueError("attempts doit être supérieur ou égal à 1.")
+    def __init__(self, prober: IcmpProber) -> None:
+        self._prober = prober
 
-    if timeout <= 0:
-        raise ValueError("timeout doit être strictement positif.")
+    def execute(
+            self,
+            ip: str,  # L'adresse IP de la machine à sonder.
+            attempts: int = 3,  # Les tentatives de ping à effectuer.
+            timeout: float = 1.0,  # Le délai d'attente en secondes pour chaque tentative.
+    ) -> dict:
+        """Retourne la latence moyenne en ms et la perte des sondes ICMP.
 
-    delays = []
-    for _ in range(attempts):
-        try:
-            delay = ping(ip, timeout=timeout, unit="ms")
-        except OSError as exc:
-            logger.exception("Impossible d'exécuter la mesure ICMP pour %s", ip)
-            raise RuntimeError(
-                f"Erreur d'exécution ICMP pour {ip} : {exc}"
-            ) from exc
+        Les absences de réponse comptent comme des sondes sans réponse.
+        Une erreur d'exécution invalide la mesure et remonte au collecteur.
+        """
+        if attempts < 1:
+            raise ValueError("attempts doit être supérieur ou égal à 1.")
 
-        # False est une erreur, pas une latence de 0 ms.
-        if delay is False:
-            logger.error("ping3 a retourné une erreur pour %s", ip)
-            raise RuntimeError(f"Échec de la mesure ICMP pour {ip}.")
+        if timeout <= 0:
+            raise ValueError("timeout doit être strictement positif.")
 
-        if delay is not None:
-            delays.append(delay)
-            
-    # Compter le nombre de réponses reçues.
-    received = len(delays)
+        delays = []
+        for _ in range(attempts):
+            # Lève RuntimeError si la sonde n'a pas pu être exécutée.
+            delay = self._prober.ping(ip, timeout=timeout)
 
-    # Calculer la latence moyenne et le pourcentage de perte de paquets.
-    return {
-        "latencyMs": sum(delays) / received if received else None,
-        "packetLossPercent": 100.0 * (attempts - received) / attempts,
-    }
+            if delay is not None:
+                delays.append(delay)
+
+        received = len(delays)
+        availability = Availability(
+            latency_ms=sum(delays) / received if received else None,
+            packet_loss_percent=100.0 * (attempts - received) / attempts,
+        )
+
+        return {
+            "latencyMs": availability.latency_ms,
+            "packetLossPercent": availability.packet_loss_percent,
+        }

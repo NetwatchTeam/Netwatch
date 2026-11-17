@@ -1,13 +1,15 @@
-"""HTTP layer of the scanner, built on Flask.
+"""Flask REST API resource definitions for network scanning.
 
 Exposes the scan use case through a small JSON API. This module only deals
 with HTTP concerns (request parsing, status codes, serialization) and
 delegates all the work to the controller.
 """
 
-from flask import Flask, jsonify, request
-from controllers.main_controller import MainController
 import os
+
+from flask import Flask, jsonify, request
+
+from controllers.main_controller import MainController
 
 
 def create_app(controller: MainController) -> Flask:
@@ -45,6 +47,12 @@ def create_app(controller: MainController) -> Flask:
 
     @app.get("/scan")
     def get_scan():
+        """Scans the targets configured in ``SCANNER_TARGETS`` (localhost by default).
+
+        Returns:
+            A JSON snapshot, 503 if no target is configured, or 502 if the
+            scan failed.
+        """
         # Par défaut, on reste strictement sur la machine locale.
         targets = [
             target.strip()
@@ -77,4 +85,5 @@ def create_app(controller: MainController) -> Flask:
             return jsonify({"error": str(exc)}), 503
 
         return jsonify({"checks": checks})
+
     return app

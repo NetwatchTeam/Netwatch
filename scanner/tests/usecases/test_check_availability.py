@@ -1,8 +1,22 @@
-from unittest.mock import patch
-
 import pytest
 
-from usecases.check_availability import check_availability
+from usecases.check_availability import CheckAvailability
+from usecases.ports.icmp import IcmpProber
+
+
+class FakeIcmpProber(IcmpProber):
+    """Faux port ICMP : rejoue des réponses prédéfinies."""
+
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls = []
+
+    def ping(self, ip, timeout):
+        self.calls.append((ip, timeout))
+        response = self.responses.pop(0)
+        if isinstance(response, Exception):
+            raise response
+        return response
 
 
 @pytest.mark.parametrize(
@@ -15,18 +29,11 @@ from usecases.check_availability import check_availability
     ],
 )
 def test_mesures(responses, expected_latency, expected_loss):
-    with patch(
-        "usecases.check_availability.ping",
-        side_effect=responses,
-    ) as mocked_ping:
-        result = check_availability("127.0.0.1")
+    prober = FakeIcmpProber(responses)
 
-    assert mocked_ping.call_count == 3
-    mocked_ping.assert_called_with(
-        "127.0.0.1",
-        timeout=1.0,
-        unit="ms",
-    )
+    result = CheckAvailability(prober).execute("127.0.0.1")
+
+    assert prober.calls == [("127.0.0.1", 1.0)] * 3
 
     if expected_latency is None:
         assert result["latencyMs"] is None
@@ -36,22 +43,19 @@ def test_mesures(responses, expected_latency, expected_loss):
     assert result["packetLossPercent"] == pytest.approx(expected_loss)
 
 
-def test_false_est_une_erreur():
-    with patch(
-        "usecases.check_availability.ping",
-        return_value=False,
-    ):
-        with pytest.raises(RuntimeError):
-            check_availability("127.0.0.1")
+def test_attempts_et_timeout_sont_transmis_au_port():
+    prober = FakeIcmpProber([1.0, 1.0])
+
+    CheckAvailability(prober).execute("10.0.0.1", attempts=2, timeout=0.5)
+
+    assert prober.calls == [("10.0.0.1", 0.5)] * 2
 
 
-def test_erreur_de_permission():
-    with patch(
-        "usecases.check_availability.ping",
-        side_effect=PermissionError("Permission refusée"),
-    ):
-        with pytest.raises(RuntimeError):
-            check_availability("127.0.0.1")
+def test_erreur_d_execution_remonte():
+    prober = FakeIcmpProber([RuntimeError("ICMP impossible")])
+
+    with pytest.raises(RuntimeError, match="ICMP impossible"):
+        CheckAvailability(prober).execute("127.0.0.1")
 
 
 @pytest.mark.parametrize(
@@ -62,5 +66,9 @@ def test_erreur_de_permission():
     ],
 )
 def test_parametres_invalides(kwargs):
+    prober = FakeIcmpProber([])
+
     with pytest.raises(ValueError):
-        check_availability("127.0.0.1", **kwargs)
+        CheckAvailability(prober).execute("127.0.0.1", **kwargs)
+
+    assert prober.calls == []
