@@ -5,6 +5,8 @@ instantiated and injected into the use cases.
 
     external lib -> adapter -> use case -> entities
 """
+import os
+
 from flask.cli import load_dotenv
 
 from adapters.icmp_adapter import Ping3IcmpProber
@@ -49,7 +51,12 @@ def main() -> None:
     """Builds the controller, creates the Flask app, and starts the development server."""
     load_dotenv()
     app = create_app(build_controller())
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    # 0.0.0.0 : dans Docker, l'API doit pouvoir joindre le scanner depuis un autre conteneur.
+    app.run(
+        host=os.getenv("SCANNER_HOST", "127.0.0.1"),
+        port=int(os.getenv("SCANNER_PORT", "5000")),
+        debug=os.getenv("SCANNER_DEBUG", "").lower() in ("1", "true"),
+    )
 
 
 if __name__ == "__main__":

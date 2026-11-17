@@ -24,23 +24,29 @@ services:
       timeout: 5s
       retries: 10
 
+  # Scanner Python (./scanner). Le service garde le nom `collector` : SCANNER_URL=http://collector:8080.
+  # Pour revenir au collecteur simulé, voir tools/scanner-test/README.md.
   collector:
-    image: node:22-alpine
-    # Sans cela, le collecteur reste arrêté après un redémarrage de Docker
-    # et tous les scans échouent en « connexion refusée ».
+    build: ./scanner
     restart: unless-stopped
-    working_dir: /collector
-    command: node server.mjs
+    # nmap (-sn) et ping3 (ICMP) ont besoin des sockets bruts.
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
     environment:
-      # Scénario joué par le collecteur simulé (voir tools/scanner-test/README.md).
-      SCENARIO: ${COLLECTOR_SCENARIO:-4-reseau-passerelles}
-    volumes:
-      - ./tools/scanner-test:/collector:ro
+      SCANNER_HOST: 0.0.0.0
+      SCANNER_PORT: 8080
+      # Plages scannées quand l'API appelle POST /scan (séparées par des virgules).
+      SCANNER_TARGETS: ${SCANNER_TARGETS:-127.0.0.1}
+      SCANNER_TCP_TARGETS: ${SCANNER_TCP_TARGETS:-[]}
+      NETWATCH_SSH_USER: ${NETWATCH_SSH_USER:-}
+      NETWATCH_SSH_PASSWORD: ${NETWATCH_SSH_PASSWORD:-}
+      NETWATCH_SSH_PORT: ${NETWATCH_SSH_PORT:-22}
     ports:
-      # Accès direct au collecteur depuis la machine hôte (changer de scénario, npm run dev).
+      # Accès direct au scanner depuis la machine hôte (curl -X POST http://localhost:8090/scan).
       - '${COLLECTOR_PORT:-8090}:8080'
     healthcheck:
-      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8080/']
+      test: ['CMD', 'python', '-c', "import urllib.request as u; u.urlopen('http://127.0.0.1:8080/tcp-checks', timeout=4)"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -52,7 +58,7 @@ services:
       db:
         condition: service_healthy
       collector:
-        condition: service_started
+        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -61,6 +67,8 @@ services:
       SCANNER_MODE: ${SCANNER_MODE:-http}
       SCANNER_URL: ${SCANNER_URL:-http://collector:8080}
       SCANNER_TOKEN: ${SCANNER_TOKEN:-}
+      # Un scan nmap + SSH + TLS dépasse vite les 15 s par défaut.
+      SCANNER_TIMEOUT_MS: ${SCANNER_TIMEOUT_MS:-120000}
       REPORT_TIME_ZONE: ${REPORT_TIME_ZONE:-Europe/Paris}
     ports:
       - '${APP_PORT:-3001}:3001'

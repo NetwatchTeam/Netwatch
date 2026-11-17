@@ -41,12 +41,22 @@ export class HttpScannerGateway implements ScannerGateway {
   async fetchSnapshot(): Promise<ScanSnapshot> {
     const url = new URL('/scan', this.options.baseUrl).toString();
     // Le collecteur sait ainsi quelle version du contrat l'API attend.
-    const headers: Record<string, string> = { Accept: 'application/json', [CONTRACT_VERSION_HEADER]: CONTRACT_VERSION };
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      [CONTRACT_VERSION_HEADER]: CONTRACT_VERSION,
+    };
     if (this.options.token) headers.Authorization = `Bearer ${this.options.token}`;
 
     let response: Response;
     try {
-      response = await fetch(url, { headers, signal: AbortSignal.timeout(this.options.timeoutMs) });
+      // POST /scan : sans cible dans le corps, le scanner utilise son SCANNER_TARGETS.
+      response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: '{}',
+        signal: AbortSignal.timeout(this.options.timeoutMs),
+      });
     } catch (error) {
       throw new ScannerUnavailableError(`Scanner injoignable (${url}) : ${explainFetchError(error, this.options.timeoutMs)}`);
     }

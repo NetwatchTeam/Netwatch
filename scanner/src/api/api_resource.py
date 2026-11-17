@@ -12,6 +12,15 @@ from flask import Flask, jsonify, request
 from controllers.main_controller import MainController
 
 
+def _configured_targets() -> list[str]:
+    """Cibles de ``SCANNER_TARGETS`` (séparées par des virgules), localhost par défaut."""
+    return [
+        target.strip()
+        for target in os.getenv("SCANNER_TARGETS", "192.168.20.0").split(",")
+        if target.strip()
+    ]
+
+
 def create_app(controller: MainController) -> Flask:
     """Creates and configures the Flask application.
 
@@ -28,8 +37,8 @@ def create_app(controller: MainController) -> Flask:
         """Scans the requested targets.
 
         Reads an optional JSON body of the form ``{"targets": ["10.0.0.1"]}``.
-        When no targets are given, the scanner falls back to its default
-        target (localhost).
+        When no targets are given, the scanner falls back to ``SCANNER_TARGETS``
+        (localhost by default).
 
         Returns:
             A JSON list of the discovered machines, or a JSON object
@@ -38,7 +47,10 @@ def create_app(controller: MainController) -> Flask:
         # silent=True returns None on a missing/invalid JSON body instead of
         # raising, so an empty request simply triggers a default scan.
         payload = request.get_json(silent=True) or {}
-        targets = payload.get("targets")
+        # Sans cible dans le corps (cas du dashboard), on prend SCANNER_TARGETS.
+        targets = payload.get("targets") or _configured_targets()
+        if not targets:
+            return jsonify({"error": "Aucune cible de scan configurée."}), 503
         try:
             return jsonify(controller.scan_machines(targets))
         except RuntimeError as exc:
@@ -53,15 +65,7 @@ def create_app(controller: MainController) -> Flask:
             A JSON snapshot, 503 if no target is configured, or 502 if the
             scan failed.
         """
-        # Par défaut, on reste strictement sur la machine locale.
-        targets = [
-            target.strip()
-            for target in os.getenv(
-                "SCANNER_TARGETS",
-                "127.0.0.1",
-            ).split(",")
-            if target.strip()
-        ]
+        targets = _configured_targets()
 
         if not targets:
             return jsonify({
