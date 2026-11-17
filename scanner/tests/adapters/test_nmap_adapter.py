@@ -49,13 +49,57 @@ def test_scan_error(nmap):
         NmapScanner().scan_hosts(["127.0.0.1"])
 
 
-def test_scan_passe_les_cibles_en_liste(nmap):
+def test_scan_un_run_par_cible(nmap):
     process_cls, _ = nmap
-    NmapScanner().scan_hosts(["10.0.0.1", "10.0.0.2"])
-    # Aucun hôte découvert : seule la phase de découverte est lancée.
-    # Une liste (et non une chaîne jointe) : libnmap supprime les espaces
-    # d'une chaîne et collerait les IP ensemble.
-    process_cls.assert_called_once_with(["10.0.0.1", "10.0.0.2"], "-sn")
+    NmapScanner().scan_hosts(["10.0.0.1", "10.0.0.0/24", "10.0.0.1"])
+    # Aucun hôte découvert : seule la découverte est lancée, une fois par cible
+    # (doublons ignorés). Une liste (et non une chaîne) : libnmap supprime les
+    # espaces d'une chaîne.
+    calls = sorted(c.args for c in process_cls.call_args_list)
+    assert calls == [(["10.0.0.0/24"], "-sn"), (["10.0.0.1"], "-sn")]
+
+
+def test_scan_plusieurs_plages_en_parallele_sans_doublons():
+    """Each range is scanned separately; overlapping hosts are reported once."""
+    def fake_process(targets, options):
+        proc = MagicMock()
+        proc.run.return_value = 0
+        proc.stdout = "|".join(targets)
+        return proc
+
+    ranges = {
+        "net-a": ["10.0.0.1", "10.0.0.2"],
+        "net-b": ["10.0.0.2", "10.1.0.1"],
+    }
+
+    def fake_parse(stdout):
+        # Discovery output is the range name; services output is the IP list.
+        ips = ranges.get(stdout, stdout.split("|"))
+        report = MagicMock()
+        report.hosts = [make_host(ip) for ip in ips]
+        return report
+
+    with patch("adapters.nmap_adapter.NmapProcess", side_effect=fake_process), \
+         patch("adapters.nmap_adapter.NmapParser") as parser_cls:
+        parser_cls.parse.side_effect = fake_parse
+        hosts = NmapScanner().scan_hosts(["net-a", "net-b"])
+
+    assert [h.ip for h in hosts] == ["10.0.0.1", "10.0.0.2", "10.1.0.1"]
+
+
+def test_scan_plusieurs_plages_propage_l_erreur_d_une_plage():
+    def fake_process(targets, options):
+        proc = MagicMock()
+        proc.run.return_value = 1 if targets == ["bad"] else 0
+        proc.stderr = "boom"
+        proc.stdout = ""
+        return proc
+
+    with patch("adapters.nmap_adapter.NmapProcess", side_effect=fake_process), \
+         patch("adapters.nmap_adapter.NmapParser") as parser_cls:
+        parser_cls.parse.return_value.hosts = []
+        with pytest.raises(RuntimeError, match="boom"):
+            NmapScanner().scan_hosts(["good", "bad"])
 
 
 def test_scan_parse_la_sortie_de_nmap(nmap):

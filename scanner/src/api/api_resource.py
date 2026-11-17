@@ -16,7 +16,7 @@ def _configured_targets() -> list[str]:
     """Cibles de ``SCANNER_TARGETS`` (séparées par des virgules), localhost par défaut."""
     return [
         target.strip()
-        for target in os.getenv("SCANNER_TARGETS", "192.168.20.0").split(",")
+        for target in os.getenv("SCANNER_TARGETS", "127.0.0.1").split(",")
         if target.strip()
     ]
 

@@ -4,6 +4,7 @@ This is the only module aware of nmap-specific terminology and data structures.
 It depends on the ``NetworkScanner`` port, never on the domain entities.
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from libnmap.parser import NmapParser
@@ -60,23 +61,47 @@ class NmapScanner(NetworkScanner):
     """NetworkScanner implemented with nmap."""
 
     def scan_hosts(self, targets: list[str]) -> list[ScannedHost]:
-        """Discovers the live hosts, then scans their ports and services.
+        """Scans each target (IP, hostname or range) in its own nmap pipeline.
 
-        Two nmap runs are chained: host discovery (-sn, which also provides the
-        MAC and hostname), then a ports/services scan on the hosts found up.
+        Each target runs independently: host discovery (-sn, which also
+        provides the MAC and hostname), then a ports/services scan on the
+        hosts found up. With several targets the pipelines run in parallel,
+        so a dead or slow range does not delay the others.
         Targets must be validated by the use case before invoking this method.
 
         Args:
             targets: List of target IP addresses, hostnames, or CIDR ranges.
 
         Returns:
-            One ScannedHost per live host.
+            One ScannedHost per live host, grouped by target in the order
+            given, without duplicates when ranges overlap.
 
         Raises:
             RuntimeError: If one of the nmap executions fails.
         """
+        unique_targets = list(dict.fromkeys(targets))
+        if len(unique_targets) <= 1:
+            results = [self._scan_target(t) for t in unique_targets]
+        else:
+            with ThreadPoolExecutor(max_workers=len(unique_targets)) as pool:
+                # map() keeps the order and re-raises the first error.
+                results = list(pool.map(self._scan_target, unique_targets))
+
+        seen: set[str] = set()
+        hosts: list[ScannedHost] = []
+        for target_hosts in results:
+            for host in target_hosts:
+                if host.ip not in seen:
+                    seen.add(host.ip)
+                    hosts.append(host)
+        return hosts
+
+    @staticmethod
+    def _scan_target(target: str) -> list[ScannedHost]:
+        """Runs discovery then ports/services scan for a single target."""
         # "-sn" : découverte d'hôtes seulement, pas de scan de ports.
-        scan = NmapProcess(targets, "-sn")
+        # Une liste (et non une chaîne) : libnmap supprime les espaces d'une chaîne.
+        scan = NmapProcess([target], "-sn")
         if scan.run() != 0:
             raise RuntimeError(f"Le scan nmap a échoué : {scan.stderr}")
 
