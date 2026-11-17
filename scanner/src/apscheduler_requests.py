@@ -1,4 +1,4 @@
-import json
+mport json
 from datetime import datetime
 from pathlib import Path
 
@@ -9,7 +9,7 @@ BASE_URL = "http://127.0.0.1:5000"
 ROOT = Path(__file__).resolve().parent
 OUTPUT_DIR = ROOT / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
-
+TARGETS = ["192.168.10.0/24"]
 
 def save_json(name, data):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -30,8 +30,8 @@ def post_scan():
     try:
         r = requests.post(
             f"{BASE_URL}/scan",
-            json={"target": "192.168.1.0/24"},  # adapte au corps attendu
-            timeout=30,
+            json={"targets": TARGETS},
+            timeout=30000,
         )
         r.raise_for_status()
         save_json("post_scan", r.json())
@@ -41,7 +41,6 @@ def post_scan():
 
 def launch_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler()
-    scheduler.add_job(get_scan, "interval", minutes=5, max_instances=1, coalesce=True)
-    scheduler.add_job(post_scan, "interval", minutes=5, max_instances=1, coalesce=True)
+    scheduler.add_job(post_scan, "interval", minutes=1, max_instances=1, coalesce=True)
     scheduler.start()
     return scheduler
