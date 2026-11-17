@@ -1,0 +1,111 @@
+{
+  "device": {
+    "id": "00000000-0000-4000-8000-00000000000f",
+    "ip": "10.20.12.101",
+    "mac": "02:20:00:00:0c:01",
+    "hostname": "pc-atelier-01",
+    "vendor": "Lenovo",
+    "kind": "unknown",
+    "label": null,
+    "critical": false,
+    "lifecycle": "pending_classification",
+    "reachability": "unreachable",
+    "gatewayIp": "10.20.0.12",
+    "gateway": {
+      "id": "00000000-0000-4000-8000-00000000000e",
+      "name": "Passerelle atelier",
+      "reachability": "down"
+    },
+    "latencyMs": null,
+    "packetLossPercent": null,
+    "cpuPercent": null,
+    "memory": null,
+    "disks": [
+      {
+        "name": "C:",
+        "usedPercent": 35,
+        "totalGb": 476.9
+      }
+    ],
+    "ports": [
+      {
+        "port": 135,
+        "protocol": "tcp",
+        "services": [
+          {
+            "name": "msrpc",
+            "product": "Microsoft Windows RPC",
+            "version": null
+          }
+        ]
+      },
+      {
+        "port": 139,
+        "protocol": "tcp",
+        "services": [
+          {
+            "name": "netbios-ssn",
+            "product": "Microsoft Windows netbios-ssn",
+            "version": null
+          }
+        ]
+      }
+    ],
+    "certificates": [],
+    "firstSeenAt": "2026-11-06T12:50:00.000Z",
+    "lastSeenAt": "2026-11-06T13:00:00.000Z",
+    "lastChangeAt": "2026-11-06T13:05:00.000Z",
+    "openEvents": 2
+  },
+  "dependents": [],
+  "events": [
+    {
+      "id": "00000000-0000-4000-8000-00000000008b",
+      "deviceId": "00000000-0000-4000-8000-00000000000f",
+      "deviceName": "pc-atelier-01",
+      "peerDeviceId": "00000000-0000-4000-8000-00000000000e",
+      "peerDeviceName": "Passerelle atelier",
+      "type": "device_unreachable",
+      "category": "incident",
+      "severity": "info",
+      "status": "open",
+      "summary": "pc-atelier-01 injoignable : Passerelle atelier est en panne",
+      "details": {
+        "ip": "10.20.12.101",
+        "hostname": "pc-atelier-01",
+        "lastSeenAt": "2026-11-06T13:00:00.000Z",
+        "missedScans": 1,
+        "gatewayIp": "10.20.0.12",
+        "cause": "gateway",
+        "gateway": "Passerelle atelier"
+      },
+      "startedAt": "2026-11-06T13:05:00.000Z",
+      "resolvedAt": null,
+      "acknowledgedAt": null,
+      "durationSeconds": 39
+    },
+    {
+      "id": "00000000-0000-4000-8000-00000000005f",
+      "deviceId": "00000000-0000-4000-8000-00000000000f",
+      "deviceName": "pc-atelier-01",
+      "peerDeviceId": null,
+      "peerDeviceName": null,
+      "type": "device_discovered",
+      "category": "configuration",
+      "severity": "info",
+      "status": "open",
+      "summary": "Nouvel équipement détecté : pc-atelier-01 — à identifier",
+      "details": {
+        "ip": "10.20.12.101",
+        "mac": "02:20:00:00:0c:01",
+        "hostname": "pc-atelier-01",
+        "vendor": "Lenovo",
+        "openPorts": "135, 139"
+      },
+      "startedAt": "2026-11-06T12:50:00.000Z",
+      "resolvedAt": null,
+      "acknowledgedAt": null,
+      "durationSeconds": 939
+    }
+  ]
+}

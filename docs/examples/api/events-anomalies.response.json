@@ -1,0 +1,161 @@
+[
+  {
+    "id": "00000000-0000-4000-8000-000000000048",
+    "deviceId": "00000000-0000-4000-8000-000000000002",
+    "deviceName": "srv-fichiers",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "resource_saturation",
+    "category": "observation",
+    "severity": "warning",
+    "status": "open",
+    "summary": "srv-fichiers : disque D: rempli à 96 %",
+    "details": {
+      "ip": "10.20.0.10",
+      "resource": "disk",
+      "disk": "D:",
+      "totalGb": 7452,
+      "usedPercent": 96,
+      "thresholdPercent": 90
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000050",
+    "deviceId": "00000000-0000-4000-8000-000000000004",
+    "deviceName": "srv-messagerie",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "resource_saturation",
+    "category": "observation",
+    "severity": "warning",
+    "status": "open",
+    "summary": "srv-messagerie : processeur chargé à 94 %",
+    "details": {
+      "ip": "10.20.0.30",
+      "resource": "cpu",
+      "usedPercent": 94,
+      "thresholdPercent": 90
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000052",
+    "deviceId": "00000000-0000-4000-8000-000000000005",
+    "deviceName": "cam-entree",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "packet_loss",
+    "category": "observation",
+    "severity": "warning",
+    "status": "open",
+    "summary": "cam-entree perd 12 % des paquets",
+    "details": {
+      "ip": "10.20.0.51",
+      "packetLossPercent": 12,
+      "thresholdPercent": 5,
+      "latencyMs": 9.8
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  },
+  {
+    "id": "00000000-0000-4000-8000-00000000006b",
+    "deviceId": "00000000-0000-4000-8000-00000000001a",
+    "deviceName": "pc-compta-03",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "resource_saturation",
+    "category": "observation",
+    "severity": "warning",
+    "status": "open",
+    "summary": "pc-compta-03 : mémoire occupée à 95 %",
+    "details": {
+      "ip": "10.20.13.103",
+      "resource": "memory",
+      "totalMb": 8192,
+      "usedPercent": 95,
+      "thresholdPercent": 90
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  },
+  {
+    "id": "00000000-0000-4000-8000-00000000006f",
+    "deviceId": "00000000-0000-4000-8000-00000000001d",
+    "deviceName": "gw-commercial",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "packet_loss",
+    "category": "observation",
+    "severity": "warning",
+    "status": "open",
+    "summary": "gw-commercial perd 6 % des paquets",
+    "details": {
+      "ip": "10.20.0.14",
+      "packetLossPercent": 6,
+      "thresholdPercent": 5,
+      "latencyMs": 0.7
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000070",
+    "deviceId": "00000000-0000-4000-8000-00000000001d",
+    "deviceName": "gw-commercial",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "resource_saturation",
+    "category": "observation",
+    "severity": "warning",
+    "status": "open",
+    "summary": "gw-commercial : processeur chargé à 95 %",
+    "details": {
+      "ip": "10.20.0.14",
+      "resource": "cpu",
+      "usedPercent": 95,
+      "thresholdPercent": 90
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  },
+  {
+    "id": "00000000-0000-4000-8000-000000000078",
+    "deviceId": "00000000-0000-4000-8000-000000000024",
+    "deviceName": "pc-commercial-07",
+    "peerDeviceId": null,
+    "peerDeviceName": null,
+    "type": "resource_saturation",
+    "category": "observation",
+    "severity": "warning",
+    "status": "open",
+    "summary": "pc-commercial-07 : disque C: rempli à 97 %",
+    "details": {
+      "ip": "10.20.14.107",
+      "resource": "disk",
+      "disk": "C:",
+      "totalGb": 238.4,
+      "usedPercent": 97,
+      "thresholdPercent": 90
+    },
+    "startedAt": "2026-11-06T12:50:00.000Z",
+    "resolvedAt": null,
+    "acknowledgedAt": null,
+    "durationSeconds": 939
+  }
+]

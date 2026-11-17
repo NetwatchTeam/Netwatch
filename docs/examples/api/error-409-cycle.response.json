@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "conflict",
+    "message": "Cette dépendance créerait un cycle : Passerelle atelier → pc-atelier-01 → Passerelle atelier"
+  }
+}

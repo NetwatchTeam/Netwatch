@@ -1,0 +1,7 @@
+# Fins de ligne LF dans le dépôt et sur tous les postes : les fichiers montés dans les
+# conteneurs Linux (collecteur simulé, SQL) restent identiques, qu'on travaille sous Windows ou non.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.pdf binary

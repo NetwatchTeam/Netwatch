@@ -1,0 +1,40 @@
+{
+  "name": "@netwatch/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "predev": "node ../../scripts/ensure-contracts.mjs",
+    "dev": "tsx watch --env-file-if-exists=.env src/main.ts",
+    "predev:demo": "node ../../scripts/ensure-contracts.mjs",
+    "dev:demo": "tsx watch --env-file=.env.demo src/main.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "pretest": "node ../../scripts/ensure-contracts.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "migrate": "tsx --env-file-if-exists=.env src/infrastructure/persistence/postgres/migrate-cli.ts",
+    "precontract:examples": "node ../../scripts/ensure-contracts.mjs",
+    "contract:examples": "tsx scripts/write-contract-examples.ts"
+  },
+  "dependencies": {
+    "@netwatch/contracts": "*",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "pdfkit": "^0.17.2",
+    "pg": "^8.16.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.15.3",
+    "@types/pdfkit": "^0.17.7",
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.20.6",
+    "typescript": "^7.0.2",
+    "vitest": "^3.2.4"
+  }
+}

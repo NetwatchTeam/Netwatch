@@ -1,0 +1,28 @@
+{
+  "name": "netwatch",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "predev": "node scripts/ensure-contracts.mjs",
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w @netwatch/api\" \"npm run dev -w @netwatch/web\"",
+    "predev:demo": "node scripts/ensure-contracts.mjs",
+    "dev:demo": "concurrently -n api,web -c blue,green \"npm run dev:demo -w @netwatch/api\" \"npm run dev -w @netwatch/web\"",
+    "build": "npm run build -w @netwatch/contracts && npm run build -w @netwatch/api && npm run build -w @netwatch/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "migrate": "npm run migrate -w @netwatch/api",
+    "pretest": "node scripts/ensure-contracts.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

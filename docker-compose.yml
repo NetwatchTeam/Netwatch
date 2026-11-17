@@ -1,0 +1,74 @@
+# Stack complète NetWatch : `docker compose up` démarre la base, le collecteur, l'API et le dashboard.
+#
+#   db         PostgreSQL ; données conservées dans le volume `netwatch-db`
+#   collector  collecteur réseau — par défaut le collecteur simulé du dépôt (tools/scanner-test),
+#              qui respecte le même contrat que le collecteur Python (docs/scanner-contract.md).
+#              Pour brancher le collecteur Python : docker-compose.collector-python.yml (voir README)
+#   app        API Node + dashboard React compilé, servi par l'API sur le même port
+#
+# Les valeurs sensibles viennent du fichier .env (copie de .env.example), jamais de ce fichier.
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-netwatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?mot de passe PostgreSQL manquant (POSTGRES_PASSWORD dans .env)}
+      POSTGRES_DB: ${POSTGRES_DB:-netwatch}
+    volumes:
+      - netwatch-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-netwatch} -d ${POSTGRES_DB:-netwatch}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  collector:
+    image: node:22-alpine
+    # Sans cela, le collecteur reste arrêté après un redémarrage de Docker
+    # et tous les scans échouent en « connexion refusée ».
+    restart: unless-stopped
+    working_dir: /collector
+    command: node server.mjs
+    environment:
+      # Scénario joué par le collecteur simulé (voir tools/scanner-test/README.md).
+      SCENARIO: ${COLLECTOR_SCENARIO:-4-reseau-passerelles}
+    volumes:
+      - ./tools/scanner-test:/collector:ro
+    ports:
+      # Accès direct au collecteur depuis la machine hôte (changer de scénario, npm run dev).
+      - '${COLLECTOR_PORT:-8090}:8080'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8080/']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      collector:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgres://${POSTGRES_USER:-netwatch}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-netwatch}
+      # `http` interroge le collecteur ; `demo` génère un réseau fictif sans collecteur.
+      SCANNER_MODE: ${SCANNER_MODE:-http}
+      SCANNER_URL: ${SCANNER_URL:-http://collector:8080}
+      SCANNER_TOKEN: ${SCANNER_TOKEN:-}
+      REPORT_TIME_ZONE: ${REPORT_TIME_ZONE:-Europe/Paris}
+    ports:
+      - '${APP_PORT:-3001}:3001'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3001/healthz']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  netwatch-db:
