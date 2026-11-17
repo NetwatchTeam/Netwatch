@@ -81,7 +81,9 @@ def test_collect_ssh_metrics_succes():
 def test_collect_ssh_metrics_metriques_illisibles():
     fetcher = FakeMetricsFetcher(RemoteMetrics())
 
-    result = CollectSystemMetrics(fetcher).collect_ssh_metrics("192.168.10.70")
+    result = CollectSystemMetrics(fetcher).collect_ssh_metrics(
+        "192.168.10.70", username="admin"
+    )
 
     assert result == EMPTY
 

@@ -47,7 +47,7 @@ class CollectSystemMetrics:
     def collect_ssh_metrics(
             self,
             ip: str,
-            username: str = "supervision",
+            username: str,
             password: Optional[str] = None,
             key_filename: Optional[str] = None,
             port: int = 22,
@@ -131,7 +131,7 @@ class CollectSystemMetrics:
                     "username": env_user,
                     "password": os.getenv("NETWATCH_SSH_PASSWORD"),
                     "key_filename": os.getenv("NETWATCH_SSH_KEY"),
-                    "port": int(os.getenv("NETWATCH_SSH_PORT", "22")),
+                    "port": int(os.getenv("NETWATCH_SSH_PORT") or "22"),
                 }
 
         if creds:

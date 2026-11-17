@@ -5,6 +5,7 @@ instantiated and injected into the use cases.
 
     external lib -> adapter -> use case -> entities
 """
+from flask.cli import load_dotenv
 
 from adapters.icmp_adapter import Ping3IcmpProber
 from adapters.nmap_adapter import NmapScanner
@@ -46,6 +47,7 @@ def build_controller() -> MainController:
 
 def main() -> None:
     """Builds the controller, creates the Flask app, and starts the development server."""
+    load_dotenv()
     app = create_app(build_controller())
     app.run(host="127.0.0.1", port=5000, debug=True)
 
