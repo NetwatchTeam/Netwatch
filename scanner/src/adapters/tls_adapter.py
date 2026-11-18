@@ -1,7 +1,7 @@
-"""Adapter: reads the TLS certificate presented by a service.
+"""Adaptateur : lit le certificat TLS présenté par un service.
 
-This is the only module aware of ssl, socket and the cryptography x509 API.
-It depends on the ``TlsCertificateReader`` port, never on the domain entities.
+C'est le seul module qui connaît ssl, socket et l'API x509 de cryptography.
+Il dépend du port ``TlsCertificateReader``, jamais des entités du domaine.
 """
 
 import socket
@@ -14,25 +14,25 @@ from usecases.ports.tls import PeerCertificate, TlsCertificateReader
 
 
 class SslTlsCertificateReader(TlsCertificateReader):
-    """TlsCertificateReader implemented with ssl and cryptography."""
+    """TlsCertificateReader implémenté avec ssl et cryptography."""
 
     def read_certificate(self, ip: str, port: int, timeout: float) -> PeerCertificate:
-        """Connects to a TLS service and decodes its certificate.
+        """Se connecte à un service TLS et décode son certificat.
 
-        The certificate is read without being verified, so that expired or
-        self-signed certificates can still be inspected.
+        Le certificat est lu sans être vérifié, afin que les certificats
+        expirés ou auto-signés puissent tout de même être inspectés.
 
         Args:
-            ip: The target IP address.
-            port: The TLS port.
-            timeout: Connection timeout in seconds.
+            ip: Adresse IP cible.
+            port: Port TLS.
+            timeout: Délai d'attente de la connexion, en secondes.
 
         Returns:
-            The PeerCertificate presented by the service.
+            Le PeerCertificate présenté par le service.
 
         Raises:
-            RuntimeError: If the port is closed, times out, the TLS handshake
-                fails or the certificate cannot be decoded.
+            RuntimeError: Si le port est fermé, expire, si la négociation TLS
+                échoue ou si le certificat ne peut pas être décodé.
         """
         context = ssl.create_default_context()
         context.check_hostname = False

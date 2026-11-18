@@ -1,4 +1,4 @@
-"""Unit tests for the system metrics collection use case."""
+"""Tests unitaires du cas d'usage de collecte des métriques système."""
 
 import pytest
 
@@ -99,7 +99,7 @@ def test_collect_ssh_metrics_echec_retourne_le_repli():
 
 
 def test_collect_system_metrics_sans_ssh_retourne_vide():
-    """Unmonitored remote devices return None/empty list cleanly without errors."""
+    """Les équipements distants non supervisés retournent None / liste vide, sans erreur."""
     fetcher = FakeMetricsFetcher()
 
     result = CollectSystemMetrics(fetcher).execute("192.168.1.50")
@@ -109,7 +109,7 @@ def test_collect_system_metrics_sans_ssh_retourne_vide():
 
 
 def test_collect_system_metrics_avec_credentials():
-    """Uses provided SSH credentials for configured target IPs."""
+    """Utilise les identifiants SSH fournis pour les IP cibles configurées."""
     fetcher = FakeMetricsFetcher(RemoteMetrics(cpu_percent=12.0))
 
     creds = {"192.168.10.80": {"username": "dbuser", "password": "secret"}}

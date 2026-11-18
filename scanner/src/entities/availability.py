@@ -1,14 +1,16 @@
+"""Entité représentant la disponibilité ICMP d'une machine."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class Availability:
-    """Represents the result of a series of ICMP echo requests.
+    """Représente le résultat d'une série de requêtes d'écho ICMP.
 
     Attributes:
-        latency_ms: Mean round-trip time in milliseconds, or None if no
-            probe received a reply.
-        packet_loss_percent: Percentage of probes without reply (0-100).
+        latency_ms: Temps d'aller-retour moyen en millisecondes, ou None si
+            aucune sonde n'a reçu de réponse.
+        packet_loss_percent: Pourcentage de sondes sans réponse (0-100).
     """
 
     latency_ms: float | None

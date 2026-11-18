@@ -1,14 +1,16 @@
+"""Entité représentant l'utilisation d'un disque."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class Disk:
-    """Represents storage disk usage.
+    """Représente l'utilisation d'un disque de stockage.
 
     Attributes:
-        name: The name or identifier of the disk.
-        percentage_used: The percentage of disk space currently in use.
-        total_gb: Total disk capacity in gigabytes.
+        name: Nom ou identifiant du disque.
+        percentage_used: Pourcentage d'espace disque utilisé.
+        total_gb: Capacité totale du disque en gigaoctets.
     """
 
     name: str

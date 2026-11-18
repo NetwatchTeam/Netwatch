@@ -1,4 +1,4 @@
-"""Port (interface): reading of the TLS certificate presented by a service."""
+"""Port (interface) : lecture du certificat TLS présenté par un service."""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -7,14 +7,14 @@ from abc import ABC, abstractmethod
 
 @dataclass(frozen=True)
 class PeerCertificate:
-    """A certificate as presented by a service.
+    """Un certificat tel que présenté par un service.
 
     Attributes:
-        fingerprint: SHA-256 fingerprint, in hexadecimal.
-        subject: Subject (RFC 4514 string).
-        issuer: Issuer (RFC 4514 string).
-        valid_from: Start of the validity period (timezone-aware).
-        expires_at: End of the validity period (timezone-aware).
+        fingerprint: Empreinte SHA-256, en hexadécimal.
+        subject: Sujet (chaîne RFC 4514).
+        issuer: Émetteur (chaîne RFC 4514).
+        valid_from: Début de la période de validité (avec fuseau horaire).
+        expires_at: Fin de la période de validité (avec fuseau horaire).
     """
 
     fingerprint: str
@@ -25,14 +25,22 @@ class PeerCertificate:
 
 
 class TlsCertificateReader(ABC):
-    """Reads the certificate of a TLS service, without verifying it."""
+    """Lit le certificat d'un service TLS, sans le vérifier."""
 
     @abstractmethod
     def read_certificate(self, ip: str, port: int, timeout: float) -> PeerCertificate:
-        """Reads the certificate.
+        """Lit le certificat.
+
+        Args:
+            ip: Adresse IP du service.
+            port: Port TLS du service.
+            timeout: Délai d'attente de la connexion, en secondes.
+
+        Returns:
+            Le certificat présenté par le service.
 
         Raises:
-            RuntimeError: If the port is closed, times out, the handshake
-                fails or the certificate cannot be decoded.
+            RuntimeError: Si le port est fermé, expire, si la négociation
+                échoue ou si le certificat ne peut pas être décodé.
         """
         ...

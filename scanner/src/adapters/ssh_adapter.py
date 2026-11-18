@@ -1,8 +1,8 @@
-"""Adapter: collects system metrics on a remote machine through paramiko.
+"""Adaptateur : collecte les métriques système d'une machine distante via paramiko.
 
-This is the only module aware of paramiko, of the SSH transport and of the
-output formats of ``free``, ``df`` and ``vmstat``.
-It depends on the ``SystemMetricsFetcher`` port, never on the domain entities.
+C'est le seul module qui connaît paramiko, le transport SSH et les formats de
+sortie de ``free``, ``df`` et ``vmstat``.
+Il dépend du port ``SystemMetricsFetcher``, jamais des entités du domaine.
 """
 
 import paramiko
@@ -16,7 +16,14 @@ from usecases.ports.ssh import (
 
 
 def _parse_free_output(output: str) -> RemoteMemory | None:
-    """Parses `free -m` output to extract memory metrics."""
+    """Analyse la sortie de `free -m` pour en extraire les métriques mémoire.
+
+    Args:
+        output: Sortie texte de la commande.
+
+    Returns:
+        Les métriques mémoire, ou None si elles sont illisibles.
+    """
     for line in output.splitlines():
         line = line.strip()
         if line.startswith("Mem:"):
@@ -39,7 +46,14 @@ def _parse_free_output(output: str) -> RemoteMemory | None:
 
 
 def _parse_df_output(output: str) -> tuple[RemoteDisk, ...]:
-    """Parses `df -mP` output to extract disk metrics."""
+    """Analyse la sortie de `df -mP` pour en extraire les métriques des disques.
+
+    Args:
+        output: Sortie texte de la commande.
+
+    Returns:
+        Les métriques de chaque disque ``/dev/...`` monté.
+    """
     disks = []
     for line in output.splitlines():
         line = line.strip()
@@ -63,10 +77,17 @@ def _parse_df_output(output: str) -> tuple[RemoteDisk, ...]:
 
 
 def _parse_vmstat_output(output: str) -> float | None:
-    """Parses `vmstat 1 2` output to calculate CPU usage."""
+    """Analyse la sortie de `vmstat 1 2` pour calculer l'utilisation du processeur.
+
+    Args:
+        output: Sortie texte de la commande.
+
+    Returns:
+        Le pourcentage d'utilisation du processeur, ou None s'il est illisible.
+    """
     lines = [line.strip() for line in output.splitlines() if line.strip()]
     if len(lines) >= 3:
-        # Use the second measurement interval (the last line)
+        # Utiliser le second intervalle de mesure (la dernière ligne)
         tokens = lines[-1].split()
         if len(tokens) >= 15:
             try:
@@ -78,7 +99,7 @@ def _parse_vmstat_output(output: str) -> float | None:
 
 
 class ParamikoMetricsFetcher(SystemMetricsFetcher):
-    """SystemMetricsFetcher implemented with paramiko."""
+    """SystemMetricsFetcher implémenté avec paramiko."""
 
     def fetch(
         self,
@@ -89,24 +110,24 @@ class ParamikoMetricsFetcher(SystemMetricsFetcher):
         port: int,
         timeout: float,
     ) -> RemoteMetrics:
-        """Runs ``free -m``, ``df -mP`` and ``vmstat 1 2`` on a remote machine.
+        """Exécute ``free -m``, ``df -mP`` et ``vmstat 1 2`` sur une machine distante.
 
         Args:
-            ip: Target machine IP address.
-            username: SSH login username.
-            password: Optional SSH password.
-            key_filename: Optional private key file path.
-            port: SSH port.
-            timeout: Network and command timeout in seconds.
+            ip: Adresse IP de la machine cible.
+            username: Nom d'utilisateur de connexion SSH.
+            password: Mot de passe SSH optionnel.
+            key_filename: Chemin optionnel du fichier de clé privée.
+            port: Port SSH.
+            timeout: Délai d'attente réseau et des commandes, en secondes.
 
         Returns:
-            The parsed metrics. Metrics unreadable from the command outputs are
-            None (or empty for disks).
+            Les métriques analysées. Les métriques illisibles dans les sorties
+            des commandes valent None (ou vide pour les disques).
 
         Raises:
-            RuntimeError: If the connection, the authentication, a command or
-                the parsing of its output fails. The connection is always
-                closed.
+            RuntimeError: Si la connexion, l'authentification, une commande ou
+                l'analyse de sa sortie échoue. La connexion est toujours
+                fermée.
         """
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

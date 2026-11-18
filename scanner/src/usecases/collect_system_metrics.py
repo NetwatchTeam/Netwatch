@@ -1,4 +1,4 @@
-"""Use case: Collect system metrics (CPU, RAM, Disks) on remote machines via SSH."""
+"""Cas d'usage : collecter les métriques système (CPU, RAM, disques) de machines distantes via SSH."""
 
 import logging
 import os
@@ -13,12 +13,24 @@ logger = logging.getLogger(__name__)
 
 
 def _empty_metrics() -> dict:
-    """Metrics of an unmonitored device, according to the contract."""
+    """Retourne les métriques d'un équipement non supervisé, selon le contrat.
+
+    Returns:
+        Un dictionnaire avec ``cpuPercent`` et ``memory`` à None, et
+        ``disks`` vide.
+    """
     return {"cpuPercent": None, "memory": None, "disks": []}
 
 
 def _to_contract(metrics: SystemMetrics) -> dict:
-    """Formats a SystemMetrics entity according to the contract."""
+    """Formate une entité SystemMetrics selon le contrat.
+
+    Args:
+        metrics: Les métriques système à formater.
+
+    Returns:
+        Un dictionnaire avec ``cpuPercent``, ``memory`` et ``disks``.
+    """
     memory = metrics.memory
     return {
         "cpuPercent": metrics.cpu_percent,
@@ -39,9 +51,14 @@ def _to_contract(metrics: SystemMetrics) -> dict:
 
 
 class CollectSystemMetrics:
-    """Collects system metrics through a SystemMetricsFetcher port."""
+    """Collecte les métriques système à travers un port SystemMetricsFetcher."""
 
     def __init__(self, fetcher: SystemMetricsFetcher) -> None:
+        """Initialise le cas d'usage.
+
+        Args:
+            fetcher: Collecteur de métriques d'une machine distante.
+        """
         self._fetcher = fetcher
 
     def collect_ssh_metrics(
@@ -53,18 +70,21 @@ class CollectSystemMetrics:
             port: int = 22,
             timeout: float = 3.0,
     ) -> dict:
-        """Collects system metrics from a remote machine via SSH without agent.
+        """Collecte les métriques système d'une machine distante via SSH, sans agent.
+
+        Si la collecte échoue, des métriques vides sont retournées.
 
         Args:
-            ip: Target machine IP address.
-            username: SSH login username.
-            password: Optional SSH password.
-            key_filename: Optional private key file path.
-            port: SSH port (default 22).
-            timeout: Network and command timeout in seconds.
+            ip: Adresse IP de la machine cible.
+            username: Nom d'utilisateur de connexion SSH.
+            password: Mot de passe SSH optionnel.
+            key_filename: Chemin optionnel du fichier de clé privée.
+            port: Port SSH (22 par défaut).
+            timeout: Délai d'attente réseau et des commandes, en secondes.
 
         Returns:
-            dict: cpuPercent, memory, disks formatted according to the contract.
+            Un dictionnaire avec ``cpuPercent``, ``memory`` et ``disks``,
+            formaté selon le contrat.
         """
         try:
             remote = self._fetcher.fetch(
@@ -105,20 +125,21 @@ class CollectSystemMetrics:
             ip: str,
             ssh_credentials: Optional[dict] = None,
     ) -> dict:
-        """Entry point for system metrics collection for a discovered machine.
+        """Point d'entrée de la collecte des métriques d'une machine découverte.
 
-        - If SSH credentials are provided (per IP, default, or via environment):
-          connects to the remote target via SSH.
-        - Otherwise (unmonitored / uninstrumented device):
-          returns None / [] cleanly according to the contract.
+        - Si des identifiants SSH sont fournis (par IP, par défaut ou via
+          l'environnement) : se connecte à la cible distante en SSH.
+        - Sinon (équipement non supervisé ou non instrumenté) : retourne
+          proprement None / [] selon le contrat.
 
         Args:
-            ip: Target IP address.
-            ssh_credentials: Optional dictionary of credentials. Can contain
-                keys matching specific IPs, or a "default" key.
+            ip: Adresse IP cible.
+            ssh_credentials: Dictionnaire optionnel d'identifiants. Peut
+                contenir des clés correspondant à des IP précises, ou une
+                clé « default ».
 
         Returns:
-            dict: {"cpuPercent": ..., "memory": ..., "disks": ...}
+            Un dictionnaire ``{"cpuPercent": ..., "memory": ..., "disks": ...}``.
         """
         creds = None
         if ssh_credentials:

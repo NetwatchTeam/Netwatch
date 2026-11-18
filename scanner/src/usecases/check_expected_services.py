@@ -10,9 +10,26 @@ class CheckExpectedServices:
     """Contrôle les services TCP configurés dans SCANNER_TCP_TARGETS."""
 
     def __init__(self, check_tcp_service: CheckTcpService) -> None:
+        """Initialise le cas d'usage.
+
+        Args:
+            check_tcp_service: Cas d'usage de contrôle d'une connexion TCP.
+        """
         self._check_tcp_service = check_tcp_service
 
     def execute(self) -> list[dict]:
+        """Contrôle chaque service listé dans ``SCANNER_TCP_TARGETS``.
+
+        La variable d'environnement contient une liste JSON d'objets avec les
+        clés ``ip`` et ``port``, et optionnellement ``timeout``.
+
+        Returns:
+            Les résultats des contrôles TCP, dans l'ordre de la configuration.
+
+        Raises:
+            ValueError: Si la configuration n'est pas un JSON valide, n'est
+                pas une liste, ou si une cible est mal formée.
+        """
         raw_targets = os.getenv("SCANNER_TCP_TARGETS", "[]")
 
         try:

@@ -1,27 +1,35 @@
+"""Entité représentant un certificat TLS observé sur un service."""
+
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 
 def _now_iso() -> str:
-    """Returns the current UTC time as an ISO 8601 string."""
+    """Retourne l'heure UTC courante au format ISO 8601.
+
+    Returns:
+        Une chaîne ISO 8601 de l'instant présent, en UTC.
+    """
     return datetime.now(timezone.utc).isoformat()
 
 
 @dataclass
 class TLSCertificate:
-    """Represents a TLS certificate extracted from a service.
+    """Représente un certificat TLS extrait d'un service.
 
     Attributes:
-        empreinte: SHA-256 fingerprint of the certificate.
-        sujet: Subject of the certificate (RFC 4514 string).
-        emetteur: Issuer of the certificate (RFC 4514 string).
-        date_debut_validite: ISO 8601 start date of the validity period.
-        date_expiration: ISO 8601 expiration date of the validity period.
-        date_observation: ISO 8601 UTC timestamp of the observation.
-        identifiant_certificat: Optional database identifier.
-        est_valide: Whether the certificate is valid, or None if not evaluated.
-        erreur_validation: Optional validation error message if invalid.
-        port: Optional port number the certificate was read from.
+        empreinte: Empreinte SHA-256 du certificat.
+        sujet: Sujet du certificat (chaîne RFC 4514).
+        emetteur: Émetteur du certificat (chaîne RFC 4514).
+        date_debut_validite: Date ISO 8601 de début de validité.
+        date_expiration: Date ISO 8601 de fin de validité.
+        date_observation: Horodatage ISO 8601 UTC de l'observation.
+        identifiant_certificat: Identifiant optionnel en base de données.
+        est_valide: Indique si le certificat est valide, ou None s'il n'a
+            pas été évalué.
+        erreur_validation: Message d'erreur de validation, le cas échéant.
+        port: Numéro du port depuis lequel le certificat a été lu, le cas
+            échéant.
     """
 
     empreinte: str

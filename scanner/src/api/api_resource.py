@@ -1,8 +1,8 @@
-"""Flask REST API resource definitions for network scanning.
+"""Définition des ressources de l'API REST Flask pour le scan réseau.
 
-Exposes the scan use case through a small JSON API. This module only deals
-with HTTP concerns (request parsing, status codes, serialization) and
-delegates all the work to the controller.
+Expose le cas d'usage de scan à travers une petite API JSON. Ce module ne
+traite que les aspects HTTP (lecture de la requête, codes de statut,
+sérialisation) et délègue tout le travail au contrôleur.
 """
 
 import os
@@ -13,7 +13,11 @@ from controllers.main_controller import MainController
 
 
 def _configured_targets() -> list[str]:
-    """Cibles de ``SCANNER_TARGETS`` (séparées par des virgules), localhost par défaut."""
+    """Retourne les cibles de ``SCANNER_TARGETS`` (séparées par des virgules).
+
+    Returns:
+        La liste des cibles configurées, localhost par défaut.
+    """
     return [
         target.strip()
         for target in os.getenv("SCANNER_TARGETS", "127.0.0.1").split(",")
@@ -22,30 +26,32 @@ def _configured_targets() -> list[str]:
 
 
 def create_app(controller: MainController) -> Flask:
-    """Creates and configures the Flask application.
+    """Crée et configure l'application Flask.
 
     Args:
-        controller: Controller that handles the scan requests.
+        controller: Contrôleur qui traite les demandes de scan.
 
     Returns:
-        A Flask application exposing the ``POST /scan`` endpoint.
+        Une application Flask exposant ``POST /scan``, ``GET /scan`` et
+        ``GET /tcp-checks``.
     """
     app = Flask(__name__)
 
     @app.post("/scan")
     def scan():
-        """Scans the requested targets.
+        """Scanne les cibles demandées.
 
-        Reads an optional JSON body of the form ``{"targets": ["10.0.0.1"]}``.
-        When no targets are given, the scanner falls back to ``SCANNER_TARGETS``
-        (localhost by default).
+        Lit un corps JSON optionnel de la forme ``{"targets": ["10.0.0.1"]}``.
+        Quand aucune cible n'est fournie, le scanner se rabat sur
+        ``SCANNER_TARGETS`` (localhost par défaut).
 
         Returns:
-            A JSON list of the discovered machines, or a JSON object
-            ``{"error": "..."}`` with HTTP status 502 if the scan failed.
+            Un instantané JSON des machines découvertes, 503 si aucune cible
+            n'est configurée, ou un objet JSON ``{"error": "..."}`` avec le
+            statut HTTP 502 si le scan a échoué.
         """
-        # silent=True returns None on a missing/invalid JSON body instead of
-        # raising, so an empty request simply triggers a default scan.
+        # silent=True renvoie None si le corps JSON est absent ou invalide au
+        # lieu de lever une exception : une requête vide lance donc un scan par défaut.
         payload = request.get_json(silent=True) or {}
         # Sans cible dans le corps (cas du dashboard), on prend SCANNER_TARGETS.
         targets = payload.get("targets") or _configured_targets()
@@ -54,16 +60,16 @@ def create_app(controller: MainController) -> Flask:
         try:
             return jsonify(controller.scan_machines(targets))
         except RuntimeError as exc:
-            # The scan backend (nmap) failed: report it as a bad gateway.
+            # Le moteur de scan (nmap) a échoué : on répond « bad gateway ».
             return jsonify({"error": str(exc)}), 502
 
     @app.get("/scan")
     def get_scan():
-        """Scans the targets configured in ``SCANNER_TARGETS`` (localhost by default).
+        """Scanne les cibles configurées dans ``SCANNER_TARGETS`` (localhost par défaut).
 
         Returns:
-            A JSON snapshot, 503 if no target is configured, or 502 if the
-            scan failed.
+            Un instantané JSON, 503 si aucune cible n'est configurée, ou 502
+            si le scan a échoué.
         """
         targets = _configured_targets()
 
@@ -81,7 +87,12 @@ def create_app(controller: MainController) -> Flask:
 
     @app.get("/tcp-checks")
     def get_tcp_checks():
-        """Contrôle les services TCP configurés, sans lancer Nmap."""
+        """Contrôle les services TCP configurés, sans lancer Nmap.
+
+        Returns:
+            Un objet JSON ``{"checks": [...]}``, ou 503 si la configuration
+            TCP est invalide.
+        """
         try:
             checks = controller.check_tcp_services()
         except ValueError as exc:

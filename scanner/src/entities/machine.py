@@ -1,3 +1,5 @@
+"""Entité représentant une machine découverte sur le réseau."""
+
 from dataclasses import dataclass, field
 
 from entities.certificate import TLSCertificate
@@ -6,23 +8,28 @@ from entities.service import Service
 
 @dataclass
 class Machine:
-    """Represents a scanned machine or network device.
+    """Représente une machine ou un équipement réseau scanné.
 
     Attributes:
-        ip: The IP address of the machine.
-        hostname: Optional hostname (falls back to the IP when nmap finds none).
-        id: Database identifier, or None if the machine is not persisted.
-        mac: MAC address, or None if it could not be determined (for example
-            when scanning localhost or a remote subnet).
-        vendor: Optional hardware vendor name.
-        gateway: Optional gateway IP address.
-        ports: List of port service details discovered on the machine.
-        open_ports: List of open port numbers.
-        services: List of running services discovered on the machine.
-        certificates: List of TLS certificates discovered on the machine.
-        cpuPercent: CPU usage percentage (0-100), or None if unavailable.
-        memory: Dictionary with usedPercent and totalMb, or None if unavailable.
-        disks: List of disk usage dictionaries (name, usedPercent, totalGb).
+        ip: Adresse IP de la machine.
+        hostname: Nom d'hôte optionnel (repli sur l'IP quand nmap n'en
+            trouve aucun).
+        id: Identifiant en base de données, ou None si la machine n'est pas
+            persistée.
+        mac: Adresse MAC, ou None si elle n'a pas pu être déterminée (par
+            exemple en scannant localhost ou un sous-réseau distant).
+        vendor: Nom optionnel du fabricant du matériel.
+        gateway: Adresse IP optionnelle de la passerelle.
+        ports: Détails des ports et services découverts sur la machine.
+        open_ports: Numéros des ports ouverts.
+        services: Services en cours d'exécution découverts sur la machine.
+        certificates: Certificats TLS découverts sur la machine.
+        cpuPercent: Utilisation du processeur en pourcentage (0-100), ou
+            None si indisponible.
+        memory: Dictionnaire avec usedPercent et totalMb, ou None si
+            indisponible.
+        disks: Dictionnaires d'utilisation des disques (name, usedPercent,
+            totalGb).
     """
 
     ip: str

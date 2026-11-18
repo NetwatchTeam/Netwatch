@@ -1,7 +1,8 @@
-"""Adapter: runs nmap through libnmap and translates its objects into port data.
+"""Adaptateur : exécute nmap via libnmap et traduit ses objets en données de port.
 
-This is the only module aware of nmap-specific terminology and data structures.
-It depends on the ``NetworkScanner`` port, never on the domain entities.
+C'est le seul module qui connaît la terminologie et les structures de données
+propres à nmap. Il dépend du port ``NetworkScanner``, jamais des entités du
+domaine.
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -14,7 +15,14 @@ from usecases.ports.network_scanner import NetworkScanner, ScannedHost, ScannedS
 
 
 def _first_hostname(host: Any) -> str | None:
-    """Extracts the first available hostname from an nmap host object."""
+    """Extrait le premier nom d'hôte disponible d'un objet hôte nmap.
+
+    Args:
+        host: L'objet hôte libnmap.
+
+    Returns:
+        Le premier nom d'hôte non vide, ou None s'il n'y en a aucun.
+    """
     for h in getattr(host, "hostnames", None) or []:
         name = h.get("name") if isinstance(h, dict) else h
         if isinstance(name, str) and name:
@@ -23,27 +31,55 @@ def _first_hostname(host: Any) -> str | None:
 
 
 def _extract_mac(host: Any) -> str | None:
-    """Extracts the MAC address of a host, if available."""
+    """Extrait l'adresse MAC d'un hôte, si elle est disponible.
+
+    Args:
+        host: L'objet hôte libnmap.
+
+    Returns:
+        L'adresse MAC, ou None.
+    """
     mac = getattr(host, "mac", None)
     return mac if mac else None
 
 
 def _extract_vendor(host: Any) -> str | None:
-    """Extracts the hardware vendor of a host, if available."""
+    """Extrait le fabricant du matériel d'un hôte, s'il est disponible.
+
+    Args:
+        host: L'objet hôte libnmap.
+
+    Returns:
+        Le nom du fabricant, ou None.
+    """
     vendor = getattr(host, "vendor", None)
     return vendor if isinstance(vendor, str) and vendor else None
 
 
 def _open_services(host: Any) -> list[Any]:
-    """Returns the libnmap services of a host whose port state is open."""
+    """Retourne les services libnmap d'un hôte dont le port est ouvert.
+
+    Args:
+        host: L'objet hôte libnmap.
+
+    Returns:
+        La liste des services dont l'état est « open ».
+    """
     return [s for s in getattr(host, "services", None) or [] if s.state == "open"]
 
 
 def _scanned_service(svc: Any) -> ScannedService:
-    """Converts a libnmap service object into a ScannedService.
+    """Convertit un objet service libnmap en ScannedService.
 
-    nmap describes https as http over an ssl tunnel: this is translated into
-    the ``tls`` flag, so that the use case never sees the nmap vocabulary.
+    nmap décrit https comme du http dans un tunnel ssl : cela est traduit en
+    indicateur ``tls``, afin que le cas d'usage ne voie jamais la librairie
+    de nmap.
+
+    Args:
+        svc: L'objet service libnmap.
+
+    Returns:
+        Le ScannedService correspondant.
     """
     info = getattr(svc, "service_dict", None) or {}
     return ScannedService(
@@ -58,33 +94,34 @@ def _scanned_service(svc: Any) -> ScannedService:
 
 
 class NmapScanner(NetworkScanner):
-    """NetworkScanner implemented with nmap."""
+    """NetworkScanner implémenté avec nmap."""
 
     def scan_hosts(self, targets: list[str]) -> list[ScannedHost]:
-        """Scans each target (IP, hostname or range) in its own nmap pipeline.
+        """Scanne chaque cible (IP, nom d'hôte ou plage) dans son propre pipeline nmap.
 
-        Each target runs independently: host discovery (-sn, which also
-        provides the MAC and hostname), then a ports/services scan on the
-        hosts found up. With several targets the pipelines run in parallel,
-        so a dead or slow range does not delay the others.
-        Targets must be validated by the use case before invoking this method.
+        Chaque cible est traitée indépendamment : découverte d'hôtes (-sn, qui
+        fournit aussi la MAC et le nom d'hôte), puis scan des ports et services
+        sur les hôtes trouvés actifs. Avec plusieurs cibles, les pipelines
+        s'exécutent en parallèle, si bien qu'une plage inactive ou lente ne
+        retarde pas les autres.
+        Les cibles doivent être validées par le cas d'usage avant l'appel.
 
         Args:
-            targets: List of target IP addresses, hostnames, or CIDR ranges.
+            targets: Adresses IP, noms d'hôte ou plages CIDR à scanner.
 
         Returns:
-            One ScannedHost per live host, grouped by target in the order
-            given, without duplicates when ranges overlap.
+            Un ScannedHost par hôte actif, regroupé par cible dans l'ordre
+            fourni, sans doublon quand des plages se chevauchent.
 
         Raises:
-            RuntimeError: If one of the nmap executions fails.
+            RuntimeError: Si l'une des exécutions de nmap échoue.
         """
         unique_targets = list(dict.fromkeys(targets))
         if len(unique_targets) <= 1:
             results = [self._scan_target(t) for t in unique_targets]
         else:
             with ThreadPoolExecutor(max_workers=len(unique_targets)) as pool:
-                # map() keeps the order and re-raises the first error.
+                # map() conserve l'ordre et relève la première erreur.
                 results = list(pool.map(self._scan_target, unique_targets))
 
         seen: set[str] = set()
@@ -98,7 +135,17 @@ class NmapScanner(NetworkScanner):
 
     @staticmethod
     def _scan_target(target: str) -> list[ScannedHost]:
-        """Runs discovery then ports/services scan for a single target."""
+        """Exécute la découverte puis le scan des ports et services d'une seule cible.
+
+        Args:
+            target: Adresse IP, nom d'hôte ou plage CIDR.
+
+        Returns:
+            Les hôtes actifs trouvés pour cette cible.
+
+        Raises:
+            RuntimeError: Si l'une des exécutions de nmap échoue.
+        """
         # "-sn" : découverte d'hôtes seulement, pas de scan de ports.
         # Une liste (et non une chaîne) : libnmap supprime les espaces d'une chaîne.
         scan = NmapProcess([target], "-sn")
@@ -133,7 +180,7 @@ class NmapScanner(NetworkScanner):
                 ScannedHost(
                     ip=host.address,
                     hostname=_first_hostname(discovery_host),
-                    mac=_extract_mac(discovery_host),  # None outside LAN or without root
+                    mac=_extract_mac(discovery_host),  # None hors du réseau local ou sans les droits root
                     vendor=_extract_vendor(discovery_host),
                     services=tuple(_scanned_service(s) for s in _open_services(host)),
                 )

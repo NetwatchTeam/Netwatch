@@ -1,26 +1,29 @@
+"""Présentateur des machines pour l'API."""
+
+
 class MachinePresenter:
-    """Formats raw machine data for the API (completely ignoring domain entities)."""
+    """Formate les données brutes des machines pour l'API (sans jamais voir les entités du domaine)."""
 
     @staticmethod
     def to_dict(machine_data: dict) -> dict:
-        """Converts raw machine data dictionary.
+        """Convertit le dictionnaire brut d'une machine.
 
         Args:
-            machine_data: The raw machine data dictionary.
+            machine_data: Dictionnaire de données brutes de la machine.
 
         Returns:
-            The formatted machine dictionary.
+            Le dictionnaire formaté de la machine.
         """
         return machine_data
 
     @staticmethod
     def to_list(machines_data: list[dict]) -> list[dict]:
-        """Converts a list of raw machine dictionaries.
+        """Convertit une liste de dictionnaires bruts de machines.
 
         Args:
-            machines_data: A list of raw machine data dictionaries.
+            machines_data: Liste de dictionnaires de données brutes de machines.
 
         Returns:
-            A list of formatted machine dictionaries.
+            La liste des dictionnaires formatés des machines.
         """
         return [MachinePresenter.to_dict(m) for m in machines_data]

@@ -1,4 +1,4 @@
-"""Port (interface): TCP connection probe."""
+"""Port (interface) : sonde de connexion TCP."""
 
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
@@ -6,13 +6,13 @@ from abc import ABC, abstractmethod
 
 @dataclass(frozen=True)
 class TcpProbeResult:
-    """Outcome of one TCP connection attempt.
+    """Résultat d'une tentative de connexion TCP.
 
     Attributes:
-        status: "open", "refused", "timeout" or "error".
-        checked_at: ISO 8601 UTC timestamp of the attempt.
-        duration_ms: Duration of the attempt in milliseconds.
-        error: The failure message, or None if the port is open.
+        status: « open », « refused », « timeout » ou « error ».
+        checked_at: Horodatage ISO 8601 UTC de la tentative.
+        duration_ms: Durée de la tentative en millisecondes.
+        error: Message d'échec, ou None si le port est ouvert.
     """
 
     status: str
@@ -22,9 +22,20 @@ class TcpProbeResult:
 
 
 class TcpProber(ABC):
-    """Tries TCP connections."""
+    """Tente des connexions TCP."""
 
     @abstractmethod
     def probe(self, ip: str, port: int, timeout: float) -> TcpProbeResult:
-        """Tries a TCP connection. Network failures are returned, not raised."""
+        """Tente une connexion TCP.
+
+        Les échecs réseau sont retournés dans le résultat, pas levés.
+
+        Args:
+            ip: Adresse IP cible.
+            port: Port TCP cible.
+            timeout: Délai d'attente de la connexion, en secondes.
+
+        Returns:
+            Le résultat de la tentative.
+        """
         ...

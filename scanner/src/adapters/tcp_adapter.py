@@ -1,7 +1,7 @@
-"""Adapter: opens TCP connections through the socket module.
+"""Adaptateur : ouvre des connexions TCP via le module socket.
 
-This is the only module aware of socket and of its exceptions.
-It depends on the ``TcpProber`` port, never on the domain entities.
+C'est le seul module qui connaît socket et ses exceptions.
+Il dépend du port ``TcpProber``, jamais des entités du domaine.
 """
 
 import socket
@@ -12,22 +12,23 @@ from usecases.ports.tcp import TcpProbeResult, TcpProber
 
 
 class SocketTcpProber(TcpProber):
-    """TcpProber implemented with the socket module."""
+    """TcpProber implémenté avec le module socket."""
 
     def probe(self, ip: str, port: int, timeout: float) -> TcpProbeResult:
-        """Tries a TCP connection to an address and a port, and times it.
+        """Tente une connexion TCP vers une adresse et un port, et la chronomètre.
 
-        Network failures are returned, not raised. The parameters must be
-        validated by the use case before invoking this method.
+        Les échecs réseau sont retournés, pas levés. Les paramètres doivent
+        être validés par le cas d'usage avant l'appel.
 
         Args:
-            ip: The target IP address (IPv4 or IPv6).
-            port: The target TCP port.
-            timeout: Socket timeout in seconds (not milliseconds).
+            ip: Adresse IP cible (IPv4 ou IPv6).
+            port: Port TCP cible.
+            timeout: Délai d'attente du socket en secondes (et non en
+                millisecondes).
 
         Returns:
-            A TcpProbeResult whose status is "open", "refused", "timeout" or
-            "error".
+            Un TcpProbeResult dont le statut est « open », « refused »,
+            « timeout » ou « error ».
         """
         checked_at = datetime.now(timezone.utc).isoformat()
         started_at = perf_counter()
@@ -44,7 +45,17 @@ class SocketTcpProber(TcpProber):
 
     @staticmethod
     def _connect(ip: str, port: int, timeout: float) -> tuple[str, str | None]:
-        """Translates the outcome of a socket connection into (status, error)."""
+        """Traduit le résultat d'une connexion socket en (statut, erreur).
+
+        Args:
+            ip: Adresse IP cible.
+            port: Port TCP cible.
+            timeout: Délai d'attente du socket, en secondes.
+
+        Returns:
+            Un couple (statut, message d'erreur), l'erreur valant None si le
+            port est ouvert.
+        """
         try:
             # create_connection gère les adresses IPv4 et IPv6.
             with socket.create_connection((ip, port), timeout=timeout):

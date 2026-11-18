@@ -1,13 +1,15 @@
+"""Entité représentant un port réseau."""
+
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
 class Port:
-    """Represents a network port.
+    """Représente un port réseau.
 
     Attributes:
-        number: The port number.
-        protocol: The network protocol (e.g., "tcp", "udp").
+        number: Numéro du port.
+        protocol: Protocole réseau (par exemple « tcp », « udp »).
     """
 
     number: int

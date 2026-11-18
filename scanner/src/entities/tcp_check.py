@@ -1,17 +1,19 @@
+"""Entité représentant le résultat d'un contrôle de connexion TCP."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class TcpCheck:
-    """Represents the outcome of a single TCP connection attempt.
+    """Représente le résultat d'une tentative de connexion TCP.
 
     Attributes:
-        ip: The probed IP address.
-        port: The probed TCP port.
-        status: "open", "refused", "timeout" or "error".
-        checked_at: ISO 8601 UTC timestamp of the attempt.
-        duration_ms: Duration of the attempt in milliseconds.
-        error: Failure message, or None if the port is open.
+        ip: Adresse IP sondée.
+        port: Port TCP sondé.
+        status: « open », « refused », « timeout » ou « error ».
+        checked_at: Horodatage ISO 8601 UTC de la tentative.
+        duration_ms: Durée de la tentative en millisecondes.
+        error: Message d'échec, ou None si le port est ouvert.
     """
 
     ip: str
@@ -23,5 +25,5 @@ class TcpCheck:
 
     @property
     def reachable(self) -> bool:
-        """True if the port accepted the connection."""
+        """Indique si le port a accepté la connexion (True) ou non (False)."""
         return self.status == "open"

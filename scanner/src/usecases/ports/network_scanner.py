@@ -1,7 +1,7 @@
-"""Port (interface): discovery of hosts and scan of their ports and services.
+"""Port (interface) : découverte des hôtes et scan de leurs ports et services.
 
-Defined by the use cases, implemented by an adapter (nmap, masscan, ...).
-The data returned is made of plain structures, never of domain entities.
+Défini par les cas d'usage, implémenté par un adaptateur (nmap, masscan, ...).
+Les données retournées sont de simples structures, jamais des entités du domaine.
 """
 
 from dataclasses import dataclass
@@ -10,15 +10,15 @@ from abc import ABC, abstractmethod
 
 @dataclass(frozen=True)
 class ScannedService:
-    """An open port and what was detected behind it.
+    """Un port ouvert et ce qui a été détecté derrière.
 
     Attributes:
-        port: The port number.
-        protocol: The transport protocol ("tcp", "udp").
-        name: The detected service name, or None if unknown.
-        product: The detected product name, or None.
-        version: The detected product version, or None.
-        tls: True if the service is wrapped in TLS.
+        port: Numéro du port.
+        protocol: Protocole de transport (« tcp », « udp »).
+        name: Nom du service détecté, ou None s'il est inconnu.
+        product: Nom du produit détecté, ou None.
+        version: Version du produit détecté, ou None.
+        tls: True si le service est encapsulé dans TLS.
     """
 
     port: int
@@ -31,14 +31,14 @@ class ScannedService:
 
 @dataclass(frozen=True)
 class ScannedHost:
-    """A live host reported by the scanner.
+    """Un hôte actif signalé par le scanner.
 
     Attributes:
-        ip: The IP address of the host.
-        hostname: The reverse DNS name, or None.
-        mac: The MAC address, or None (outside the LAN or without root).
-        vendor: The hardware vendor, or None.
-        services: The services found on the open ports.
+        ip: Adresse IP de l'hôte.
+        hostname: Nom obtenu par résolution DNS inverse, ou None.
+        mac: Adresse MAC, ou None (hors du réseau local ou sans les droits root).
+        vendor: Fabricant du matériel, ou None.
+        services: Services trouvés sur les ports ouverts.
     """
 
     ip: str
@@ -49,19 +49,19 @@ class ScannedHost:
 
 
 class NetworkScanner(ABC):
-    """Discovers live hosts and scans their ports and services."""
+    """Découvre les hôtes actifs et scanne leurs ports et services."""
 
     @abstractmethod
     def scan_hosts(self, targets: list[str]) -> list[ScannedHost]:
-        """Scans the targets.
+        """Scanne les cibles.
 
         Args:
-            targets: IP addresses, hostnames or CIDR ranges.
+            targets: Adresses IP, noms d'hôte ou plages CIDR.
 
         Returns:
-            One ScannedHost per live host.
+            Un ScannedHost par hôte actif.
 
         Raises:
-            RuntimeError: If the scan fails.
+            RuntimeError: Si le scan échoue.
         """
         ...

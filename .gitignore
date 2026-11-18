@@ -1,6 +1,63 @@
-node_modules
-dist
-coverage
+# ========================
+# Python
+# ========================
+# Compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# ========================
+# JavaScript / Node
+# ========================
+node_modules/
+dist/
+coverage/
+
+# ========================
+# Database
+# ========================
+# Ignore the SQLite development database
+netwatch.db
+*.sqlite3
+*.db
+
+# ========================
+# Configuration & Secrets
+# ========================
+# Environment variable files (very important for security)
 .env
 .env.local
+
+# ========================
+# IDEs & Editors
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ========================
+# OS
+# ========================
+.DS_Store
+Thumbs.db
+
+# ========================
+# Tests, Logs & Build
+# ========================
 *.log
+.pytest_cache/
+htmlcov/
+.coverage
+build/
+dist/
+*.egg-info/
+scan.sh
+uml_gen.py
+uv.lock

@@ -1,3 +1,5 @@
+"""Cas d'usage : scanner les machines et enrichir chacune de ses contrôles (ICMP, TCP, système, TLS)."""
+
 import ipaddress
 import logging
 from dataclasses import asdict
@@ -21,7 +23,14 @@ TLS_VALID_STATUSES = ("ok", "expired", "expiring_soon")
 
 
 def _detected_ports(machine_data: dict) -> Set[int]:
-    """Retourne les ports TCP détectés par Nmap (open_ports + ports)."""
+    """Retourne les ports TCP détectés par Nmap (open_ports + ports).
+
+    Args:
+        machine_data: Dictionnaire de données brutes d'une machine.
+
+    Returns:
+        L'ensemble des numéros de ports TCP détectés.
+    """
     detected = set()
 
     for port in machine_data.get("open_ports") or []:
@@ -39,7 +48,14 @@ def _detected_ports(machine_data: dict) -> Set[int]:
 
 
 def _tls_port(machine_data: dict) -> Optional[int]:
-    """Retourne le port TLS à contrôler (443 en priorité), sinon None."""
+    """Retourne le port TLS à contrôler (443 en priorité), sinon None.
+
+    Args:
+        machine_data: Dictionnaire de données brutes d'une machine.
+
+    Returns:
+        Le port TLS à contrôler, ou None si aucun port HTTPS n'est détecté.
+    """
     detected = _detected_ports(machine_data)
 
     for port in TLS_PORTS:
@@ -60,6 +76,16 @@ class ScanMachines:
         check_tls: CheckMachineTls,
         collect_system_metrics: CollectSystemMetrics,
     ) -> None:
+        """Initialise le cas d'usage.
+
+        Args:
+            scan_network: Cas d'usage de découverte réseau (Nmap).
+            check_availability: Cas d'usage de mesure ICMP.
+            check_tcp_service: Cas d'usage de contrôle TCP.
+            check_tls: Cas d'usage de lecture du certificat TLS.
+            collect_system_metrics: Cas d'usage de collecte des métriques
+                système.
+        """
         self._scan_network = scan_network
         self._check_availability = check_availability
         self._check_tcp_service = check_tcp_service
@@ -67,7 +93,16 @@ class ScanMachines:
         self._collect_system_metrics = collect_system_metrics
 
     def _collect_certificates(self, ip: str, machine_data: dict) -> List[dict]:
-        """Lit le certificat TLS uniquement si un port HTTPS est ouvert."""
+        """Lit le certificat TLS uniquement si un port HTTPS est ouvert.
+
+        Args:
+            ip: Adresse IP de la machine.
+            machine_data: Dictionnaire de données brutes de la machine.
+
+        Returns:
+            Une liste contenant le certificat lu, ou une liste vide si aucun
+            port HTTPS n'est ouvert ou si le certificat est illisible.
+        """
         port = _tls_port(machine_data)
         if port is None:
             return []

@@ -1,3 +1,5 @@
+"""Entité représentant les métriques système d'une machine."""
+
 from dataclasses import dataclass, field
 
 from entities.disk import Disk
@@ -6,12 +8,13 @@ from entities.memory import Memory
 
 @dataclass
 class SystemMetrics:
-    """Represents the system metrics collected on a machine.
+    """Représente les métriques système collectées sur une machine.
 
     Attributes:
-        cpu_percent: CPU usage percentage (0-100), or None if unavailable.
-        memory: Memory usage, or None if unavailable.
-        disks: Usage of each mounted disk.
+        cpu_percent: Utilisation du processeur en pourcentage (0-100), ou
+            None si indisponible.
+        memory: Utilisation de la mémoire, ou None si indisponible.
+        disks: Utilisation de chaque disque monté.
     """
 
     cpu_percent: float | None = None

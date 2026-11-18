@@ -8,6 +8,11 @@ class CheckAvailability:
     """Mesure la disponibilité ICMP à travers un port IcmpProber."""
 
     def __init__(self, prober: IcmpProber) -> None:
+        """Initialise le cas d'usage.
+
+        Args:
+            prober: Sonde ICMP utilisée pour envoyer les requêtes d'écho.
+        """
         self._prober = prober
 
     def execute(
@@ -20,6 +25,20 @@ class CheckAvailability:
 
         Les absences de réponse comptent comme des sondes sans réponse.
         Une erreur d'exécution invalide la mesure et remonte au collecteur.
+
+        Args:
+            ip: Adresse IP de la machine à sonder.
+            attempts: Nombre de tentatives de ping à effectuer.
+            timeout: Délai d'attente en secondes pour chaque tentative.
+
+        Returns:
+            Un dictionnaire avec ``latencyMs`` (latence moyenne, ou None si
+            aucune réponse) et ``packetLossPercent``.
+
+        Raises:
+            ValueError: Si ``attempts`` est inférieur à 1 ou si ``timeout``
+                n'est pas strictement positif.
+            RuntimeError: Si la sonde n'a pas pu être exécutée.
         """
         if attempts < 1:
             raise ValueError("attempts doit être supérieur ou égal à 1.")

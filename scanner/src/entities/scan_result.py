@@ -1,3 +1,5 @@
+"""Entité représentant le résultat d'un scan réseau."""
+
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -7,12 +9,12 @@ from entities.throughput import Throughput
 
 @dataclass
 class ScanResult:
-    """Represents the results of a network scan.
+    """Représente les résultats d'un scan réseau.
 
     Attributes:
-        scanned_at: The timestamp when the scan was performed.
-        machines: List of scanned machines/devices.
-        throughput: List of throughput measurements between nodes.
+        scanned_at: Horodatage de réalisation du scan.
+        machines: Machines ou équipements scannés.
+        throughput: Mesures de débit entre les nœuds.
     """
 
     scanned_at: datetime

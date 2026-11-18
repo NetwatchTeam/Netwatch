@@ -1,4 +1,4 @@
-"""Port (interface): collection of system metrics on a remote machine."""
+"""Port (interface) : collecte des métriques système sur une machine distante."""
 
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
@@ -6,7 +6,12 @@ from abc import ABC, abstractmethod
 
 @dataclass(frozen=True)
 class RemoteMemory:
-    """Memory usage reported by a remote machine."""
+    """Utilisation de la mémoire signalée par une machine distante.
+
+    Attributes:
+        used_percent: Pourcentage de mémoire utilisé.
+        total_mb: Mémoire totale en mégaoctets.
+    """
 
     used_percent: float
     total_mb: float
@@ -14,7 +19,13 @@ class RemoteMemory:
 
 @dataclass(frozen=True)
 class RemoteDisk:
-    """Usage of one mounted disk reported by a remote machine."""
+    """Utilisation d'un disque monté signalée par une machine distante.
+
+    Attributes:
+        mountpoint: Point de montage du disque.
+        used_percent: Pourcentage d'espace utilisé.
+        total_gb: Capacité totale en gigaoctets.
+    """
 
     mountpoint: str
     used_percent: float
@@ -23,12 +34,12 @@ class RemoteDisk:
 
 @dataclass(frozen=True)
 class RemoteMetrics:
-    """System metrics reported by a remote machine.
+    """Métriques système signalées par une machine distante.
 
     Attributes:
-        cpu_percent: CPU usage (0-100), or None if unreadable.
-        memory: Memory usage, or None if unreadable.
-        disks: Usage of each mounted disk.
+        cpu_percent: Utilisation du processeur (0-100), ou None si illisible.
+        memory: Utilisation de la mémoire, ou None si illisible.
+        disks: Utilisation de chaque disque monté.
     """
 
     cpu_percent: float | None = None
@@ -37,7 +48,7 @@ class RemoteMetrics:
 
 
 class SystemMetricsFetcher(ABC):
-    """Collects CPU, memory and disk metrics on a remote machine."""
+    """Collecte les métriques de processeur, mémoire et disques d'une machine distante."""
 
     @abstractmethod
     def fetch(
@@ -49,9 +60,20 @@ class SystemMetricsFetcher(ABC):
         port: int,
         timeout: float,
     ) -> RemoteMetrics:
-        """Collects the metrics.
+        """Collecte les métriques.
+
+        Args:
+            ip: Adresse IP de la machine cible.
+            username: Nom d'utilisateur de connexion.
+            password: Mot de passe, ou None.
+            key_filename: Chemin du fichier de clé privée, ou None.
+            port: Port de connexion.
+            timeout: Délai d'attente réseau et des commandes, en secondes.
+
+        Returns:
+            Les métriques collectées.
 
         Raises:
-            RuntimeError: If the connection, a command or its parsing fails.
+            RuntimeError: Si la connexion, une commande ou son analyse échoue.
         """
         ...

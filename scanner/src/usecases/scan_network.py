@@ -1,4 +1,4 @@
-"""Use case for scanning network targets and returning the discovered machines."""
+"""Cas d'usage : scanner des cibles réseau et retourner les machines découvertes."""
 
 from entities.machine import Machine
 from entities.port import Port
@@ -9,10 +9,17 @@ DEFAULT_TARGETS = ["127.0.0.1"]
 
 
 def _to_service(scanned: ScannedService) -> Service:
-    """Builds a Service entity from a scanned service."""
+    """Construit une entité Service à partir d'un service scanné.
+
+    Args:
+        scanned: Le service détecté par le scanner.
+
+    Returns:
+        L'entité Service correspondante.
+    """
     name = scanned.name or "unknown"
     if scanned.tls and name == "http":
-        name = "https"  # http over TLS is https
+        name = "https"  # http sur TLS, c'est https
     return Service(
         name=name,
         port=Port(number=scanned.port, protocol=scanned.protocol),
@@ -23,7 +30,14 @@ def _to_service(scanned: ScannedService) -> Service:
 
 
 def _to_port_details(scanned: ScannedService) -> dict:
-    """Builds the port detail dictionary stored in ``Machine.ports``."""
+    """Construit le dictionnaire de détails de port stocké dans ``Machine.ports``.
+
+    Args:
+        scanned: Le service détecté par le scanner.
+
+    Returns:
+        Un dictionnaire avec ``port``, ``protocol`` et ``services``.
+    """
     services = []
     if scanned.name:
         services.append(
@@ -37,10 +51,17 @@ def _to_port_details(scanned: ScannedService) -> dict:
 
 
 def _to_machine(host: ScannedHost) -> Machine:
-    """Builds a Machine entity from a scanned host."""
+    """Construit une entité Machine à partir d'un hôte scanné.
+
+    Args:
+        host: L'hôte actif signalé par le scanner.
+
+    Returns:
+        L'entité Machine correspondante.
+    """
     return Machine(
         ip=host.ip,
-        # fallback: IP if no reverse DNS
+        # Repli sur l'IP en l'absence de DNS inverse.
         hostname=host.hostname or host.ip,
         mac=host.mac,
         vendor=host.vendor,
@@ -50,25 +71,30 @@ def _to_machine(host: ScannedHost) -> Machine:
 
 
 class ScanNetwork:
-    """Scans network targets through a NetworkScanner port."""
+    """Scanne des cibles réseau à travers un port NetworkScanner."""
 
     def __init__(self, scanner: NetworkScanner) -> None:
+        """Initialise le cas d'usage.
+
+        Args:
+            scanner: Scanner réseau utilisé pour découvrir les hôtes.
+        """
         self._scanner = scanner
 
     def execute(self, targets: list[str] | None = None) -> list[Machine]:
-        """Scans the given targets and returns the machines that are up.
+        """Scanne les cibles données et retourne les machines actives.
 
-        The returned entities are not persisted (``id`` is None).
+        Les entités retournées ne sont pas persistées (``id`` vaut None).
 
         Args:
-            targets: IP addresses, hostnames or CIDR ranges to scan. Defaults
-                to ``DEFAULT_TARGETS`` (localhost).
+            targets: Adresses IP, noms d'hôte ou plages CIDR à scanner. Par
+                défaut, ``DEFAULT_TARGETS`` (localhost).
 
         Returns:
-            A list of Machine entities, one per host reported as up.
+            Une liste d'entités Machine, une par hôte signalé comme actif.
 
         Raises:
-            RuntimeError: If the scanner fails.
+            RuntimeError: Si le scanner échoue.
         """
         hosts = self._scanner.scan_hosts(targets or DEFAULT_TARGETS)
         return [_to_machine(host) for host in hosts]

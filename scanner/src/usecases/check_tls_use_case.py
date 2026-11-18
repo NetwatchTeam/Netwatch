@@ -13,6 +13,11 @@ class CheckMachineTls:
     """Contrôle un certificat TLS à travers un port TlsCertificateReader."""
 
     def __init__(self, reader: TlsCertificateReader) -> None:
+        """Initialise le cas d'usage.
+
+        Args:
+            reader: Lecteur de certificat TLS.
+        """
         self._reader = reader
 
     def execute(
@@ -22,6 +27,21 @@ class CheckMachineTls:
             timeout: float = 3.0,
             expiring_soon_days: int = EXPIRING_SOON_DAYS,
     ) -> dict:
+        """Lit le certificat d'un service TLS et évalue sa validité.
+
+        Args:
+            ip: Adresse IP du service.
+            port: Port TLS du service.
+            timeout: Délai d'attente de la connexion, en secondes.
+            expiring_soon_days: Nombre de jours restants en dessous duquel le
+                certificat est considéré comme bientôt expiré.
+
+        Returns:
+            Un dictionnaire décrivant le certificat, avec un ``status`` valant
+            « ok », « expiring_soon » ou « expired ». Si le certificat n'a pas
+            pu être lu, le ``status`` vaut « unreachable » et ``message``
+            contient la cause.
+        """
         now = datetime.now(timezone.utc)
         date_observation = now.isoformat()
 

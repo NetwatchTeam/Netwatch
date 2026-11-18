@@ -1,7 +1,8 @@
-"""Output data of the scan use cases.
+"""Données de sortie des cas d'usage de scan.
 
-These models are defined by the use case layer and consumed by the presenters.
-They carry plain data only: the presenters never see the domain entities.
+Ces modèles sont définis par la couche des cas d'usage et consommés par les
+présentateurs. Ils ne portent que des données simples : les présentateurs ne
+voient jamais les entités du domaine.
 """
 
 from dataclasses import dataclass, field
@@ -10,12 +11,12 @@ from datetime import datetime
 
 @dataclass(frozen=True)
 class ThroughputResponse:
-    """A throughput measurement between two endpoints.
+    """Une mesure de débit entre deux extrémités.
 
     Attributes:
-        source_ip: The source IP address.
-        target_ip: The target IP address.
-        mbps: Throughput speed in megabits per second.
+        source_ip: Adresse IP source.
+        target_ip: Adresse IP cible.
+        mbps: Débit en mégabits par seconde.
     """
 
     source_ip: str
@@ -25,12 +26,12 @@ class ThroughputResponse:
 
 @dataclass(frozen=True)
 class ScanResponse:
-    """The result of a network scan, as handed over to the presenter.
+    """Le résultat d'un scan réseau, transmis au présentateur.
 
     Attributes:
-        scanned_at: The timestamp when the scan was performed.
-        machines: The scanned machines, as raw data dictionaries.
-        throughput: The throughput measurements between nodes.
+        scanned_at: Horodatage de réalisation du scan.
+        machines: Machines scannées, sous forme de dictionnaires de données brutes.
+        throughput: Mesures de débit entre les nœuds.
     """
 
     scanned_at: datetime

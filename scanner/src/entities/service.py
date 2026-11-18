@@ -1,3 +1,5 @@
+"""Entité représentant un service réseau."""
+
 from dataclasses import dataclass
 
 from entities.port import Port
@@ -5,14 +7,14 @@ from entities.port import Port
 
 @dataclass
 class Service:
-    """Represents a network service running on a specific port.
+    """Représente un service réseau exécuté sur un port donné.
 
     Attributes:
-        name: The name of the service.
-        port: The port associated with the service.
-        product: Optional product name of the service.
-        version: Optional version of the service.
-        tls: Flag indicating if TLS is enabled.
+        name: Nom du service.
+        port: Port associé au service.
+        product: Nom optionnel du produit qui fournit le service.
+        version: Version optionnelle du produit.
+        tls: Indique si TLS est activé.
     """
 
     name: str

@@ -1,4 +1,4 @@
-"""Unit tests for MainController."""
+"""Tests unitaires de MainController."""
 
 from unittest.mock import Mock, patch
 
@@ -15,7 +15,7 @@ def make_controller():
 
 
 def test_scan_machines_transmet_targets_au_use_case_et_au_presenter():
-    """Forwards the targets to the use case and its result to the presenter."""
+    """Transmet les cibles au cas d'usage et son résultat au présentateur."""
     controller, scan_machines, _ = make_controller()
     machines = [{"ip": "10.0.0.1"}]
     snapshot = {
@@ -37,7 +37,7 @@ def test_scan_machines_transmet_targets_au_use_case_et_au_presenter():
 
 
 def test_scan_machines_retourne_un_snapshot_complet():
-    """Builds a full snapshot from the use case result (real presenter)."""
+    """Construit un instantané complet depuis le résultat du cas d'usage (vrai présentateur)."""
     controller, scan_machines, _ = make_controller()
     scan_machines.execute.return_value = [{"ip": "10.0.0.1"}]
 

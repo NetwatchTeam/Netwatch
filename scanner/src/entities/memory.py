@@ -1,13 +1,15 @@
+"""Entité représentant l'utilisation de la mémoire."""
+
 from dataclasses import dataclass
 
 
 @dataclass
 class Memory:
-    """Represents memory usage statistics.
+    """Représente les statistiques d'utilisation de la mémoire.
 
     Attributes:
-        percentage_used: The percentage of memory currently in use.
-        total_mb: Total memory capacity in megabytes.
+        percentage_used: Pourcentage de mémoire actuellement utilisé.
+        total_mb: Capacité totale de la mémoire en mégaoctets.
     """
 
     percentage_used: float

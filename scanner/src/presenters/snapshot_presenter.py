@@ -1,3 +1,5 @@
+"""Présentateur de l'instantané de scan selon le contrat de l'API."""
+
 from datetime import datetime, timezone
 
 
@@ -6,6 +8,16 @@ class SnapshotPresenter:
 
     @staticmethod
     def to_snapshot(machines: list[dict]) -> dict:
+        """Construit l'instantané de l'API à partir des machines collectées.
+
+        Args:
+            machines: Dictionnaires bruts des machines, tels que produits par
+                le cas d'usage de scan.
+
+        Returns:
+            Un dictionnaire contenant la version du contrat, l'horodatage du
+            scan et la liste des équipements formatés.
+        """
         devices = []
 
         for machine in machines:

@@ -1,9 +1,9 @@
-"""Application entry point for the Netwatch scanner service.
+"""Point d'entrée du service scanner Netwatch.
 
-This is the composition root: the only place where the adapters are
-instantiated and injected into the use cases.
+Ce module est la racine de composition : c'est le seul endroit où les
+adaptateurs sont instanciés puis injectés dans les cas d'usage.
 
-    external lib -> adapter -> use case -> entities
+    bibliothèque externe -> adaptateur -> cas d'usage -> entités
 """
 import os
 
@@ -26,10 +26,10 @@ from usecases.scan_network import ScanNetwork
 
 
 def build_controller() -> MainController:
-    """Wires the adapters, the use cases and the controller together.
+    """Assemble les adaptateurs, les cas d'usage et le contrôleur.
 
     Returns:
-        A MainController ready to serve requests.
+        Un MainController prêt à traiter les requêtes.
     """
     check_tcp_service = CheckTcpService(SocketTcpProber())
 
@@ -48,7 +48,7 @@ def build_controller() -> MainController:
 
 
 def main() -> None:
-    """Builds the controller, creates the Flask app, and starts the development server."""
+    """Construit le contrôleur, crée l'application Flask et lance le serveur de développement."""
     load_dotenv()
     app = create_app(build_controller())
     # 0.0.0.0 : dans Docker, l'API doit pouvoir joindre le scanner depuis un autre conteneur.

@@ -10,7 +10,7 @@ from usecases.ports.network_scanner import ScannedHost, ScannedService
 
 
 def make_host(address, up=True, mac=None):
-    """Builds a fake libnmap host."""
+    """Construit un faux hôte libnmap."""
     host = MagicMock()
     host.address = address
     host.is_up.return_value = up
@@ -19,7 +19,7 @@ def make_host(address, up=True, mac=None):
 
 
 def make_service(port, name, state="open", tunnel=None, product="", version=""):
-    """Builds a fake libnmap service."""
+    """Construit un faux service libnmap."""
     svc = MagicMock()
     svc.port = port
     svc.protocol = "tcp"
@@ -31,7 +31,7 @@ def make_service(port, name, state="open", tunnel=None, product="", version=""):
 
 @pytest.fixture
 def nmap():
-    """Mocks NmapProcess (successful run) and NmapParser."""
+    """Simule NmapProcess (exécution réussie) et NmapParser."""
     with patch("adapters.nmap_adapter.NmapProcess") as process_cls, \
          patch("adapters.nmap_adapter.NmapParser") as parser_cls:
         process_cls.return_value.run.return_value = 0
@@ -60,7 +60,7 @@ def test_scan_un_run_par_cible(nmap):
 
 
 def test_scan_plusieurs_plages_en_parallele_sans_doublons():
-    """Each range is scanned separately; overlapping hosts are reported once."""
+    """Chaque plage est scannée séparément ; les hôtes en chevauchement ne sont signalés qu'une fois."""
     def fake_process(targets, options):
         proc = MagicMock()
         proc.run.return_value = 0
@@ -73,7 +73,7 @@ def test_scan_plusieurs_plages_en_parallele_sans_doublons():
     }
 
     def fake_parse(stdout):
-        # Discovery output is the range name; services output is the IP list.
+        # La sortie de découverte est le nom de la plage ; celle des services est la liste des IP.
         ips = ranges.get(stdout, stdout.split("|"))
         report = MagicMock()
         report.hosts = [make_host(ip) for ip in ips]
@@ -139,7 +139,7 @@ FIXTURES = Path(__file__).parent.parent / "fixtures"
 
 
 def test_scan_avec_un_vrai_xml_nmap():
-    """Integration: real NmapParser on real XML output, only NmapProcess mocked."""
+    """Intégration : vrai NmapParser sur une vraie sortie XML, seul NmapProcess est simulé."""
     pytest.importorskip("libnmap")
     xml = (FIXTURES / "nmap_localhost.xml").read_text()
 

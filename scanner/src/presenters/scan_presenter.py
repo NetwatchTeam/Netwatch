@@ -1,3 +1,5 @@
+"""Présentateur du résultat d'un scan selon le contrat de l'API."""
+
 from datetime import UTC, datetime
 
 from presenters.machine_presenter import MachinePresenter
@@ -7,13 +9,15 @@ CONTRACT_VERSION = "1.0.0"
 
 
 def _iso(dt: datetime) -> str:
-    """Converts a datetime object to an ISO 8601 formatted string in UTC.
+    """Convertit un datetime en chaîne ISO 8601 en UTC.
+
+    Un datetime sans fuseau horaire est supposé être en UTC.
 
     Args:
-        dt: The datetime object to convert.
+        dt: Le datetime à convertir.
 
     Returns:
-        An ISO 8601 formatted string representation.
+        Une représentation ISO 8601 en UTC, à la milliseconde, suffixée par « Z ».
     """
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=UTC)
@@ -22,41 +26,41 @@ def _iso(dt: datetime) -> str:
 
 
 def _without_none(d: dict) -> dict:
-    """Removes keys with None values from a dictionary.
+    """Retire d'un dictionnaire les clés dont la valeur est None.
 
     Args:
-        d: The dictionary to filter.
+        d: Le dictionnaire à filtrer.
 
     Returns:
-        A new dictionary without None values.
+        Un nouveau dictionnaire sans valeur None.
     """
     return {k: v for k, v in d.items() if v is not None}
 
 
 class ScanPresenter:
-    """Presenter responsible for formatting scan results into API contracts."""
+    """Présentateur chargé de formater les résultats de scan selon le contrat de l'API."""
 
     @staticmethod
     def _throughput(x: ThroughputResponse) -> dict:
-        """Formats a throughput measurement into a dictionary.
+        """Formate une mesure de débit en dictionnaire.
 
         Args:
-            x: The ThroughputResponse instance.
+            x: L'instance de ThroughputResponse.
 
         Returns:
-            A dictionary representation of the throughput.
+            La représentation du débit sous forme de dictionnaire.
         """
         return {"sourceIp": x.source_ip, "targetIp": x.target_ip, "mbps": x.mbps}
 
     @staticmethod
     def present(scan_result: ScanResponse) -> dict:
-        """Presents the scan result data as a dictionary adhering to the API contract.
+        """Présente le résultat du scan sous forme de dictionnaire conforme au contrat de l'API.
 
         Args:
-            scan_result: The ScanResponse produced by the use case.
+            scan_result: Le ScanResponse produit par le cas d'usage.
 
         Returns:
-            A dictionary containing the formatted scan report.
+            Un dictionnaire contenant le rapport de scan formaté.
         """
         return {
             "contractVersion": CONTRACT_VERSION,

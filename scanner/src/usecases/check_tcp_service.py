@@ -11,6 +11,11 @@ class CheckTcpService:
     """Contrôle une connexion TCP à travers un port TcpProber."""
 
     def __init__(self, prober: TcpProber) -> None:
+        """Initialise le cas d'usage.
+
+        Args:
+            prober: Sonde TCP utilisée pour tenter les connexions.
+        """
         self._prober = prober
 
     def execute(
@@ -24,6 +29,19 @@ class CheckTcpService:
         Une connexion réussie ne valide pas le protocole applicatif.
         Les erreurs de configuration lèvent ValueError.
         Les échecs réseau sont retournés dans le résultat.
+
+        Args:
+            ip: Adresse IP cible (IPv4 ou IPv6).
+            port: Port TCP cible, entre 1 et 65535.
+            timeout: Délai d'attente de la connexion, en secondes.
+
+        Returns:
+            Un dictionnaire avec les clés ``ip``, ``port``, ``checkedAt``,
+            ``reachable``, ``status``, ``durationMs`` et ``error``.
+
+        Raises:
+            ValueError: Si l'adresse IP, le port ou le délai d'attente est
+                invalide.
         """
         ip = str(ipaddress.ip_address(ip))
 

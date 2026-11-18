@@ -12,7 +12,7 @@ SRC = Path(__file__).parent.parent / "src"
 
 
 def _imported_modules(package: str) -> list[tuple[str, str]]:
-    """Returns (file, imported module) for every import of a package."""
+    """Retourne (fichier, module importé) pour chaque import d'un paquet."""
     found = []
     for path in sorted((SRC / package).rglob("*.py")):
         for node in ast.walk(ast.parse(path.read_text())):
