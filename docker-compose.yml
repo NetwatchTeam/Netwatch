@@ -68,7 +68,7 @@ services:
       SCANNER_URL: ${SCANNER_URL:-http://collector:8080}
       SCANNER_TOKEN: ${SCANNER_TOKEN:-}
       # Un scan nmap + SSH + TLS dépasse vite les 15 s par défaut.
-      SCANNER_TIMEOUT_MS: ${SCANNER_TIMEOUT_MS:-120000}
+      SCANNER_TIMEOUT_MS: ${SCANNER_TIMEOUT_MS:-300000}
       REPORT_TIME_ZONE: ${REPORT_TIME_ZONE:-Europe/Paris}
     ports:
       - '${APP_PORT:-3001}:3001'
