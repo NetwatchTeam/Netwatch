@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" role="img" aria-label="Architecture simplifiée de NetWatch : le collecteur sonde le parc ; l'API l'interroge toutes les cinq minutes, applique les règles métier et enregistre l'état dans PostgreSQL ; le dashboard lit l'API en REST." font-family="Segoe UI, system-ui, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect width="1600" height="900" fill="#ffffff"/>
+
+  <text x="60" y="72" font-size="34" font-weight="700" fill="#16202c">NetWatch — architecture</text>
+  <text x="60" y="106" font-size="18" fill="#64717f">Surveiller le réseau d’une PME : détecter, expliquer, rendre compte</text>
+
+  <g fill="#16202c" text-anchor="middle">
+
+    <!-- Parc -->
+    <rect x="60" y="280" width="230" height="170" rx="12" fill="#f4f6f9" stroke="#c9d1dc" stroke-width="1.5"/>
+    <text x="175" y="330" font-size="20" font-weight="700">Parc de l’entreprise</text>
+    <text x="175" y="360" font-size="16" fill="#475569">10 à 100 machines</text>
+    <text x="175" y="396" font-size="14" fill="#64717f">serveurs · postes · caméras</text>
+    <text x="175" y="418" font-size="14" fill="#64717f">passerelles · imprimantes</text>
+
+    <!-- Collecteur → Parc -->
+    <line x1="350" y1="365" x2="294" y2="365" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="320" y="352" font-size="14" fill="#475569">sonde</text>
+
+    <!-- Collecteur -->
+    <rect x="350" y="280" width="250" height="170" rx="12" fill="#16202c"/>
+    <text x="475" y="330" font-size="20" font-weight="700" fill="#ffffff">Collecteur réseau</text>
+    <text x="475" y="358" font-size="15" fill="#cbd2dc">Python</text>
+    <text x="475" y="396" font-size="14" fill="#cbd2dc">ping · ports · services</text>
+    <text x="475" y="418" font-size="14" fill="#cbd2dc">TLS · CPU · mémoire · disques</text>
+
+    <!-- API ⇄ Collecteur -->
+    <line x1="700" y1="335" x2="604" y2="335" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="650" y="322" font-size="14" fill="#475569">GET /scan</text>
+    <line x1="600" y1="395" x2="696" y2="395" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="650" y="418" font-size="14" fill="#475569">JSON</text>
+    <text x="650" y="370" font-size="13" fill="#64717f">toutes les 5 min</text>
+
+    <!-- API -->
+    <rect x="700" y="170" width="430" height="390" rx="12" fill="#fbfcfd" stroke="#94a3b8" stroke-width="1.5"/>
+    <text x="720" y="198" text-anchor="start" font-size="14" font-weight="700" fill="#64717f" letter-spacing="1">API NODE.JS</text>
+
+    <rect x="720" y="212" width="390" height="60" rx="8" fill="#ffffff" stroke="#c9d1dc" stroke-width="1.2"/>
+    <text x="915" y="237" font-size="17" font-weight="700">Interfaces HTTP</text>
+    <text x="915" y="259" font-size="14" fill="#64717f">routes REST · validation · rapport PDF</text>
+
+    <rect x="720" y="284" width="390" height="60" rx="8" fill="#ffffff" stroke="#c9d1dc" stroke-width="1.2"/>
+    <text x="915" y="309" font-size="17" font-weight="700">Cas d’usage</text>
+    <text x="915" y="331" font-size="14" fill="#64717f">ingestion des scans · validation · ajout manuel</text>
+
+    <rect x="720" y="356" width="390" height="188" rx="8" fill="#eaf1fe" stroke="#1f5fd6" stroke-width="2"/>
+    <text x="915" y="384" font-size="18" font-weight="700" fill="#1f5fd6">Règles métier</text>
+    <rect x="736" y="398" width="114" height="32" rx="6" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="793" y="419" font-size="14">pannes</text>
+    <rect x="858" y="398" width="114" height="32" rx="6" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="915" y="419" font-size="14">perte paquets</text>
+    <rect x="980" y="398" width="114" height="32" rx="6" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="1037" y="419" font-size="14">saturation</text>
+    <rect x="736" y="438" width="114" height="32" rx="6" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="793" y="459" font-size="14">certificats TLS</text>
+    <rect x="858" y="438" width="114" height="32" rx="6" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="915" y="459" font-size="14">ports exposés</text>
+    <rect x="980" y="438" width="114" height="32" rx="6" fill="#ffffff" stroke="#c9d1dc"/>
+    <text x="1037" y="459" font-size="14">débit</text>
+    <text x="915" y="500" font-size="14" fill="#1f5fd6"><tspan font-weight="700">corrélation</tspan> : en panne, ou coupée</text>
+    <text x="915" y="521" font-size="14" fill="#1f5fd6">par sa passerelle ?</text>
+
+    <!-- Dashboard → API -->
+    <line x1="1230" y1="365" x2="1134" y2="365" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="1180" y="352" font-size="14" fill="#475569">REST</text>
+    <text x="1180" y="388" font-size="14" fill="#475569">JSON</text>
+
+    <!-- Dashboard -->
+    <rect x="1230" y="170" width="310" height="390" rx="12" fill="#fbfcfd" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="7 5"/>
+    <text x="1250" y="198" text-anchor="start" font-size="14" font-weight="700" fill="#64717f" letter-spacing="1">NAVIGATEUR</text>
+    <text x="1385" y="234" font-size="20" font-weight="700">Dashboard React</text>
+
+    <rect x="1250" y="252" width="270" height="118" rx="8" fill="none" stroke="#c9d1dc" stroke-width="1.2"/>
+    <text x="1266" y="278" text-anchor="start" font-size="16" font-weight="700">Direction</text>
+    <rect x="1266" y="290" width="238" height="30" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1385" y="310" font-size="14">Vue d’ensemble</text>
+    <rect x="1266" y="328" width="238" height="30" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1385" y="348" font-size="14">Rapport hebdomadaire · PDF</text>
+
+    <rect x="1250" y="384" width="270" height="160" rx="8" fill="none" stroke="#c9d1dc" stroke-width="1.2"/>
+    <text x="1266" y="410" text-anchor="start" font-size="16" font-weight="700">Technique</text>
+    <rect x="1266" y="422" width="115" height="30" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1323" y="442" font-size="14">Équipements</text>
+    <rect x="1389" y="422" width="115" height="30" rx="6" fill="#eaf1fe" stroke="#1f5fd6"/>
+    <text x="1446" y="442" font-size="14" fill="#1f5fd6" font-weight="600">À valider</text>
+    <rect x="1266" y="460" width="115" height="30" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1323" y="480" font-size="14">Événements</text>
+    <rect x="1389" y="460" width="115" height="30" rx="6" fill="#f4f6f9" stroke="#c9d1dc"/>
+    <text x="1446" y="480" font-size="14">Dépendances</text>
+    <text x="1385" y="522" font-size="13" fill="#64717f">fiche machine, scans, réglages</text>
+
+    <!-- API → PostgreSQL -->
+    <line x1="915" y1="560" x2="915" y2="608" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="927" y="590" text-anchor="start" font-size="14" fill="#475569">SQL</text>
+
+    <rect x="700" y="612" width="430" height="92" rx="12" fill="#f4f6f9" stroke="#c9d1dc" stroke-width="1.5"/>
+    <text x="915" y="650" font-size="20" font-weight="700">PostgreSQL</text>
+    <text x="915" y="678" font-size="14" fill="#64717f">parc · événements · décisions · dépendances · mesures</text>
+
+    <!-- Messages clés -->
+    <rect x="60" y="752" width="355" height="104" rx="12" fill="#eaf1fe" stroke="#1f5fd6" stroke-width="1.5"/>
+    <text x="237" y="790" font-size="17" font-weight="700" fill="#1f5fd6">Le scan propose, l’humain décide</text>
+    <text x="237" y="816" font-size="14" fill="#475569">rien n’est supervisé sans validation,</text>
+    <text x="237" y="836" font-size="14" fill="#475569">chaque décision est tracée</text>
+
+    <rect x="435" y="752" width="355" height="104" rx="12" fill="#ffffff" stroke="#c9d1dc" stroke-width="1.5"/>
+    <text x="612" y="790" font-size="17" font-weight="700">Panne ou injoignable ?</text>
+    <text x="612" y="816" font-size="14" fill="#475569">les dépendances validées séparent</text>
+    <text x="612" y="836" font-size="14" fill="#475569">la cause de ses conséquences</text>
+
+    <rect x="810" y="752" width="355" height="104" rx="12" fill="#ffffff" stroke="#c9d1dc" stroke-width="1.5"/>
+    <text x="987" y="790" font-size="17" font-weight="700">Rendre compte</text>
+    <text x="987" y="816" font-size="14" fill="#475569">rapport hebdomadaire en PDF,</text>
+    <text x="987" y="836" font-size="14" fill="#475569">incidents les plus graves en tête</text>
+
+    <rect x="1185" y="752" width="355" height="104" rx="12" fill="#16202c"/>
+    <text x="1362" y="790" font-size="17" font-weight="700" fill="#ffffff">docker compose up</text>
+    <text x="1362" y="816" font-size="14" fill="#cbd2dc">base · collecteur · application</text>
+    <text x="1362" y="836" font-size="14" fill="#cbd2dc">un seul port : 3001</text>
+  </g>
+</svg>

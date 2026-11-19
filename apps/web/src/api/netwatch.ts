@@ -76,7 +76,7 @@ export const api = {
     request<EventDto>(`/events/${encodeURIComponent(id)}/acknowledge`, { method: 'DELETE' }),
 
   getScans: () => request<ScanRunDto[]>('/scans'),
-  runScan: () => request<ScanRunDto>('/scans/run', { method: 'POST' }),
+  runScan: () => request<ScanRunDto>('/scans/run', { method: 'POST' }, config.scanRequestTimeoutMs),
 
   getSettings: () => request<MonitoringSettingsDto>('/settings'),
   updateSettings: (patch: UpdateMonitoringSettingsInput) =>

@@ -25,9 +25,13 @@ export function toQuery(params: Record<string, string | number | boolean | undef
   return qs ? `?${qs}` : '';
 }
 
-export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(
+  path: string,
+  init: RequestInit = {},
+  timeoutMs: number = config.requestTimeoutMs,
+): Promise<T> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), config.requestTimeoutMs);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');

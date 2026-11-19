@@ -24,7 +24,8 @@ X-NetWatch-Contract: 1.1.0              (version du contrat attendue par l'API)
 Authorization: Bearer {SCANNER_TOKEN}   (seulement si SCANNER_TOKEN est configuré)
 ```
 
-- Délai d'attente maximal : 15 s par défaut (`SCANNER_TIMEOUT_MS`).
+- Délai d'attente maximal : 5 min par défaut, et au plus (`SCANNER_TIMEOUT_MS`, en millisecondes). Un scan
+  complet du réseau prend plus de 2 minutes ; au-delà de 5 minutes, l'API considère que le collecteur ne répond pas.
 - Un code différent de 200, un JSON invalide ou un dépassement de délai est enregistré comme un
   scan en échec et affiché dans la page « Scans » ; l'état connu des équipements n'est pas modifié.
 - L'appel doit être sans effet de bord : l'API peut le rejouer (bouton « Lancer un scan maintenant »).

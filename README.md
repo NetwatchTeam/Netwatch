@@ -239,6 +239,7 @@ packages/
 └── contracts/              # types partagés API ↔ interface (le contrat HTTP)
 docs/
 ├── architecture.svg/png    # schéma ci-dessus
+├── architecture-soutenance.svg/png  # version simplifiée du schéma, pour une présentation
 ├── squelette-application.md  # plan du site, maquette et rôle de chaque écran, structure du code du dashboard
 ├── squelette/              # maquettes fil de fer (générées par tools/squelette/generer-maquettes.mjs)
 ├── mcd.svg/png             # MCD de référence : à mettre à jour avec chaque évolution du schéma
@@ -276,6 +277,7 @@ une valeur manquante ou invalide arrête le service avec un message explicite.
 | `SCANNER_MODE` | `demo` | `http` pour interroger le vrai scanner ; `none` : aucun scan automatique, données injectées seulement |
 | `SCANNER_URL` | — | Obligatoire si `SCANNER_MODE=http` |
 | `SCANNER_TOKEN` | — | Envoyé en `Authorization: Bearer` au scanner |
+| `SCANNER_TIMEOUT_MS` | `300000` (5 min) | Attente maximale de la réponse du collecteur, 5 min au plus ; au-delà, le scan est enregistré en échec |
 | `SCAN_IMPORT` | activée hors production | `enabled` / `disabled` : autorise `POST /api/v1/scans/import` (`npm run scan:inject`) ; désactivée par défaut en production |
 | `REPORT_TIME_ZONE` | `Europe/Paris` | Fuseau des heures affichées dans le rapport PDF |
 | `WEB_DIST_PATH` | — | Dossier de l'interface compilée, servie par l'API en production |
