@@ -37,7 +37,7 @@ export function ScansPage() {
         subtitle="L'API interroge le scanner à intervalle régulier (réglable dans Réglages)"
         actions={
           <button type="button" className="btn btn-primary" disabled={running} onClick={() => void runNow()}>
-            {running ? 'Scan en cours…' : 'Lancer un scan maintenant'}
+            {running ? 'Scan en cours… (quelques minutes)' : 'Lancer un scan maintenant'}
           </button>
         }
       />

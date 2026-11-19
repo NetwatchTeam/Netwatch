@@ -11,7 +11,15 @@ export interface ScanSnapshot {
   throughput: ThroughputObservation[];
 }
 
+export interface ScanRequest {
+  /**
+   * IP à sonder en plus de la découverte habituelle : les équipements ajoutés à la main,
+   * que le collecteur ne trouverait pas seul. Un équipement muet est simplement absent de la réponse.
+   */
+  targets: string[];
+}
+
 export interface ScannerGateway {
   /** Lève `ScannerUnavailableError` si le scanner ne répond pas ou renvoie un JSON invalide. */
-  fetchSnapshot(): Promise<ScanSnapshot>;
+  fetchSnapshot(request?: ScanRequest): Promise<ScanSnapshot>;
 }

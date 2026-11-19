@@ -1,5 +1,7 @@
 {
   "kind": "router",
   "label": "Passerelle atelier",
-  "critical": true
+  "critical": true,
+  "lifecycle": "active",
+  "author": "Technicien réseau"
 }

@@ -2,8 +2,10 @@ import type {
   CertificateStatus,
   DependencyDto,
   DependencyGraphDto,
+  DeviceDecisionDto,
   DeviceDto,
   DeviceLinkDto,
+  DuplicateDeviceDetails,
   EventDto,
   MonitoringSettingsDto,
   NetworkSummaryDto,
@@ -13,6 +15,7 @@ import type {
 } from '@netwatch/contracts';
 import { deviceDisplayName, type Device, type TlsCertificate } from '../../domain/entities/device.js';
 import { isUsedByCorrelation, type Dependency } from '../../domain/entities/dependency.js';
+import type { DeviceDecision } from '../../domain/entities/device-decision.js';
 import type { ScanRun, ThroughputSample } from '../../domain/entities/measurement.js';
 import type { DependencyIssue } from '../../domain/rules/dependency-graph.js';
 import { eventDurationSeconds, type MonitoringEvent } from '../../domain/entities/monitoring-event.js';
@@ -85,6 +88,7 @@ export function toDeviceDto(
     label: device.label,
     critical: device.critical,
     lifecycle: device.lifecycle,
+    origin: device.origin,
     reachability: device.reachability,
     gatewayIp: device.gatewayIp,
     gateway: gateway ? toDeviceLinkDto(gateway) : null,
@@ -106,9 +110,37 @@ export function toDeviceDto(
       status: certificateStatus(certificate, now),
     })),
     firstSeenAt: device.firstSeenAt.toISOString(),
-    lastSeenAt: device.lastSeenAt.toISOString(),
+    lastSeenAt: device.lastSeenAt?.toISOString() ?? null,
     lastChangeAt: device.lastChangeAt.toISOString(),
     openEvents,
+  };
+}
+
+export function toDeviceDecisionDto(decision: DeviceDecision): DeviceDecisionDto {
+  return {
+    id: decision.id,
+    deviceId: decision.deviceId,
+    action: decision.action,
+    author: decision.author,
+    decidedAt: decision.decidedAt.toISOString(),
+    previousLifecycle: decision.previousLifecycle,
+    lifecycle: decision.lifecycle,
+    kind: decision.kind,
+    label: decision.label,
+    critical: decision.critical,
+  };
+}
+
+export function toDuplicateDeviceDetails(existing: Device, matchedOn: Array<'ip' | 'mac'>): DuplicateDeviceDetails {
+  return {
+    existing: {
+      ...toDeviceLinkDto(existing),
+      ip: existing.ip,
+      mac: existing.mac,
+      lifecycle: existing.lifecycle,
+      origin: existing.origin,
+    },
+    matchedOn,
   };
 }
 

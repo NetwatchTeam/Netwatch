@@ -1,0 +1,141 @@
+{
+  "contractVersion": "1.1.0",
+  "scannedAt": "2026-11-15T09:05:00Z",
+  "devices": [
+    {
+      "ip": "192.168.20.10",
+      "mac": "02:20:00:00:00:10",
+      "hostname": "srv-web",
+      "vendor": "Dell",
+      "gatewayIp": null,
+      "latencyMs": 1.2,
+      "packetLossPercent": 0,
+      "cpuPercent": 22.5,
+      "memory": {
+        "usedPercent": 48.1,
+        "totalMb": 16384
+      },
+      "disks": [
+        {
+          "name": "/",
+          "usedPercent": 41.0,
+          "totalGb": 237.5
+        },
+        {
+          "name": "/var",
+          "usedPercent": 63.2,
+          "totalGb": 931.0
+        }
+      ],
+      "ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "http",
+              "product": "nginx",
+              "version": "1.24"
+            }
+          ]
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "services": []
+        }
+      ],
+      "certificates": []
+    },
+    {
+      "ip": "192.168.20.30",
+      "mac": "02:20:00:00:00:30",
+      "hostname": "imp-hall",
+      "vendor": "Brother",
+      "latencyMs": 3.4,
+      "packetLossPercent": 0,
+      "ports": [
+        {
+          "port": 631,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "ipp",
+              "product": "CUPS",
+              "version": "2.4"
+            }
+          ]
+        },
+        {
+          "port": 9100,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "jetdirect",
+              "product": null,
+              "version": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "ip": "192.168.20.53",
+      "mac": "02:20:00:00:00:53",
+      "hostname": "dns-int",
+      "vendor": "Raspberry Pi Foundation",
+      "latencyMs": 0.8,
+      "packetLossPercent": 0,
+      "cpuPercent": 4.0,
+      "memory": {
+        "usedPercent": 31.0,
+        "totalMb": 4096
+      },
+      "disks": [
+        {
+          "name": "/",
+          "usedPercent": 22.0,
+          "totalGb": 29.7
+        }
+      ],
+      "ports": [
+        {
+          "port": 53,
+          "protocol": "tcp",
+          "services": [
+            {
+              "name": "domain",
+              "product": "Unbound",
+              "version": "1.19"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "ip": "192.168.20.99"
+    },
+    {
+      "ip": "192.168.20.98",
+      "mac": "da:4f:1e:00:00:98",
+      "hostname": null,
+      "vendor": null,
+      "latencyMs": 12.7,
+      "packetLossPercent": 0,
+      "ports": [],
+      "certificates": []
+    }
+  ],
+  "throughput": [
+    {
+      "sourceIp": "192.168.20.10",
+      "targetIp": "192.168.20.53",
+      "mbps": 940
+    },
+    {
+      "sourceIp": "192.168.20.10",
+      "targetIp": null,
+      "mbps": 180
+    }
+  ]
+}

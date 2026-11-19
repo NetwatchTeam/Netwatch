@@ -2,7 +2,15 @@ import type { ApiErrorDto } from '@netwatch/contracts';
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 import type { Logger } from '../../../application/ports/system.js';
-import { ConflictError, NotFoundError, ScannerUnavailableError, ValidationError } from '../../../domain/errors.js';
+import {
+  ConflictError,
+  DuplicateDeviceError,
+  ForbiddenError,
+  NotFoundError,
+  ScannerUnavailableError,
+  ValidationError,
+} from '../../../domain/errors.js';
+import { toDuplicateDeviceDetails } from '../presenters.js';
 
 /** Traduction des erreurs métier en codes HTTP : le domaine ignore tout du protocole. */
 export function errorHandler(logger: Logger) {
@@ -30,8 +38,25 @@ export function errorHandler(logger: Logger) {
       return;
     }
 
+    if (error instanceof ForbiddenError) {
+      body(403, { error: { code: 'forbidden', message: error.message } });
+      return;
+    }
+
     if (error instanceof NotFoundError) {
       body(404, { error: { code: 'not_found', message: error.message } });
+      return;
+    }
+
+    // Avant ConflictError, dont elle hérite : le dashboard a besoin de l'équipement existant pour proposer la fusion.
+    if (error instanceof DuplicateDeviceError) {
+      body(409, {
+        error: {
+          code: 'duplicate_device',
+          message: error.message,
+          details: toDuplicateDeviceDetails(error.existing, error.matchedOn),
+        },
+      });
       return;
     }
 

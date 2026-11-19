@@ -207,5 +207,5 @@ export default function scan({ scanNumber, now }) {
     if (pcsAnswer) devices.push(...pcs(g));
   }
 
-  return { contractVersion: '1.0.0', scannedAt: now.toISOString(), devices, throughput };
+  return { contractVersion: '1.1.0', scannedAt: now.toISOString(), devices, throughput };
 }

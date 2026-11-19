@@ -1,5 +1,5 @@
 import { CONTRACT_VERSION, CONTRACT_VERSION_HEADER } from '@netwatch/contracts';
-import type { ScanSnapshot, ScannerGateway } from '../../application/ports/scanner-gateway.js';
+import type { ScanRequest, ScanSnapshot, ScannerGateway } from '../../application/ports/scanner-gateway.js';
 import { ScannerUnavailableError } from '../../domain/errors.js';
 import { snapshotSchema, toDomainSnapshot } from './snapshot-schema.js';
 
@@ -22,13 +22,21 @@ const NETWORK_ERRORS: Record<string, string> = {
   UND_ERR_SOCKET: 'connexion coupée par le scanner pendant la réponse',
 };
 
+/** Délais internes de `fetch` (undici, 5 min) : même cause qu'un dépassement de SCANNER_TIMEOUT_MS. */
+const FETCH_TIMEOUTS = new Set(['UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT']);
+
+function formatDelay(ms: number): string {
+  return ms >= 60_000 && ms % 60_000 === 0 ? `${ms / 60_000} min` : `${ms / 1000} s`;
+}
+
 export function explainFetchError(error: unknown, timeoutMs: number): string {
-  if (error instanceof DOMException && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
-    return `pas de réponse en ${timeoutMs / 1000} s (SCANNER_TIMEOUT_MS)`;
-  }
   // `fetch` enveloppe l'erreur réseau d'origine dans `cause`.
   const cause = error instanceof Error ? (error.cause as { code?: string; message?: string } | undefined) : undefined;
   const code = cause?.code;
+  const timedOut =
+    (error instanceof DOMException && (error.name === 'TimeoutError' || error.name === 'AbortError')) ||
+    (code !== undefined && FETCH_TIMEOUTS.has(code));
+  if (timedOut) return `pas de réponse en ${formatDelay(timeoutMs)} (SCANNER_TIMEOUT_MS)`;
   if (code && NETWORK_ERRORS[code]) return `${NETWORK_ERRORS[code]} (${code})`;
   if (code) return `${cause?.message ?? 'erreur réseau'} (${code})`;
   return error instanceof Error ? error.message : String(error);
@@ -38,8 +46,11 @@ export function explainFetchError(error: unknown, timeoutMs: number): string {
 export class HttpScannerGateway implements ScannerGateway {
   constructor(private readonly options: HttpScannerOptions) {}
 
-  async fetchSnapshot(): Promise<ScanSnapshot> {
-    const url = new URL('/scan', this.options.baseUrl).toString();
+  async fetchSnapshot(request: ScanRequest = { targets: [] }): Promise<ScanSnapshot> {
+    const target = new URL('/scan', this.options.baseUrl);
+    // Équipements ajoutés à la main : le collecteur les sonde en plus de sa découverte (contrat 1.1).
+    if (request.targets.length > 0) target.searchParams.set('targets', request.targets.join(','));
+    const url = target.toString();
     // Le collecteur sait ainsi quelle version du contrat l'API attend.
     const headers: Record<string, string> = {
       Accept: 'application/json',

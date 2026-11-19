@@ -81,7 +81,7 @@ export function OverviewPage() {
                 to="/technique/evenements?category=signalement"
               />
               <StatCard
-                label="Machines à identifier"
+                label="Équipements à valider"
                 value={data.devices.pendingClassification}
                 tone={data.devices.pendingClassification > 0 ? 'warning' : 'good'}
                 to="/technique/a-identifier"

@@ -2,8 +2,10 @@ import type {
   CertificateStatus,
   DependencySource,
   DependencyStatus,
+  DeviceDecisionAction,
   DeviceKind,
   DeviceLifecycle,
+  DeviceOrigin,
   DeviceReachability,
   EventCategory,
   EventSeverity,
@@ -19,9 +21,24 @@ export const REACHABILITY_LABELS: Record<DeviceReachability, string> = {
 };
 
 export const LIFECYCLE_LABELS: Record<DeviceLifecycle, string> = {
-  pending_classification: 'À identifier',
-  active: 'Suivi',
+  pending_classification: 'À valider',
+  active: 'Validé',
   ignored: 'Ignoré',
+  excluded: 'Exclu',
+};
+
+export const ORIGIN_LABELS: Record<DeviceOrigin, string> = {
+  discovered: 'Découvert par le collecteur',
+  manual: 'Ajouté manuellement',
+};
+
+export const DECISION_LABELS: Record<DeviceDecisionAction, string> = {
+  created: 'Ajouté manuellement',
+  merged: 'Ajout manuel fusionné',
+  validated: 'Validé',
+  ignored: 'Ignoré',
+  excluded: 'Exclu',
+  updated: 'Fiche modifiée',
 };
 
 export const KIND_LABELS: Record<DeviceKind, string> = {

@@ -17,11 +17,31 @@ export const DEVICE_KINDS = [
 export type DeviceKind = (typeof DEVICE_KINDS)[number];
 
 /**
- * Cycle de vie d'un équipement dans le parc.
- * `pending_classification` : détecté par le scanner, en attente d'une décision humaine.
+ * Cycle de vie d'un équipement. Le scan propose, l'humain décide :
+ * - `pending_classification` : détecté par le collecteur, « à valider » ; ni supervisé ni compté ;
+ * - `active` : validé, il fait partie du référentiel et il est supervisé ;
+ * - `ignored` : connu mais non supervisé (pas d'alerte), il reste visible dans le parc ;
+ * - `excluded` : ne fait pas partie du parc (appareil de passage, autre réseau) : masqué et non supervisé.
+ * Un équipement ignoré ou exclu n'est jamais reproposé comme nouveau.
  */
-export const DEVICE_LIFECYCLES = ['pending_classification', 'active', 'ignored'] as const;
+export const DEVICE_LIFECYCLES = ['pending_classification', 'active', 'ignored', 'excluded'] as const;
 export type DeviceLifecycle = (typeof DEVICE_LIFECYCLES)[number];
+
+/** Décisions possibles sur un équipement : valider, ignorer ou exclure. */
+export const DEVICE_DECISION_LIFECYCLES = ['active', 'ignored', 'excluded'] as const;
+export type DeviceDecisionLifecycle = (typeof DEVICE_DECISION_LIFECYCLES)[number];
+
+/** `discovered` : trouvé par le collecteur ; `manual` : ajouté à la main (équipement non détectable par scan). */
+export const DEVICE_ORIGINS = ['discovered', 'manual'] as const;
+export type DeviceOrigin = (typeof DEVICE_ORIGINS)[number];
+
+/**
+ * Action tracée dans l'historique d'un équipement :
+ * `created` (ajout manuel), `merged` (ajout manuel fusionné avec un équipement découvert),
+ * `validated`, `ignored`, `excluded` (décision sur son cycle de vie), `updated` (fiche modifiée sans changer d'état).
+ */
+export const DEVICE_DECISION_ACTIONS = ['created', 'merged', 'validated', 'ignored', 'excluded', 'updated'] as const;
+export type DeviceDecisionAction = (typeof DEVICE_DECISION_ACTIONS)[number];
 
 /**
  * Dernier état de joignabilité observé.
@@ -90,6 +110,7 @@ export interface DeviceDto {
   /** Un équipement critique remonte en tête des rapports. */
   critical: boolean;
   lifecycle: DeviceLifecycle;
+  origin: DeviceOrigin;
   reachability: DeviceReachability;
   /** IP de la passerelle par laquelle la machine est jointe, telle que rapportée par le scanner. */
   gatewayIp: string | null;
@@ -104,8 +125,10 @@ export interface DeviceDto {
   disks: DiskUsageDto[];
   ports: OpenPortDto[];
   certificates: TlsCertificateDto[];
+  /** Première détection par le collecteur, ou date de l'ajout manuel. */
   firstSeenAt: string;
-  lastSeenAt: string;
+  /** Dernière réponse au collecteur ; `null` pour un équipement ajouté à la main et encore jamais vu. */
+  lastSeenAt: string | null;
   /** Date du dernier changement de joignabilité (début de la panne en cours, le cas échéant). */
   lastChangeAt: string;
   openEvents: number;
@@ -124,10 +147,64 @@ export interface DeviceFilters {
   reachability?: DeviceReachability;
 }
 
-/** Corps de PATCH /devices/:id — classer un équipement détecté. */
+/** Corps de PATCH /devices/:id — décider du sort d'un équipement (valider, ignorer, exclure) ou modifier sa fiche. */
 export interface ClassifyDeviceInput {
   kind: DeviceKind;
   label?: string | null;
   critical?: boolean;
-  lifecycle?: Extract<DeviceLifecycle, 'active' | 'ignored'>;
+  /** Par défaut `active` (valider). */
+  lifecycle?: DeviceDecisionLifecycle;
+  /** Qui prend la décision : enregistré dans l'historique de l'équipement. */
+  author: string;
+}
+
+/** Corps de POST /devices — ajouter à la main un équipement que le collecteur ne détecte pas. */
+export interface CreateDeviceInput {
+  ip: string;
+  /** Nom métier, obligatoire pour un ajout manuel. */
+  label: string;
+  /** Rôle de l'équipement (`unknown` refusé). */
+  kind: DeviceKind;
+  critical: boolean;
+  mac?: string | null;
+  author: string;
+  /**
+   * Fusionner avec l'équipement déjà connu à cette IP ou cette MAC (identifiant renvoyé par l'erreur 409
+   * `duplicate_device`) : il reçoit le nom, le rôle et la criticité saisis et devient validé.
+   */
+  mergeInto?: string;
+}
+
+/** Corps de POST /devices/validate-pending — valider d'un coup toutes les machines à valider. */
+export interface ValidatePendingInput {
+  author: string;
+}
+
+/** Réponse de POST /devices/validate-pending. */
+export interface ValidatePendingResultDto {
+  /** Nombre d'équipements validés (une décision tracée par équipement). */
+  validated: number;
+  devices: DeviceLinkDto[];
+}
+
+/** Une ligne de l'historique des décisions d'un équipement. */
+export interface DeviceDecisionDto {
+  id: string;
+  deviceId: string;
+  action: DeviceDecisionAction;
+  author: string;
+  decidedAt: string;
+  /** État avant la décision (`null` pour une création). */
+  previousLifecycle: DeviceLifecycle | null;
+  lifecycle: DeviceLifecycle;
+  kind: DeviceKind;
+  label: string | null;
+  critical: boolean;
+}
+
+/** Détails de l'erreur 409 `duplicate_device` : l'équipement déjà connu à cette IP ou cette MAC. */
+export interface DuplicateDeviceDetails {
+  existing: DeviceLinkDto & { ip: string; mac: string | null; lifecycle: DeviceLifecycle; origin: DeviceOrigin };
+  /** Ce qui correspond : même IP, même MAC, ou les deux. */
+  matchedOn: Array<'ip' | 'mac'>;
 }

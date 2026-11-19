@@ -62,6 +62,46 @@ repartir d'une base vide avant de les jouer, pour ne pas mélanger les deux parc
 
 Leurs dates de certificats sont fixes (septembre–octobre 2026) : ajustez-les si vous les rejouez plus tard.
 
+## Cas limites : `5-cas-limites-*`
+
+Trois photographies à rejouer **dans l'ordre**, sur un petit réseau séparé (192.168.20.x, 4 équipements).
+Elles servent à vérifier que l'API et le dashboard tiennent face aux données inhabituelles. Les dates sont
+fixes et choisies pour ne pas vieillir (certificats valides jusqu'en 2031, un certificat expiré en 2025).
+
+| Fichier | Contenu | Ce qu'il faut constater |
+| --- | --- | --- |
+| `5-cas-limites-1-reference` | `srv-web` (SSH, HTTP, HTTPS, certificat), `imp-hall` (imprimante sans agent : ni processeur, ni mémoire, ni disque ; **Telnet** ouvert), `dns-int` (**port 53 en TCP et en UDP**), `ap-hall` (**deux services sur le même port** 443, certificat **non vérifié**) ; un débit **vers Internet** (`targetIp: null`) | 4 machines à valider. Une fois validées puis rescannées : Telnet signalé |
+| `5-cas-limites-2-inconnu-et-services-disparus` | **Équipement inconnu** `192.168.20.99` (une IP et rien d'autre) et `192.168.20.98` (MAC aléatoire, aucun port) ; **services disparus** : SSH fermé et HTTPS ouvert mais plus identifié sur `srv-web` (plus de certificat), Telnet coupé sur `imp-hall`, DNS UDP arrêté ; `ap-hall` ne répond plus | Les deux inconnus arrivent « à valider », nommés par leur IP ; les ports disparus quittent les fiches et le signalement Telnet se referme ; `ap-hall` en panne |
+| `5-cas-limites-3-valeurs-limites` | Valeurs aux bornes : processeur et disque à 100 %, mémoire à 0 % sans capacité, latence 0, perte 99,5 %, port 65535 en UDP, certificat **expiré** et certificat **auto-signé**, fabricant accentué, débit nul | Aucune erreur ; saturations, certificats expiré et invalide signalés ; l'inconnu disparu n'ouvre pas de panne (il n'était pas validé) |
+
+Ces fichiers sont rejoués par un test automatique ([edge-cases.test.ts](../../apps/api/tests/application/edge-cases.test.ts)),
+et tous les scénarios sont vérifiés **strictement** contre le contrat : un champ inconnu fait échouer `npm test`.
+
+## Injecter un jeu de données dans l'API, sans collecteur
+
+`npm run scan:inject` envoie une ou plusieurs photographies à une API en marche (`POST /api/v1/scans/import`).
+Chacune est d'abord validée strictement contre le contrat, puis ingérée exactement comme un vrai scan
+(elle apparaît dans la page « Scans »). Par défaut, `scannedAt` est remplacé par l'heure actuelle.
+
+```bash
+# API sans collecteur ni base : seules les données injectées l'alimentent (aucun scan automatique)
+npm run dev:injection
+
+# Dans un autre terminal, depuis la racine du dépôt :
+npm run scan:inject -- 5-cas-limites-1-reference 5-cas-limites-2-inconnu-et-services-disparus 5-cas-limites-3-valeurs-limites
+npm run scan:inject -- 4-reseau-passerelles --scans 3          # scans 0 à 2 du scénario dynamique
+npm run scan:inject -- 4-reseau-passerelles --from 3           # le scan 3 : passerelle en panne
+npm run scan:inject -- ./mon-fichier.json --api http://localhost:3001 --keep-date
+```
+
+Un argument est un fichier JSON, ou le nom d'un scénario de `scenarios/` (sans extension). Avec
+`npm run dev:demo` ou une API branchée sur un collecteur, l'injection fonctionne aussi, mais les scans
+automatiques continuent : les machines présentes dans une source seulement passent en panne dans l'autre.
+Pour ne voir que le jeu injecté, utilisez `npm run dev:injection` (`SCANNER_MODE=none`).
+
+L'injection est **désactivée en production** (`NODE_ENV=production`, donc dans `docker compose`) : n'importe
+qui sur le réseau pourrait sinon injecter de fausses données. Pour l'autoriser : `SCAN_IMPORT=enabled`.
+
 ## Modifier ou ajouter un scénario
 
 Les fichiers de `scenarios/` sont relus à chaque scan : on peut les modifier sans rien redémarrer.

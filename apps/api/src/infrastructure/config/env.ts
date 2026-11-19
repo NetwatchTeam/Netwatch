@@ -10,6 +10,9 @@ function isValidTimeZone(timeZone: string): boolean {
   }
 }
 
+/** 5 minutes : délai par défaut et maximal d'attente du collecteur. */
+export const SCANNER_TIMEOUT_MAX_MS = 5 * 60_000;
+
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
@@ -21,11 +24,31 @@ const schema = z.object({
   STORAGE: z.enum(['postgres', 'memory']).default('postgres'),
   DATABASE_URL: z.string().min(1).optional(),
 
-  /** `http` interroge le scanner ; `demo` génère un réseau fictif pour une démonstration. */
-  SCANNER_MODE: z.enum(['http', 'demo']).default('demo'),
+  /**
+   * `http` interroge le scanner ; `demo` génère un réseau fictif pour une démonstration ;
+   * `none` : aucun scan automatique, les données n'arrivent que par injection (`npm run scan:inject`).
+   */
+  SCANNER_MODE: z.enum(['http', 'demo', 'none']).default('demo'),
   SCANNER_URL: z.string().url().optional(),
   SCANNER_TOKEN: z.string().optional(),
-  SCANNER_TIMEOUT_MS: z.coerce.number().int().positive().default(15_000),
+  /**
+   * Attente maximale de la réponse du collecteur. Un scan complet du réseau prend plus de 2 minutes :
+   * 5 minutes par défaut. Plafonnée à 5 minutes, car le `fetch` de Node coupe de lui-même toute
+   * réponse dont les en-têtes tardent davantage (délai interne d'undici).
+   */
+  SCANNER_TIMEOUT_MS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(SCANNER_TIMEOUT_MAX_MS, 'SCANNER_TIMEOUT_MS ne peut dépasser 300000 (5 min), limite de fetch dans Node')
+    .default(SCANNER_TIMEOUT_MAX_MS),
+
+  /**
+   * `POST /api/v1/scans/import` : injecter une photographie fictive (`npm run scan:inject`).
+   * Absente : activée hors production, désactivée en production (n'importe qui sur le réseau pourrait
+   * sinon injecter de fausses données).
+   */
+  SCAN_IMPORT: z.enum(['enabled', 'disabled']).optional(),
 
   /** Fuseau horaire des heures affichées dans le rapport PDF. */
   REPORT_TIME_ZONE: z
@@ -40,6 +63,10 @@ const schema = z.object({
 });
 
 export type Env = z.infer<typeof schema>;
+
+export function isScanImportEnabled(env: Pick<Env, 'SCAN_IMPORT' | 'NODE_ENV'>): boolean {
+  return env.SCAN_IMPORT ? env.SCAN_IMPORT === 'enabled' : env.NODE_ENV !== 'production';
+}
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   const parsed = schema.safeParse(source);

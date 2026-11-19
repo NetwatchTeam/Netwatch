@@ -23,10 +23,11 @@ node tools/squelette/generer-maquettes.mjs
 | --- | --- | --- | --- | --- |
 | `/` | Vue d'ensemble | gestionnaire | `pages/OverviewPage.tsx` | `GET /summary`, `GET /events?category=incident&status=open`, `GET /metrics/throughput` |
 | `/rapport` | Rapport hebdomadaire | gestionnaire | `pages/WeeklyReportPage.tsx` | `GET /reports/weekly?week=`, `GET /reports/weekly.pdf?week=` |
-| `/technique/equipements` | Équipements | technicien | `pages/DevicesPage.tsx` | `GET /devices?q=&reachability=&kind=` |
+| `/technique/equipements` | Équipements | technicien | `pages/DevicesPage.tsx` | `GET /devices?lifecycle=&q=&reachability=&kind=` |
+| `/technique/equipements/nouveau` | Ajouter un équipement | technicien | `pages/AddDevicePage.tsx` | `POST /devices` (avec `mergeInto` pour fusionner un doublon) |
 | `/technique/equipements/:id` | Fiche équipement | technicien | `pages/DeviceDetailPage.tsx` | `GET /devices/:id`, `PATCH /devices/:id` |
 | `/technique/evenements` | Événements | technicien | `pages/EventsPage.tsx` | `GET /events?category=&status=`, `POST` / `DELETE /events/:id/acknowledge` |
-| `/technique/a-identifier` | Machines à identifier | technicien | `pages/PendingDevicesPage.tsx` | `GET /devices?lifecycle=pending_classification`, `PATCH /devices/:id` |
+| `/technique/a-identifier` | À valider | technicien | `pages/PendingDevicesPage.tsx` | `GET /devices?lifecycle=pending_classification`, `PATCH /devices/:id`, `POST /devices/validate-pending` |
 | `/technique/dependances` | Dépendances | technicien | `pages/DependenciesPage.tsx` | `GET`, `POST /dependencies`, `PATCH` / `DELETE /dependencies/:id`, `POST /dependencies/validate-suggestions` |
 | `/technique/scans` | Scans | technicien | `pages/ScansPage.tsx` | `GET /scans`, `POST /scans/run` |
 | `/technique/reglages` | Réglages | technicien | `pages/SettingsPage.tsx` | `GET` / `PUT /settings` |
@@ -67,7 +68,7 @@ Page d'accueil du gestionnaire : l'état du réseau sans vocabulaire technique.
 | N° | Zone | Contenu | Actions |
 | --- | --- | --- | --- |
 | 1 | Bandeau de santé | Une phrase : « Tout fonctionne normalement », « … des points demandent votre attention » ou « Une panne est en cours ». Avertissement si le collecteur n'a pas répondu récemment | — |
-| 2 | Chiffres clés | Équipements suivis, En panne, Injoignables, Disponibilité (7 jours), Débit moyen (24 h), Points de sécurité, Machines à identifier | Chaque carte ouvre la liste correspondante, déjà filtrée |
+| 2 | Chiffres clés | Équipements suivis, En panne, Injoignables, Disponibilité (7 jours), Débit moyen (24 h), Points de sécurité, Équipements à valider | Chaque carte ouvre la liste correspondante, déjà filtrée |
 | 3 | Pannes en cours | Incidents ouverts : famille, gravité, résumé, équipement, durée | « Tout l'historique » → Événements ; clic sur l'équipement → sa fiche |
 | 4 | Vitesse du réseau | Courbe des débits mesurés sur 7 jours (actualisée chaque minute) | « Rapport hebdomadaire » |
 
@@ -88,14 +89,26 @@ Bilan d'une semaine pour la réunion de direction, centré sur les incidents les
 
 ### 3.3 Équipements — `/technique/equipements`
 
-Tout le parc, avec les mesures du dernier scan.
+Le référentiel (équipements validés) par défaut, avec les mesures du dernier scan. Les équipements à valider,
+ignorés ou exclus s'affichent avec le filtre de cycle de vie.
 
 ![Maquette : équipements](squelette/03-equipements.svg)
 
 | N° | Zone | Contenu | Actions |
 | --- | --- | --- | --- |
-| 1 | Filtres | Recherche (nom, IP, MAC, fabricant), état (en ligne, hors ligne, injoignable, inconnu), type | Les filtres sont repris dans l'adresse |
-| 2 | Tableau | État, équipement (étiquettes « Critique », « À identifier »), IP, type, latence, perte de paquets, CPU, mémoire, disque le plus rempli, nombre d'alertes ouvertes, dernière réponse | Clic sur un nom → fiche équipement |
+| 1 | Filtres | Recherche (nom, IP, MAC, fabricant), cycle de vie (Référentiel, À valider, Ignoré, Exclu, Tout le parc connu), état (en ligne, hors ligne, injoignable, inconnu), type | Les filtres sont repris dans l'adresse ; **Ajouter un équipement** |
+| 2 | Tableau | État, équipement (étiquettes « Critique », « Manuel », cycle de vie s'il n'est pas validé), IP, type, latence, perte de paquets, CPU, mémoire, disque le plus rempli, nombre d'alertes ouvertes, dernière réponse (« jamais » pour un ajout manuel pas encore vu) | Clic sur un nom → fiche équipement |
+
+La maquette ne montre ni le filtre de cycle de vie ni le bouton **Ajouter un équipement**, ajoutés avec les tickets #31 et #32.
+
+### Ajouter un équipement — `/technique/equipements/nouveau`
+
+Pour un équipement que le collecteur ne détecte pas seul (ticket #32). Pas de maquette : la page est un formulaire.
+
+| N° | Zone | Contenu | Actions |
+| --- | --- | --- | --- |
+| 1 | Formulaire | Adresse IP*, nom*, rôle*, criticité*, adresse MAC (facultative), votre nom* (* obligatoire, revérifié par l'API) | **Ajouter au référentiel** → fiche du nouvel équipement ; les erreurs de l'API s'affichent champ par champ |
+| 2 | Doublon | *Si l'IP ou la MAC est déjà connue* : l'équipement existant, son état, et ce qui correspond (IP, MAC) | **Fusionner avec cet équipement** (complète sa fiche et le valide), **Voir sa fiche** |
 
 ### 3.4 Fiche équipement — `/technique/equipements/:id`
 
@@ -105,12 +118,13 @@ Tout ce que l'on sait d'une machine, et l'endroit où on l'identifie.
 
 | N° | Zone | Contenu | Actions |
 | --- | --- | --- | --- |
-| 1 | En-tête | Nom métier (ou nom réseau, ou IP), type, dernière réponse ; état (En ligne, Hors ligne, Injoignable) et cycle de vie (À identifier, Suivi, Ignoré) | « ← Retour aux équipements » |
-| 2 | Fiche technique et identification | IP, MAC, nom réseau, fabricant, **passerelle** (selon les dépendances validées), première détection, dernier changement d'état ; formulaire type, nom métier, critique | **Enregistrer**, **Ignorer cette machine** ; clic sur la passerelle → sa fiche |
+| 1 | En-tête | Nom métier (ou nom réseau, ou IP), type, dernière réponse (ou « jamais vu par le collecteur ») ; état (En ligne, Hors ligne, Injoignable) et cycle de vie (À valider, Validé, Ignoré, Exclu) | « ← Retour aux équipements » |
+| 2 | Fiche technique et décision | IP, MAC, nom réseau, fabricant, **passerelle** (selon les dépendances validées), origine (découvert / ajouté manuellement), première détection ou date d'ajout, dernier changement d'état ; formulaire rôle, nom métier, votre nom, critique | **Enregistrer** (sans changer d'état) et les deux autres décisions parmi **Réintégrer au référentiel**, **Ignorer**, **Exclure du parc** ; clic sur la passerelle → sa fiche |
 | 3 | Machines derrière cette passerelle | *Seulement pour une passerelle* : machines qui en dépendent et leur état ; phrase indiquant s'il s'agit d'une panne de la passerelle ou d'une panne en aval | Clic → fiche de la machine |
 | 4 | État et ports | Latence, perte de paquets, jauges CPU et mémoire, disques ; ports ouverts avec protocole et services détectés | — |
 | 5 | Certificats TLS | Port, sujet, émetteur, dates de validité, jours restants, résultat de la vérification et raison d'un refus | — |
-| 6 | Historique | Événements de la machine (100 derniers), avec leurs valeurs mesurées | — |
+| 6 | Historique des décisions | Qui a ajouté, validé, ignoré, exclu ou modifié l'équipement, quand, et l'état obtenu | — |
+| 7 | Historique des événements | Événements de la machine (100 derniers), avec leurs valeurs mesurées | — |
 
 ### 3.5 Dépendances — `/technique/dependances`
 
@@ -138,16 +152,18 @@ Historique complet de ce que l'API a détecté.
 | 1 | Filtres | Famille (panne, observation, signalement, à configurer), état (ouvert, pris en charge, résolu) | Les filtres sont repris dans l'adresse |
 | 2 | Liste | Famille, gravité, résumé, équipement, durée, valeurs mesurées, état | **Prendre en charge**, **Retirer la prise en charge** ; clic sur l'équipement → sa fiche |
 
-### 3.7 Machines à identifier — `/technique/a-identifier`
+### 3.7 À valider — `/technique/a-identifier`
 
-File d'attente des machines détectées dont on ne sait pas encore ce qu'elles sont.
+File d'attente des équipements découverts par le collecteur (ticket #31). Le scan propose, l'humain décide :
+une machine « à valider » n'est ni supervisée ni comptée dans les rapports.
 
-![Maquette : machines à identifier](squelette/07-machines-a-identifier.svg)
+![Maquette : équipements à valider](squelette/07-machines-a-identifier.svg)
 
 | N° | Zone | Contenu | Actions |
 | --- | --- | --- | --- |
+| — | Bandeau (au-dessus des cartes, absent de la maquette) | Ce que change chaque décision ; votre nom | **Tout valider (N)** : après confirmation, valide toutes les machines en attente avec le rôle et le nom détectés, une décision tracée par machine |
 | 1 | Carte par machine | IP, MAC, fabricant, date de détection, ports et services | — |
-| 2 | Identification | Type, nom métier, critique | **Enregistrer** (la machine passe « Suivi » et sort de la liste), **Ignorer cette machine** |
+| 2 | Décision | Rôle, nom métier, votre nom (enregistré dans l'historique), critique | **Valider** (entre au référentiel, supervisé), **Ignorer** (reste visible, non supervisé), **Exclure** (hors du parc, masqué) ; dans les trois cas la machine sort de la liste et n'y revient plus |
 
 ### 3.8 Scans — `/technique/scans`
 
@@ -194,7 +210,8 @@ apps/web/src/
 │   ├── StatCard.tsx         carte de chiffre clé (vue d'ensemble, rapport)
 │   ├── DeviceTable.tsx      tableau des équipements
 │   ├── EventList.tsx        liste d'événements (vue d'ensemble, événements, fiche)
-│   ├── ClassifyDeviceForm.tsx  formulaire d'identification (fiche, machines à identifier)
+│   ├── ClassifyDeviceForm.tsx  décision valider / ignorer / exclure (fiche, page « À valider »)
+│   ├── AuthorField.tsx      champ « Votre nom », mémorisé par hooks/useAuthor.ts
 │   ├── Metrics.tsx          jauges, valeurs colorées, ports, badge de certificat
 │   ├── Badges.tsx           badges d'état, de gravité, de famille
 │   └── ThroughputChart.tsx  courbe de débit

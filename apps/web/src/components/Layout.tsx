@@ -17,7 +17,7 @@ const SECTIONS = [
     items: [
       { to: '/technique/equipements', label: 'Équipements' },
       { to: '/technique/evenements', label: 'Événements' },
-      { to: '/technique/a-identifier', label: 'Machines à identifier' },
+      { to: '/technique/a-identifier', label: 'À valider' },
       { to: '/technique/dependances', label: 'Dépendances' },
       { to: '/technique/scans', label: 'Scans' },
       { to: '/technique/reglages', label: 'Réglages' },

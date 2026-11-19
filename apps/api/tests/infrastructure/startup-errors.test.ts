@@ -42,6 +42,11 @@ describe('erreurs de démarrage lisibles', () => {
     expect(loadEnv({ STORAGE: 'memory', SCANNER_MODE: 'demo' })).toMatchObject({ STORAGE: 'memory' });
   });
 
+  it('attend le collecteur 5 minutes par défaut, et pas davantage', () => {
+    expect(loadEnv({ STORAGE: 'memory' }).SCANNER_TIMEOUT_MS).toBe(300_000);
+    expect(() => loadEnv({ STORAGE: 'memory', SCANNER_TIMEOUT_MS: '600000' })).toThrow(/SCANNER_TIMEOUT_MS ne peut dépasser 300000/);
+  });
+
   it('ne montre jamais le mot de passe de DATABASE_URL', () => {
     expect(describeTarget(URL)).toEqual({ where: 'localhost:5433', user: 'netwatch', database: 'netwatch' });
     for (const code of ['28P01', '3D000', 'ECONNREFUSED']) {

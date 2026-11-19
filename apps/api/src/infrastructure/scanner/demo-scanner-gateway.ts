@@ -1,4 +1,4 @@
-import type { ScanSnapshot, ScannerGateway } from '../../application/ports/scanner-gateway.js';
+import type { ScanRequest, ScanSnapshot, ScannerGateway } from '../../application/ports/scanner-gateway.js';
 import type { Clock } from '../../application/ports/system.js';
 import type { DeviceObservation, OpenPort, PortService } from '../../domain/entities/device.js';
 
@@ -108,21 +108,45 @@ export class DemoScannerGateway implements ScannerGateway {
 
   constructor(private readonly clock: Clock) {}
 
-  async fetchSnapshot(): Promise<ScanSnapshot> {
+  async fetchSnapshot(request: ScanRequest = { targets: [] }): Promise<ScanSnapshot> {
     const now = this.clock.now();
     this.scanCount += 1;
 
     const hosts = this.scanCount > 3 ? [...HOSTS, LATE_ARRIVAL] : HOSTS;
     const responding = hosts.filter((host) => !host.flaky || this.scanCount % 5 !== 0);
+    const simulated = new Set(hosts.map((host) => host.ip));
+    // Un équipement ajouté à la main répond au ping (sauf .250 à .254, laissés muets pour montrer une panne).
+    const targets = request.targets.filter((ip) => !simulated.has(ip));
 
     return {
       scannedAt: now,
-      devices: responding.map((host) => this.observe(host, now)),
+      devices: [
+        ...responding.map((host) => this.observe(host, now)),
+        ...targets.filter((ip) => !isSilentTarget(ip)).map((ip) => this.pingOnly(ip)),
+      ],
       throughput: [
         { sourceIp: '192.168.1.60', targetIp: '192.168.1.11', mbps: this.degradeEvery(7, 920, 60) },
         { sourceIp: '192.168.1.61', targetIp: '192.168.1.11', mbps: this.jitter(880, 40) },
         { sourceIp: '192.168.1.20', targetIp: '192.168.1.11', mbps: this.jitter(640, 30) },
       ],
+    };
+  }
+
+  /** Équipement sondé à la demande : on ne connaît que sa réponse au ping. */
+  private pingOnly(ip: string): DeviceObservation {
+    return {
+      ip,
+      mac: null,
+      hostname: null,
+      vendor: null,
+      gatewayIp: null,
+      latencyMs: this.jitter(4, 2),
+      packetLossPercent: 0,
+      cpuPercent: null,
+      memory: null,
+      disks: [],
+      ports: [],
+      certificates: [],
     };
   }
 
@@ -180,4 +204,9 @@ export class DemoScannerGateway implements ScannerGateway {
   private degradeEvery(period: number, base: number, spread: number): number {
     return this.scanCount % period === 0 ? this.jitter(base * 0.25, spread) : this.jitter(base, spread);
   }
+}
+
+function isSilentTarget(ip: string): boolean {
+  const last = Number(ip.split('.').at(-1));
+  return last >= 250 && last <= 254;
 }

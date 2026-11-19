@@ -1,11 +1,11 @@
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { CONTRACT_VERSION, CONTRACT_VERSION_HEADER } from '@netwatch/contracts';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import type { Logger } from '../../application/ports/system.js';
 import type { AppContainer } from '../../container.js';
-import type { Env } from '../../infrastructure/config/env.js';
+import { isScanImportEnabled, type Env } from '../../infrastructure/config/env.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { dashboardRoutes } from './routes/dashboard-routes.js';
 import { dependencyRoutes } from './routes/dependency-routes.js';
@@ -38,13 +38,15 @@ export function createServer(container: AppContainer, env: Env, logger: Logger):
   api.use(dependencyRoutes(container));
   api.use(eventRoutes(container));
   api.use(dashboardRoutes(container, { reportTimeZone: env.REPORT_TIME_ZONE }));
-  api.use(operationsRoutes(container));
+  api.use(operationsRoutes(container, { scanImport: isScanImportEnabled(env) }));
   app.use('/api/v1', api);
 
   // En production, l'API sert aussi l'interface compilée : un seul conteneur à déployer.
   if (env.WEB_DIST_PATH && existsSync(env.WEB_DIST_PATH)) {
-    const indexHtml = join(env.WEB_DIST_PATH, 'index.html');
-    app.use(express.static(env.WEB_DIST_PATH));
+    // Chemin absolu : `res.sendFile` refuse un chemin relatif (WEB_DIST_PATH=apps/web/dist donnait une erreur 500).
+    const webDist = resolve(env.WEB_DIST_PATH);
+    const indexHtml = join(webDist, 'index.html');
+    app.use(express.static(webDist));
     app.get(/^\/(?!api\/).*/, (_req, res) => {
       res.sendFile(indexHtml);
     });

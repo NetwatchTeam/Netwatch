@@ -197,7 +197,7 @@ const NAV = [
     [
       ['devices', 'Équipements'],
       ['events', 'Événements'],
-      ['pending', 'Machines à identifier'],
+      ['pending', 'À valider'],
       ['dependencies', 'Dépendances'],
       ['scans', 'Scans'],
       ['settings', 'Réglages'],
@@ -274,7 +274,7 @@ written.push(page('01-vue-ensemble.svg', 'Maquette : vue d’ensemble', 'overvie
     ['Disponibilité (7 jours)', '99,98 %', 'good'],
     ['Débit moyen (24 h)', '848 Mbit/s'],
     ['Points de sécurité', '9', 'warn'],
-    ['Machines à identifier', '35', 'warn'],
+    ['Équipements à valider', '35', 'warn'],
   ];
   const cardW = (CW - 3 * 12) / 4;
   cards.forEach(([label, value, tone], i) => {
@@ -370,7 +370,7 @@ written.push(page('04-fiche-equipement.svg', 'Maquette : fiche d’un équipemen
   y += 22;
   const head = pageHeader(y, 'Passerelle atelier', 'Routeur · vu il y a 2 minutes');
   add(head.svg);
-  add(badge(X + CW - 190, y + 10, 'Hors ligne', 'bad').svg + badge(X + CW - 100, y + 10, 'Suivi', 'good').svg);
+  add(badge(X + CW - 190, y + 10, 'Hors ligne', 'bad').svg + badge(X + CW - 100, y + 10, 'Validé', 'good').svg);
   add(marker(1, X + CW - 200, y + 6));
   y += head.h + 12;
 
@@ -382,7 +382,7 @@ written.push(page('04-fiche-equipement.svg', 'Maquette : fiche d’un équipemen
   add(t(X + half + 32, y + 72, 'Type', { size: 10.5, color: C.muted }) + select(X + half + 32, y + 78, half - 64, 'Routeur'));
   add(t(X + half + 32, y + 126, 'Nom métier', { size: 10.5, color: C.muted }) + input(X + half + 32, y + 132, half - 64, 'Passerelle atelier'));
   add(rect(X + half + 32, y + 178, 14, 14, { rx: 3 }) + t(X + half + 54, y + 190, 'Équipement critique pour l’activité', { size: 11.5 }));
-  add(buttonsLeft(X + half + 32, y + 206, [['Enregistrer', { primary: true }], ['Ignorer cette machine', {}]]).svg);
+  add(buttonsLeft(X + half + 32, y + 206, [['Enregistrer', { primary: true }], ['Ignorer', {}], ['Exclure du parc', {}]]).svg);
   add(marker(2, X, y));
   y += topH + GAP;
 
@@ -478,7 +478,7 @@ written.push(page('06-evenements.svg', 'Maquette : événements', 'events', 520,
 
 written.push(page('07-machines-a-identifier.svg', 'Maquette : machines à identifier', 'pending', 520, (add) => {
   let y = 24;
-  const head = pageHeader(y, 'Machines à identifier', 'Nouvelles machines détectées sur le réseau, en attente d’une décision');
+  const head = pageHeader(y, 'Équipements à valider', 'Le scan propose, l’humain décide : aucun équipement n’entre au référentiel sans validation');
   add(head.svg);
   y += head.h + 12;
   for (let i = 0; i < 2; i += 1) {
@@ -489,11 +489,12 @@ written.push(page('07-machines-a-identifier.svg', 'Maquette : machines à identi
     add(badge(cx + 16, y + 148, '135 · msrpc', 'neutral').svg + badge(cx + 110, y + 148, '139 · netbios-ssn', 'neutral').svg);
     add(t(cx + 16, y + 200, 'Type', { size: 10.5, color: C.muted }) + select(cx + 16, y + 206, half - 32, 'Non identifié'));
     add(t(cx + 16, y + 254, 'Nom métier', { size: 10.5, color: C.muted }) + input(cx + 16, y + 260, half - 32, 'Poste atelier 1'));
-    add(rect(cx + 16, y + 306, 14, 14, { rx: 3 }) + t(cx + 38, y + 318, 'Équipement critique pour l’activité', { size: 11.5 }));
-    add(buttonsLeft(cx + 16, y + 340, [['Enregistrer', { primary: true }], ['Ignorer cette machine', {}]]).svg);
+    add(t(cx + 16, y + 308, 'Votre nom (tracé dans l’historique)', { size: 10.5, color: C.muted }) + input(cx + 16, y + 314, half - 32, 'Prénom Nom'));
+    add(rect(cx + 16, y + 360, 14, 14, { rx: 3 }) + t(cx + 38, y + 372, 'Équipement critique pour l’activité', { size: 11.5 }));
+    add(buttonsLeft(cx + 16, y + 392, [['Valider', { primary: true }], ['Ignorer', {}], ['Exclure', {}]]).svg);
   }
   add(marker(1, X, y));
-  add(marker(2, X, y + 296));
+  add(marker(2, X, y + 196));
 }));
 
 written.push(page('08-scans.svg', 'Maquette : scans', 'scans', 520, (add) => {
@@ -562,7 +563,7 @@ written.push((() => {
   s += rect(380, 180, 680, 290, { fill: '#f8fafc', stroke: C.line, rx: 10, dash: '6 4' }) + t(396, 202, 'ESPACE TECHNIQUE — technicien', { size: 11, weight: 700, color: C.muted });
   s += box(400, 216, 200, 'Équipements', '/technique/equipements');
   s += box(620, 216, 200, 'Événements', '/technique/evenements');
-  s += box(840, 216, 200, 'Machines à identifier', '/technique/a-identifier');
+  s += box(840, 216, 200, 'À valider', '/technique/a-identifier');
   s += box(400, 300, 200, 'Fiche équipement', '/technique/equipements/:id');
   s += box(620, 300, 200, 'Dépendances', '/technique/dependances', 'accent');
   s += box(840, 300, 200, 'Scans', '/technique/scans');
@@ -576,7 +577,7 @@ written.push((() => {
   s += arrow(190, 268, 190, 298, true); // vue d'ensemble → rapport
 
   s += t(40, 498, 'Flèches pleines : le menu donne accès aux deux espaces. Pointillés : liens à l’intérieur des pages.', { size: 11.5, color: C.muted });
-  s += t(40, 516, 'Liens dans les pages : les cartes de la vue d’ensemble ouvrent Équipements (filtré par état), Événements et Machines à identifier ;', { size: 11.5, color: C.muted });
+  s += t(40, 516, 'Liens dans les pages : les cartes de la vue d’ensemble ouvrent Équipements (filtré par état), Événements et À valider ;', { size: 11.5, color: C.muted });
   s += t(40, 534, 'une ligne d’équipement, d’événement ou de dépendance ouvre la fiche de la machine ; la fiche d’un PC renvoie vers sa passerelle.', { size: 11.5, color: C.muted });
   s += `<rect x="0.5" y="0.5" width="${W - 1}" height="${H - 1}" fill="none" stroke="${C.line}"/></svg>\n`;
   writeFileSync(join(OUT, '00-plan-du-site.svg'), s, 'utf8');

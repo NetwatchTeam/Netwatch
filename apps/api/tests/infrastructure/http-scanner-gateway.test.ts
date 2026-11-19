@@ -1,7 +1,7 @@
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it } from 'vitest';
-import { HttpScannerGateway } from '../../src/infrastructure/scanner/http-scanner-gateway.js';
+import { explainFetchError, HttpScannerGateway } from '../../src/infrastructure/scanner/http-scanner-gateway.js';
 
 let servers: Server[] = [];
 
@@ -40,6 +40,12 @@ describe('passerelle HTTP du scanner', () => {
     const gateway = new HttpScannerGateway({ baseUrl, timeoutMs: 200 });
 
     await expect(gateway.fetchSnapshot()).rejects.toThrow(/pas de réponse en 0.2 s/);
+  });
+
+  it('traite le délai interne de fetch comme un collecteur qui ne répond pas', () => {
+    const error = new TypeError('fetch failed', { cause: Object.assign(new Error('Headers Timeout Error'), { code: 'UND_ERR_HEADERS_TIMEOUT' }) });
+
+    expect(explainFetchError(error, 300_000)).toBe('pas de réponse en 5 min (SCANNER_TIMEOUT_MS)');
   });
 
   it('détaille l’écart quand le JSON ne suit pas le contrat', async () => {

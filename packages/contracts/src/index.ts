@@ -4,7 +4,7 @@
  * - MAJEUR : rupture (champ retiré ou renommé, sens modifié) → nouvelle base d'URL `/api/v2`.
  * Voir docs/api-contract.md, section « Versionnement ».
  */
-export const CONTRACT_VERSION = '1.0.0';
+export const CONTRACT_VERSION = '1.1.0';
 
 /** En-tête HTTP portant la version du contrat, dans les deux sens. */
 export const CONTRACT_VERSION_HEADER = 'X-NetWatch-Contract';
@@ -20,9 +20,10 @@ export interface ApiErrorDto {
   error: {
     code:
       | 'bad_request'
+      | 'forbidden'
       | 'not_found'
       | 'conflict'
-      | 'conflict'
+      | 'duplicate_device'
       | 'scanner_unavailable'
       | 'internal_error';
     message: string;

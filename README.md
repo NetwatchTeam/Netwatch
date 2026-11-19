@@ -24,7 +24,7 @@ Les écrans du dashboard, leur disposition et leurs données sont décrits dans 
 | Port sensible ouvert | **Signalement** | Liste des ports surveillés configurable ; le service détecté derrière le port est indiqué |
 | Certificat TLS proche de l'expiration | **Signalement** | Préavis de 30 jours par défaut, critique à moins de 7 jours |
 | Certificat TLS refusé par la vérification | **Signalement** | Auto-signé, nom d'hôte différent, chaîne incomplète… la raison donnée par le scanner est affichée |
-| Nouvelle machine sur le réseau | **À configurer** | Reste « à identifier » tant qu'un utilisateur n'a pas déclaré ce qu'elle est |
+| Nouvelle machine sur le réseau | **À configurer** | Reste « à valider » tant qu'un utilisateur ne l'a pas validée, ignorée ou exclue ; elle n'est supervisée qu'une fois validée |
 
 Un événement déjà ouvert n'est jamais dupliqué : une contrainte en base garantit un seul événement
 ouvert par (équipement, cause).
@@ -33,6 +33,12 @@ Le **rapport hebdomadaire** s'exporte en PDF (bouton « Exporter en PDF », ou
 `GET /api/v1/reports/weekly.pdf?week=<date>`) pour la réunion de direction : synthèse, chiffres clés,
 puis les incidents les plus conséquents en tête — machines restées le plus longtemps hors service et
 coupures ayant touché le plus de machines à la fois — suivis des points de sécurité à traiter.
+
+**Le scan propose, l'humain décide** : aucun équipement n'entre au référentiel (supervision, rapports) sans
+validation. Chaque décision (valider, ignorer, exclure) est enregistrée avec son auteur, et un équipement
+écarté n'est jamais reproposé. Un équipement que le collecteur ne voit pas peut être **ajouté à la main** :
+un doublon avec un équipement découvert (même IP ou même MAC) est signalé, avec la possibilité de fusionner.
+Détail : [docs/api-contract.md § 4.7](docs/api-contract.md#47-validation-humaine-et-ajout-manuel).
 
 Pour chaque machine, la fiche détaillée affiche aussi : les ports ouverts et le ou les services
 associés, la latence et la perte de paquets, la charge processeur, l'occupation mémoire et disques,
@@ -127,10 +133,35 @@ PostgreSQL est alors accessible sur le port 5433 et le collecteur simulé sur le
 et le dashboard (http://localhost:5173) tournent sur votre machine, avec rechargement. Si la stack de la
 méthode A tourne aussi, arrêtez d'abord son API : `docker compose stop app` (elle occupe le port 3001).
 
+### Mettre à jour après un `git pull`
+
+**Les migrations de la base s'appliquent toutes seules** au démarrage de l'API : aucune commande à lancer, et
+les données sont conservées. Il suffit de relancer avec la bonne commande :
+
+| Méthode | Après un `git pull` |
+| --- | --- |
+| A. Docker | `docker compose up -d --build --wait` (`--build` reconstruit l'image avec le nouveau code et les nouvelles migrations) |
+| B. Mode démo | `npm install` puis `npm run dev:demo` |
+| C. Développement complet | `npm install`, puis arrêter et relancer `npm run dev` (le rechargement automatique ne rejoue pas les migrations) |
+
+Les fichiers `.env` ne sont pas versionnés : un `git pull` ne les met pas à jour. Comparez-les à `.env.example`
+et `apps/api/.env.example` si un réglage semble manquer.
+
+**Pour faire évoluer la base**, ajoutez une nouvelle migration (`apps/api/migrations/007_….sql`) et ne modifiez
+jamais une migration déjà poussée : une migration déjà appliquée n'est pas rejouée, et les bases de l'équipe
+divergeraient. Mettez à jour le MCD ([docs/mcd.png](docs/mcd.png)) et [docs/modele-donnees.md](docs/modele-donnees.md)
+dans le même commit.
+
 ### Premiers pas dans le dashboard
 
+Ce parcours vaut pour les méthodes A et C (réseau de test de 38 équipements). En mode démo (méthode B), le réseau
+fictif compte environ 18 machines sans passerelle : les étapes 3 et 4 ne s'appliquent pas.
+
 1. **Vue d'ensemble** : état général du parc. Le premier scan a lieu au démarrage, puis toutes les 5 minutes.
-2. **Machines à identifier** : les 38 équipements découverts attendent qu'on déclare leur type.
+2. **À valider** : les 38 équipements découverts attendent une décision. Tant qu'ils ne sont pas validés, aucun
+   n'est supervisé : sans cette étape, la panne de l'étape 4 n'apparaît pas. Indiquez votre nom (il est
+   enregistré avec chaque décision), puis **Tout valider**, ou décidez machine par machine
+   (**Valider**, **Ignorer**, **Exclure**).
 3. **Dépendances** → **Valider toutes les suggestions** : le collecteur a deviné quelle passerelle dessert chaque
    PC, mais tant que ce n'est pas validé, une panne de passerelle apparaît comme 9 pannes séparées.
 4. La passerelle `gw-atelier` tombe toutes les 50 minutes (méthodes A et C). Pour ne pas attendre, ouvrez
@@ -153,12 +184,16 @@ méthode A tourne aussi, arrêtez d'abord son API : `docker compose stop app` (e
 | `'cp' n'est pas reconnu` (invite de commandes Windows, cmd) | Utilisez PowerShell ou Git Bash, ou `copy .env.example .env` |
 | `npm error engine Unsupported engine` / erreurs de syntaxe au démarrage | Node.js trop ancien : installez Node 22.12 ou plus récent |
 | Après un `git pull`, le dashboard Docker n'a pas changé | Reconstruire l'image : `docker compose up -d --build --wait` |
+| `Cannot find package 'pdfkit'` (ou un autre paquet) après un `git pull` | De nouvelles dépendances sont arrivées : `npm install` |
+| Environ 18 machines en 192.168.1.x au lieu des 38 du réseau de test | Le fichier `.env` (copié d'une ancienne version) contient `SCANNER_MODE=demo` : mettre `SCANNER_MODE=http` et `SCANNER_URL=http://collector:8080`, puis `docker compose down -v` et relancer (efface les données) |
 
 ### Commandes de développement
 
 | Commande | Rôle |
 | --- | --- |
 | `npm run dev:demo` | API (en mémoire, réseau fictif) et dashboard, sans base ni Docker |
+| `npm run dev:injection` | API (en mémoire, **sans aucun scan**) et dashboard : seules les données injectées l'alimentent |
+| `npm run scan:inject -- <scénario ou fichier.json>...` | Injecte des photographies fictives dans l'API en marche, validées strictement contre le contrat ([tools/scanner-test](tools/scanner-test/README.md)) |
 | `npm run dev` | API et dashboard avec la base et le collecteur de la méthode C |
 | `npm test` | Tests (règles métier, ingestion, API HTTP, conformité des exemples du contrat) |
 | `npm run typecheck` | Vérification des types sur tout le dépôt |
@@ -204,14 +239,19 @@ packages/
 └── contracts/              # types partagés API ↔ interface (le contrat HTTP)
 docs/
 ├── architecture.svg/png    # schéma ci-dessus
+├── architecture-soutenance.svg/png  # version simplifiée du schéma, pour une présentation
 ├── squelette-application.md  # plan du site, maquette et rôle de chaque écran, structure du code du dashboard
 ├── squelette/              # maquettes fil de fer (générées par tools/squelette/generer-maquettes.mjs)
+├── mcd.svg/png             # MCD de référence : à mettre à jour avec chaque évolution du schéma
+├── modele-donnees.md       # correspondance MCD ↔ tables PostgreSQL, fonctionnalité de réparation à brancher
 ├── api-contract.md         # contrat REST/JSON : routes, formats, erreurs, versionnement
 ├── scanner-contract.md     # ce que l'API attend du collecteur
 └── examples/               # réponses JSON réelles (générées par le code, vérifiées par les tests)
 tools/
 ├── scanner-test/           # collecteur simulé (service `collector` de docker compose)
 └── squelette/              # générateur des maquettes de docs/squelette
+scripts/
+└── ensure-contracts.mjs    # compile packages/contracts si besoin, avant dev et test
 ```
 
 ### Pourquoi ce découpage
@@ -234,9 +274,11 @@ une valeur manquante ou invalide arrête le service avec un message explicite.
 | `STORAGE` | `postgres` | `memory` : sans base, données perdues à l'arrêt (développement du dashboard) |
 | `DATABASE_URL` | — | Connexion PostgreSQL (obligatoire si `STORAGE=postgres`) |
 | `PORT` | `3001` | Port d'écoute |
-| `SCANNER_MODE` | `demo` | `http` pour interroger le vrai scanner |
+| `SCANNER_MODE` | `demo` | `http` pour interroger le vrai scanner ; `none` : aucun scan automatique, données injectées seulement |
 | `SCANNER_URL` | — | Obligatoire si `SCANNER_MODE=http` |
 | `SCANNER_TOKEN` | — | Envoyé en `Authorization: Bearer` au scanner |
+| `SCANNER_TIMEOUT_MS` | `300000` (5 min) | Attente maximale de la réponse du collecteur, 5 min au plus ; au-delà, le scan est enregistré en échec |
+| `SCAN_IMPORT` | activée hors production | `enabled` / `disabled` : autorise `POST /api/v1/scans/import` (`npm run scan:inject`) ; désactivée par défaut en production |
 | `REPORT_TIME_ZONE` | `Europe/Paris` | Fuseau des heures affichées dans le rapport PDF |
 | `WEB_DIST_PATH` | — | Dossier de l'interface compilée, servie par l'API en production |
 
@@ -259,6 +301,10 @@ les mesures de débit, l'historique des scans et les réglages. Elle reste indis
 
 ## Ce qui reste à faire
 
+- Déclarer à l'avance qu'un équipement part en réparation, pour un avertissement plutôt qu'une panne : les tables
+  sont prêtes, la logique reste à coder (étapes dans [docs/modele-donnees.md](docs/modele-donnees.md))
+- Faire écrire l'application dans les tables du MCD, encore vides (même document)
+- Brancher le collecteur Python (dossier `scanner/` des branches du collecteur) dans `docker compose`
 - Alertes sortantes : e-mail ou Teams sur ouverture d'incident, et envoi automatique du rapport hebdomadaire
   (le PDF est déjà produit par `renderWeeklyReportPdf`, réutilisable tel quel en pièce jointe)
 - Comptes utilisateurs et rôles, si l'accès libre ne suffit plus (voir plus haut)

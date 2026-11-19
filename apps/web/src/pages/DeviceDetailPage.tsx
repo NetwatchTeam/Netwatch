@@ -1,4 +1,4 @@
-import type { ClassifyDeviceInput, DeviceDto, DeviceLinkDto } from '@netwatch/contracts';
+import type { ClassifyDeviceInput, DeviceDecisionDto, DeviceDto, DeviceLinkDto } from '@netwatch/contracts';
 import { Link, useParams } from 'react-router';
 import { api } from '../api/netwatch';
 import { AsyncState } from '../components/AsyncState';
@@ -18,9 +18,45 @@ import {
   formatPercentValue,
   formatRelative,
   formatServices,
+  DECISION_LABELS,
   KIND_LABELS,
+  LIFECYCLE_LABELS,
+  ORIGIN_LABELS,
   packetLossTone,
 } from '../utils/format';
+
+/** Qui a ajouté, validé, ignoré ou exclu l'équipement : la trace demandée pour chaque décision. */
+function DecisionsPanel({ decisions }: { decisions: DeviceDecisionDto[] }) {
+  return (
+    <section className="panel">
+      <h2>Historique des décisions</h2>
+      {decisions.length === 0 ? (
+        <p className="muted">Aucune décision enregistrée pour cet équipement.</p>
+      ) : (
+        <ul className="decision-list">
+          {decisions.map((decision) => (
+            <li key={decision.id}>
+              <strong>{DECISION_LABELS[decision.action]}</strong>
+              <span>par {decision.author}</span>
+              <span className="muted" title={formatDateTime(decision.decidedAt)}>
+                {formatRelative(decision.decidedAt)}
+              </span>
+              <span className="muted">
+                {decision.previousLifecycle && decision.previousLifecycle !== decision.lifecycle
+                  ? `${LIFECYCLE_LABELS[decision.previousLifecycle]} → ${LIFECYCLE_LABELS[decision.lifecycle]}`
+                  : LIFECYCLE_LABELS[decision.lifecycle]}
+                {' · '}
+                {KIND_LABELS[decision.kind]}
+                {decision.label ? ` « ${decision.label} »` : ''}
+                {decision.critical ? ' · critique' : ''}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
 
 function HealthPanel({ device }: { device: DeviceDto }) {
   const offline = device.reachability === 'down';
@@ -234,11 +270,13 @@ export function DeviceDetailPage() {
       </Link>
 
       <AsyncState {...detail} onRetry={detail.refresh}>
-        {({ device, dependents, events }) => (
+        {({ device, dependents, events, decisions }) => (
           <>
             <PageHeader
               title={device.label ?? device.hostname ?? device.ip}
-              subtitle={`${KIND_LABELS[device.kind]} · vu ${formatRelative(device.lastSeenAt)}`}
+              subtitle={`${KIND_LABELS[device.kind]} · ${
+                device.lastSeenAt ? `vu ${formatRelative(device.lastSeenAt)}` : 'jamais vu par le collecteur'
+              }`}
               actions={
                 <>
                   <ReachabilityBadge status={device.reachability} />
@@ -281,7 +319,11 @@ export function DeviceDetailPage() {
                     </dd>
                   </div>
                   <div>
-                    <dt>Première détection</dt>
+                    <dt>Origine</dt>
+                    <dd>{ORIGIN_LABELS[device.origin]}</dd>
+                  </div>
+                  <div>
+                    <dt>{device.origin === 'manual' ? 'Ajouté le' : 'Première détection'}</dt>
                     <dd>{formatDateTime(device.firstSeenAt)}</dd>
                   </div>
                   <div>
@@ -292,9 +334,9 @@ export function DeviceDetailPage() {
               </section>
 
               <section className="panel">
-                <h2>Identification</h2>
+                <h2>Identification et décision</h2>
                 <p className="muted">
-                  Le type et le nom métier renseignés ici servent dans tous les rapports.
+                  Le rôle et le nom métier servent dans tous les rapports. Seul un équipement validé est supervisé.
                 </p>
                 <ClassifyDeviceForm device={device} onSubmit={classify} />
               </section>
@@ -308,6 +350,8 @@ export function DeviceDetailPage() {
             </div>
 
             <CertificatesPanel device={device} />
+
+            <DecisionsPanel decisions={decisions} />
 
             <section className="panel">
               <h2>Historique des événements</h2>

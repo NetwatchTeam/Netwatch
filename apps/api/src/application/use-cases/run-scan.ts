@@ -1,6 +1,6 @@
 import type { ScanRun } from '../../domain/entities/measurement.js';
-import type { ScannerGateway } from '../ports/scanner-gateway.js';
-import type { ScanRunRepository } from '../ports/repositories.js';
+import type { ScanSnapshot, ScannerGateway } from '../ports/scanner-gateway.js';
+import type { DeviceRepository, ScanRunRepository } from '../ports/repositories.js';
 import type { Clock, IdGenerator, Logger } from '../ports/system.js';
 import type { IngestScanSnapshot } from './ingest-scan-snapshot.js';
 
@@ -14,12 +14,30 @@ export class RunScan {
     private readonly scanner: ScannerGateway,
     private readonly ingest: IngestScanSnapshot,
     private readonly scanRuns: ScanRunRepository,
+    private readonly devices: DeviceRepository,
     private readonly ids: IdGenerator,
     private readonly clock: Clock,
     private readonly logger: Logger,
   ) {}
 
   async execute(): Promise<ScanRun> {
+    return this.record(async () => {
+      // Les équipements ajoutés à la main ne sont pas découverts seuls : le collecteur doit les sonder.
+      const known = await this.devices.findAll({ lifecycle: 'active' });
+      const targets = known.filter((device) => device.origin === 'manual').map((device) => device.ip);
+      return this.scanner.fetchSnapshot({ targets });
+    });
+  }
+
+  /**
+   * Photographie fournie directement (jeu de données fictif injecté par `npm run scan:inject`) :
+   * elle suit exactement le chemin d'un vrai scan, journal compris, sans interroger le collecteur.
+   */
+  async importSnapshot(snapshot: ScanSnapshot): Promise<ScanRun> {
+    return this.record(async () => snapshot);
+  }
+
+  private async record(obtain: () => Promise<ScanSnapshot>): Promise<ScanRun> {
     const run: ScanRun = {
       id: this.ids.next(),
       startedAt: this.clock.now(),
@@ -32,7 +50,7 @@ export class RunScan {
     await this.scanRuns.start(run);
 
     try {
-      const snapshot = await this.scanner.fetchSnapshot();
+      const snapshot = await obtain();
       const result = await this.ingest.execute(snapshot);
       const finished: ScanRun = {
         ...run,

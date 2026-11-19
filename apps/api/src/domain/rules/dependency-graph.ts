@@ -1,4 +1,4 @@
-import { deviceDisplayName, type Device } from '../entities/device.js';
+import { deviceDisplayName, isDismissed, type Device } from '../entities/device.js';
 import type { Dependency, DependencyEdge } from '../entities/dependency.js';
 
 // ---------------------------------------------------------------------------
@@ -181,13 +181,13 @@ export function dependencyIssues(dependencies: Dependency[], devices: Device[]):
 
   for (const dependency of validated) {
     const upstream = devices.find((d) => d.id === dependency.dependsOnId);
-    if (upstream?.lifecycle === 'ignored') {
+    if (upstream && isDismissed(upstream)) {
       issues.push({
         kind: 'ignored_upstream',
         severity: 'warning',
         message:
-          `${name(dependency.deviceId)} dépend de ${name(dependency.dependsOnId)}, qui est ignoré : ` +
-          'ses pannes ne seront plus suivies, la corrélation devient incertaine.',
+          `${name(dependency.deviceId)} dépend de ${name(dependency.dependsOnId)}, qui est ${upstream.lifecycle === 'excluded' ? 'exclu' : 'ignoré'} : ` +
+          'ses pannes ne sont pas suivies, la corrélation devient incertaine.',
         dependencyIds: [dependency.id],
       });
     }

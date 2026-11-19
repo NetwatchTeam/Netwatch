@@ -1,5 +1,6 @@
 import type {
   DependencyRepository,
+  DeviceDecisionRepository,
   DeviceQuery,
   DeviceRepository,
   EventQuery,
@@ -11,6 +12,7 @@ import type {
 import type { IdGenerator } from '../../../application/ports/system.js';
 import type { Repositories } from '../../../container.js';
 import type { Dependency } from '../../../domain/entities/dependency.js';
+import type { DeviceDecision } from '../../../domain/entities/device-decision.js';
 import { deviceDisplayName, type Device } from '../../../domain/entities/device.js';
 import type { ScanRun, ThroughputSample } from '../../../domain/entities/measurement.js';
 import type { EventType, MonitoringEvent } from '../../../domain/entities/monitoring-event.js';
@@ -54,6 +56,24 @@ export class InMemoryDeviceRepository implements DeviceRepository {
 
   async saveMany(devices: Device[]): Promise<void> {
     for (const device of devices) this.items.set(device.id, device);
+  }
+}
+
+export class InMemoryDeviceDecisionRepository implements DeviceDecisionRepository {
+  readonly items: DeviceDecision[] = [];
+
+  async insert(decision: DeviceDecision): Promise<void> {
+    this.items.push(decision);
+  }
+
+  async listByDevice(deviceId: string, limit = 50): Promise<DeviceDecision[]> {
+    // Ordre d'insertion inversé à date égale, comme `order by decided_at desc` le serait en pratique.
+    return this.items
+      .map((decision, index) => ({ decision, index }))
+      .filter(({ decision }) => decision.deviceId === deviceId)
+      .sort((a, b) => b.decision.decidedAt.getTime() - a.decision.decidedAt.getTime() || b.index - a.index)
+      .slice(0, Math.min(limit, 500))
+      .map(({ decision }) => decision);
   }
 }
 
@@ -232,6 +252,7 @@ export class InMemoryDependencyRepository implements DependencyRepository {
 export function inMemoryRepositories() {
   return {
     devices: new InMemoryDeviceRepository(),
+    decisions: new InMemoryDeviceDecisionRepository(),
     events: new InMemoryEventRepository(),
     throughput: new InMemoryThroughputRepository(),
     scanRuns: new InMemoryScanRunRepository(),

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import type { AppContainer } from '../../../container.js';
+import { ForbiddenError } from '../../../domain/errors.js';
+import { strictSnapshotSchema, toDomainSnapshot } from '../../../infrastructure/scanner/snapshot-schema.js';
 import { toScanRunDto, toSettingsDto } from '../presenters.js';
 
 const settingsSchema = z
@@ -19,7 +21,12 @@ const settingsSchema = z
   })
   .partial();
 
-export function operationsRoutes(container: AppContainer): Router {
+export interface OperationsOptions {
+  /** `POST /scans/import` accepté (voir SCAN_IMPORT). */
+  scanImport: boolean;
+}
+
+export function operationsRoutes(container: AppContainer, options: OperationsOptions = { scanImport: false }): Router {
   const router = Router();
 
   router.get('/scans', async (_req, res) => {
@@ -31,6 +38,19 @@ export function operationsRoutes(container: AppContainer): Router {
   router.post('/scans/run', async (_req, res) => {
     const run = await container.runScan.execute();
     res.status(202).json(toScanRunDto(run));
+  });
+
+  // Injection d'un jeu de données fictif (npm run scan:inject) : validé strictement contre le contrat
+  // du collecteur, puis ingéré comme un vrai scan. Désactivé en production par défaut.
+  router.post('/scans/import', async (req, res) => {
+    if (!options.scanImport) {
+      throw new ForbiddenError(
+        'Injection de scans désactivée sur cette instance (production). Pour l’autoriser : SCAN_IMPORT=enabled.',
+      );
+    }
+    const snapshot = toDomainSnapshot(strictSnapshotSchema.parse(req.body));
+    const run = await container.runScan.importSnapshot(snapshot);
+    res.status(201).json(toScanRunDto(run));
   });
 
   router.get('/settings', async (_req, res) => {

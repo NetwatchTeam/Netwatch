@@ -1,0 +1,7 @@
+{
+  "ip": "10.20.0.250",
+  "label": "Automate de quai",
+  "kind": "iot",
+  "critical": false,
+  "author": "Technicien réseau"
+}
